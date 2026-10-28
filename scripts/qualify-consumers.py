@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P5.1/P5.2 qualification from installed artifacts and actual owning consumer IO."""
+"""P5.1/P5.2/P5.3 qualification from installed artifacts and actual owning consumer IO."""
 import argparse
 import datetime
 import hashlib
@@ -242,6 +242,10 @@ def ledgers(art,source,result):
 
 
 def main():
+    if '--item' in sys.argv and sys.argv[sys.argv.index('--item')+1] == 'P5.3':
+        import runpy
+        runpy.run_path(str(ROOT/'tests/consumers/flexcrm/qualify.py'),run_name='__main__')
+        return
     if '--item' in sys.argv and sys.argv[sys.argv.index('--item')+1] == 'P5.2':
         import runpy
         runpy.run_path(str(ROOT/'tests/consumers/vaulter/qualify.py'),run_name='__main__')
