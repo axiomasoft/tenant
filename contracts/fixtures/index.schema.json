@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axiomasoft:tenant:fixture-index:1",
+  "title": "Tenant fixture corpus index",
+  "type": "object",
+  "$defs": {
+    "applicability": {
+      "type": "object",
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "required",
+            "conditional",
+            "not-applicable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "assignment": {
+      "type": "object",
+      "required": [
+        "item",
+        "profile",
+        "proofKind"
+      ],
+      "properties": {
+        "item": {
+          "type": "string",
+          "pattern": "^P[2-5]\\.[1-4]$"
+        },
+        "profile": {
+          "enum": [
+            "php-scoped",
+            "single",
+            "laravel-pg-database",
+            "postgres-lifecycle"
+          ]
+        },
+        "proofKind": {
+          "enum": [
+            "contract",
+            "synthetic",
+            "worker",
+            "IO",
+            "physical",
+            "consumer",
+            "install"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "fixture": {
+      "type": "object",
+      "required": [
+        "id",
+        "sourceBranches",
+        "assignments",
+        "applicability",
+        "setup",
+        "steps",
+        "expected",
+        "runtimeStatus",
+        "tags"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceBranches": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(N|TC|EXT)-[0-9]{2}$"
+          }
+        },
+        "assignments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/assignment"
+          }
+        },
+        "applicability": {
+          "$ref": "#/$defs/applicability"
+        },
+        "setup": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtimeStatus": {
+          "const": "not-run"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "portion": {
+      "type": "object",
+      "required": [
+        "id",
+        "sourceId",
+        "sourceBranch",
+        "fixtureId",
+        "item",
+        "profile",
+        "proofKind",
+        "applicability",
+        "expectedObservations"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceId": {
+          "type": "string",
+          "pattern": "^(N|TC|EXT)-[0-9]{2}$"
+        },
+        "sourceBranch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fixtureId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "item": {
+          "type": "string",
+          "pattern": "^P[2-5]\\.[1-4]$"
+        },
+        "profile": {
+          "enum": [
+            "php-scoped",
+            "single",
+            "laravel-pg-database",
+            "postgres-lifecycle"
+          ]
+        },
+        "proofKind": {
+          "enum": [
+            "contract",
+            "synthetic",
+            "worker",
+            "IO",
+            "physical",
+            "consumer",
+            "install"
+          ]
+        },
+        "applicability": {
+          "$ref": "#/$defs/applicability"
+        },
+        "expectedObservations": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "$schema",
+    "contract",
+    "status",
+    "frozenInputs",
+    "sourceEvidence",
+    "sourceCohorts",
+    "interpretation",
+    "portions",
+    "fixtures"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contract": {
+      "const": "tenant.fixture-index/1"
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frozenInputs": {
+      "type": "object",
+      "minProperties": 5,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "sourceEvidence": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "sourceCohorts": {
+      "type": "object",
+      "minProperties": 3,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{40}$"
+      }
+    },
+    "interpretation": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "portions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/portion"
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/fixture"
+      }
+    }
+  },
+  "additionalProperties": false
+}

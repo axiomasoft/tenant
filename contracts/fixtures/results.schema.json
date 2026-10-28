@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axiomasoft:tenant:fixture-results:1",
+  "title": "Tenant conformance result ledger",
+  "type": "object",
+  "required": [
+    "contract",
+    "corpusHash",
+    "indexSchemaHash",
+    "resultSchemaHash",
+    "candidate",
+    "results"
+  ],
+  "properties": {
+    "contract": {
+      "const": "tenant.fixture-results/1"
+    },
+    "corpusHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "indexSchemaHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "resultSchemaHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "checkout",
+        "dirtyContentHash",
+        "artifactHashes"
+      ],
+      "properties": {
+        "checkout": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dirtyContentHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "artifactHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "portionId",
+          "fixtureId",
+          "producerItem",
+          "profile",
+          "lane",
+          "proofKind",
+          "applicability",
+          "check",
+          "expected",
+          "observed",
+          "status",
+          "rawEvidence"
+        ],
+        "properties": {
+          "portionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fixtureId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "producerItem": {
+            "type": "string",
+            "pattern": "^P[1-6]\\.[1-4]$"
+          },
+          "profile": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lane": {
+            "type": "string",
+            "minLength": 1
+          },
+          "proofKind": {
+            "enum": [
+              "contract",
+              "synthetic",
+              "worker",
+              "IO",
+              "physical",
+              "consumer",
+              "install"
+            ]
+          },
+          "applicability": {
+            "type": "object",
+            "required": [
+              "status",
+              "reason"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "required",
+                  "conditional",
+                  "not-applicable"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "check": {
+            "type": "object",
+            "required": [
+              "procedure",
+              "result"
+            ],
+            "properties": {
+              "procedure": {
+                "type": "string",
+                "minLength": 1
+              },
+              "result": {
+                "type": [
+                  "string",
+                  "integer",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "expected": {
+            "type": "string",
+            "minLength": 1
+          },
+          "observed": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "failed",
+              "unavailable",
+              "not-run"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rawEvidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "artifactHashes": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "passed",
+                    "failed"
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "observed": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "rawEvidence": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "check": {
+                  "properties": {
+                    "result": {
+                      "type": [
+                        "string",
+                        "integer"
+                      ]
+                    }
+                  }
+                }
+              },
+              "required": [
+                "artifactHashes"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "unavailable"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "reason"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "applicability": {
+                  "properties": {
+                    "status": {
+                      "const": "not-applicable"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              },
+              "required": [
+                "applicability"
+              ]
+            },
+            "then": {
+              "properties": {
+                "status": {
+                  "const": "not-run"
+                }
+              }
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
