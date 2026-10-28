@@ -132,15 +132,35 @@ final class SafeTenantRuntime implements TenantRuntime
             if ($resolved->context->kind !== 'central') throw new \Tenant\Exceptions\BindingMismatch();
             return $resolved;
         }
-        if ($context === null || $context->mode !== $selection->mode || $context->identity != $selection->identity) throw new \Tenant\Exceptions\BindingMismatch();
-        if ($context->profile != $selection->expectedProfile) throw new \Tenant\Exceptions\UnsupportedProfile();
-        if ($context->extensions != $selection->extensions) throw new \Tenant\Exceptions\SelectionLost();
+        if ($context === null || $context->mode !== $selection->mode || $selection->identity === null || $context->identity->namespace !== $selection->identity->namespace || $context->identity->id !== $selection->identity->id) throw new \Tenant\Exceptions\BindingMismatch();
+        if ($context->profile->id !== $selection->expectedProfile->id || $context->profile->version !== $selection->expectedProfile->version) throw new \Tenant\Exceptions\UnsupportedProfile();
+        if (!self::sameExtensions($context->extensions, $selection->extensions)) throw new \Tenant\Exceptions\SelectionLost();
         $expected = $selection->expectedBinding;
         if ($expected !== null) {
             if ($expected->resourceRef !== $context->binding->resourceRef || $expected->incarnation !== $context->binding->incarnation) throw new \Tenant\Exceptions\StaleIncarnation();
             if ($expected->routeRevision !== $context->binding->routeRevision) throw new \Tenant\Exceptions\StaleRoute();
         }
         return $resolved;
+    }
+
+    /**
+     * @param list<\Tenant\Data\ExtensionRef> $actual
+     * @param list<\Tenant\Data\ExtensionRef> $expected
+     */
+    private static function sameExtensions(array $actual, array $expected): bool
+    {
+        if (count($actual) !== count($expected)) return false;
+        foreach ($expected as $index => $reference) {
+            $other = $actual[$index];
+            if ($other->type !== $reference->type || $other->version !== $reference->version || $other->required !== $reference->required) return false;
+            $actualRefs = $other->refs;
+            $expectedRefs = $reference->refs;
+            // Maps have no insertion order semantics; opaque values never undergo numeric coercion.
+            ksort($actualRefs, SORT_STRING);
+            ksort($expectedRefs, SORT_STRING);
+            if ($actualRefs !== $expectedRefs) return false;
+        }
+        return true;
     }
 
     private function verifyBinding(Selection $selection, ResolvedIsolation $resolved): void
@@ -153,7 +173,7 @@ final class SafeTenantRuntime implements TenantRuntime
         if (!is_string($capability) || !$verifier instanceof \Tenant\Contracts\BindingVerifier) throw new TenantFailure('unsupported_capability');
         $expected = $resolved->context->context->binding ?? throw new \Tenant\Exceptions\BindingMismatch();
         $proof = $verifier->verify(new \Tenant\Data\BindingVerificationInput($expected, $resolved->facets->require(new \Tenant\Data\CapabilityId($capability))));
-        if ($proof->expected != $expected) throw new \Tenant\Exceptions\BindingMismatch();
+        if ($proof->expected->resourceRef !== $expected->resourceRef || $proof->expected->incarnation !== $expected->incarnation || $proof->expected->routeRevision !== $expected->routeRevision) throw new \Tenant\Exceptions\BindingMismatch();
     }
 
     public function restore(FrameToken $token): void

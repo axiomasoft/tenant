@@ -10,6 +10,7 @@ use Tenant\Data\{BindingExpectation, CapabilityId, ContextState, ExtensionRef, F
 use Tenant\Exceptions\TenantFailure;
 
 require_once __DIR__.'/RuntimeRig.php';
+require_once __DIR__.'/ReviewRegression.php';
 
 final class Scenarios
 {
@@ -191,6 +192,11 @@ final class Scenarios
         Check::reason(fn () => $r->tenant->enter(RuntimeRig::selection('A', [], new BindingExpectation('A', 'wrong', 'r1')), RuntimeRig::purpose()), 'stale_incarnation');
         Check::reason(fn () => $r->tenant->enter(RuntimeRig::selection('A', [], new BindingExpectation('A', 'i1', 'old')), RuntimeRig::purpose()), 'stale_route');
         $r->tenant->restore($a);
+        $r->trace[] = ['review-F1' => [
+            'identities' => ReviewRegression::identities($r->decorated),
+            'extensions' => ReviewRegression::extensions($r->decorated),
+            'proofs' => ReviewRegression::proofs($r->decorated),
+        ]];
     }
 
     public static function revocation(RuntimeRig $r): void
@@ -331,6 +337,7 @@ final class Scenarios
         Check::same($r->trace, $before);
         Check::reason(fn () => $r->builder->register($r->declaration('late')), 'composition_frozen');
         Check::reason(fn () => $r->builder->compile(), 'composition_frozen');
+        $r->trace[] = ['review-F2' => ReviewRegression::profileCapabilities($r->decorated)];
     }
 
     public static function snapshots(RuntimeRig $r): void

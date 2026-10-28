@@ -73,6 +73,7 @@ final class Compiler
                 $providers[$capability->id][] = $id;
             }
         }
+        self::validateProfileCapabilities($profiles, $providers, $serviceCapabilities);
         foreach ($all as $id => $d) {
             foreach ($d->requires as $capability) {
                 $owners = $providers[$capability->id] ?? [];
@@ -95,6 +96,27 @@ final class Compiler
             foreach ($edges[$id] as $target => $_) $indegree[$target]--;
         }
         return new CompiledComposition(1, $order, $profiles, array_map(fn ($id) => $all[$id], $order), $serviceSlots);
+    }
+    /**
+     * @param array<string, mixed> $profiles
+     * @param array<string, list<string>> $providers Effective participants, after replacements.
+     * @param array<string, int> $serviceCapabilities Selected typed host services.
+     */
+    private static function validateProfileCapabilities(array $profiles, array $providers, array $serviceCapabilities): void
+    {
+        foreach ($profiles as $profile) {
+            if (!is_array($profile) || !array_key_exists('requiredCapabilities', $profile)) continue;
+            $required = $profile['requiredCapabilities'];
+            if (!is_array($required) || !array_is_list($required)) throw new TenantFailure('unsupported_capability');
+            foreach ($required as $capability) {
+                if (!is_string($capability)) throw new TenantFailure('unsupported_capability');
+                try { new CapabilityId($capability); }
+                catch (\InvalidArgumentException $failure) { throw new TenantFailure('unsupported_capability', [$failure]); }
+                $count = count($providers[$capability] ?? []) + ($serviceCapabilities[$capability] ?? 0);
+                if ($count === 0) throw new TenantFailure('unsupported_capability');
+                if ($count > 1) throw new TenantFailure('ambiguous_capability');
+            }
+        }
     }
     /** @param array<mixed> $profiles */
     private static function validateProfiles(array $profiles): void
