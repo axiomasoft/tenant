@@ -4,7 +4,7 @@ import json, os, pathlib, re, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[3]
 m=json.loads(pathlib.Path(os.environ.get('P41_MANIFEST',str(ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1/lab-manifest.json'))).read_text())
 assert re.fullmatch(r'[0-9a-f]{12}',m['runId'])
-name='tenant_p41_'+m['runId']; assert m['project']==name and m['central']==name+'_central_test'
+name=m['project']; assert name in [prefix+m['runId'] for prefix in (['tenant_p41_','tenant_p42_'] if os.environ.get('P4_ITEM')=='P4.2' else ['tenant_p41_'])]; assert m['project']==name and m['central']==name+'_central_test'
 assert m['admin']==name+'_admin' and m['runtime']==name+'_runtime' and m['host']=='127.0.0.1'
 private=pathlib.Path(m['root']); assert private==pathlib.Path('/tmp')/name and private.stat().st_mode & 0o077==0
 secret=pathlib.Path(m['credentials']);assert secret==private/'credentials.json' and secret.stat().st_mode & 0o077==0

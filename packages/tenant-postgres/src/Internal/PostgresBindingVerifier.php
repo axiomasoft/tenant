@@ -17,7 +17,7 @@ use Tenant\Postgres\Data\PhysicalAccess;
 final readonly class PostgresBindingVerifier implements BindingVerifier
 {
     /** @param Closure(object): array<string, mixed> $routeFor Current owner route, never caller-provided credentials. */
-    public function __construct(private Connection $catalog, private Closure $routeFor) {}
+    public function __construct(private Connection $catalog, private Closure $routeFor, private ?\Tenant\Postgres\Contracts\RecoveryAnchor $anchor=null, private bool $maintenance=false) {}
 
     public function verify(BindingVerificationInput $input): VerifiedBinding
     {
@@ -26,6 +26,8 @@ final readonly class PostgresBindingVerifier implements BindingVerifier
             $expected=$input->expected;
             $row=$this->catalog->table('tenant_pg_resources')->where('resource_ref',$expected->resourceRef)->first();
             if ($row === null || $row->deleted_at !== null || $row->incarnation !== $expected->incarnation || $row->route_revision !== $expected->routeRevision || ! is_string($row->recovery_generation)) throw new \RuntimeException('Stale catalog binding.');
+            if (!$this->maintenance && in_array($row->status,['exporting','exported','deleting','quarantined','recovering','deleted'],true)) throw new \RuntimeException('Resource admission is closed.');
+            if ($this->anchor!==null && AnchorHistory::assertCurrent($this->catalog,$this->anchor)!==$row->recovery_generation) throw new \RuntimeException('Recovery anchor mismatch.');
             $route=($this->routeFor)($row);
             if ($route !== $input->access->route || ($route['driver'] ?? null) !== 'pgsql' || ($route['database'] ?? null) !== $row->database_name || isset($route['url']) || isset($route['read']) || isset($route['write'])) throw new \RuntimeException('Route mismatch.');
             $pdo=(new PostgresConnector)->connect($route);

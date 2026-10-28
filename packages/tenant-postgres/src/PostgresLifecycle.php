@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 namespace Tenant\Postgres;
-/** Frozen optional owner SPI; export/delete/recovery are unavailable until P4.2. */
+/** Frozen optional physical owner SPI. */
 interface PostgresLifecycle
 {
     public function claim(ProvisionIntent $intent,OperationKey $key,Admission $admission):OperationReceipt;

@@ -17,5 +17,6 @@ final readonly class OperationReceipt
         public string $observedEffect,
         public bool $cancellationRequested = false,
         public ?OperationKey $key = null,
+        public ?ExportRef $exportRef = null,
     ) {}
 }

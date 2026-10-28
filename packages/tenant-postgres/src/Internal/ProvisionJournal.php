@@ -25,7 +25,7 @@ final readonly class ProvisionJournal
         foreach([$snapshot->databaseName,$templateDatabase] as $identifier)if(preg_match('/^[A-Za-z0-9_]{1,63}$/D',$identifier)!==1)throw new ClaimConflict('Invalid database identifier.');
         $keyHash=$key->storageKey();$digest=$intent->digest();
         return $this->connection->transaction(function()use($intent,$key,$snapshot,$templateDatabase,$keyHash,$digest):OperationReceipt{
-            $this->connection->select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))',['tenant:provision-key:'.$keyHash]);
+            OperationKeys::lock($this->connection, $key, false);
             $r=$this->connection->table('tenant_pg_provision_attempts')->where('key_hash',$keyHash)->lockForUpdate()->first();
             if($r!==null){
                 if($r->key_namespace!==$key->namespace||$r->operation_key!==$key->key||!hash_equals($r->intent_digest,$digest)||$r->resource_ref!==$snapshot->resourceRef||$r->incarnation!==$snapshot->incarnation||$r->database_name!==$snapshot->databaseName||$r->template_database!==$templateDatabase)throw new ClaimConflict('Original provision target differs.');
@@ -112,17 +112,9 @@ final readonly class ProvisionJournal
 
     private function withFence(object $row, Closure $work): mixed
     {
-        if($this->connection->transactionLevel()!==0)throw new ClaimUnavailable('Physical operation requires a nontransactional session.');
-        $pdo=$this->connection->getPdo();$pid=$this->connection->selectOne('SELECT pg_backend_pid() AS pid')->pid;$key='tenant:physical:'.$row->database_name;
-        $acquired=$this->connection->selectOne('SELECT pg_try_advisory_lock(hashtextextended(?,0)) AS locked',[$key])->locked;
-        if(!in_array($acquired,[true,'t',1],true))throw new ClaimUnavailable('Physical target is fenced by another backend.');
-        $fence=function()use($pdo,$pid,$key):void{
-            if($this->connection->getPdo()!==$pdo || $this->connection->selectOne('SELECT pg_backend_pid() AS pid')->pid!==$pid)throw new ClaimUnavailable('Physical session lost; outcome unknown.');
-            $held=$this->connection->selectOne("SELECT EXISTS (SELECT 1 FROM pg_locks WHERE locktype='advisory' AND pid=pg_backend_pid() AND granted AND objsubid=1 AND classid=((hashtextextended(?,0) >> 32) & 4294967295)::oid AND objid=(hashtextextended(?,0) & 4294967295)::oid) AS held",[$key,$key])->held;
-            if(!in_array($held,[true,'t',1],true))throw new ClaimUnavailable('Physical fence lost; outcome unknown.');
-        };
-        try{return $work($fence);}finally{try{if($this->connection->getPdo()===$pdo)$this->connection->select('SELECT pg_advisory_unlock(hashtextextended(?,0))',[$key]);}catch(\Throwable){}}
+        return (new PhysicalFence($this->connection))->run($row->database_name, $work);
     }
+
     public function usesConnection(Connection $connection): bool { return $this->connection === $connection; }
 
     private function verifyTemplate(object $r): void

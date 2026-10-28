@@ -22,7 +22,7 @@ final readonly class ClaimReceiptStore
         $admission->assertAllowed('provision', $intent->hostIntentRef);
         $digest=$intent->digest(); $storageKey=$key->storageKey();
         return $this->connection->transaction(function () use ($intent,$key,$admission,$digest,$storageKey): OperationReceipt {
-            $this->connection->select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', ['tenant:operation:'.$storageKey]);
+            OperationKeys::lock($this->connection, $key, false);
             $existing=$this->connection->table('tenant_pg_operations')->where('key_hash',$storageKey)->lockForUpdate()->first();
             if ($existing !== null) {
                 if (! hash_equals($existing->intent_digest,$digest) || $existing->key_namespace !== $key->namespace || $existing->operation_key !== $key->key) throw new ClaimConflict('Operation key already binds a different intent.');

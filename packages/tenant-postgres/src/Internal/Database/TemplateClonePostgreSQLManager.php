@@ -50,7 +50,7 @@ final readonly class TemplateClonePostgreSQLManager
 
             // No automatic CREATE retry: a lost connection may conceal a committed DDL.
             $this->fence();
-            $this->connection->statement('CREATE DATABASE "'.$snapshot->databaseName.'" TEMPLATE "'.$templateDatabase.'" STRATEGY WAL_LOG');
+            $this->connection->getPdo()->exec('CREATE DATABASE "'.$snapshot->databaseName.'" TEMPLATE "'.$templateDatabase.'" STRATEGY WAL_LOG');
             $this->fence();
             ($this->stampNewBinding)($snapshot);
             $this->fence();
