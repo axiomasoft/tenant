@@ -35,6 +35,8 @@ it('distinguishes missing central and active single', function () {
         ->and(ContextState::active($context)->context->identity)->toBe($identity)
         ->and(Selection::single($identity)->expectedProfile->id)->toBe('single');
     new Purpose('acme:job');
+    expect(fn () => new BindingExpectation('postgres://host/db', 'i1', 'r1'))->toThrow(InvalidArgumentException::class);
+    expect(fn () => new ProfileRef('single', 2147483648))->toThrow(InvalidArgumentException::class);
 });
 
 it('compiles in dependency order independent of registration order and freezes', function () {

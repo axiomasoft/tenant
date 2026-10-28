@@ -11,6 +11,6 @@ final readonly class ProfileRef
 {
     public function __construct(public string $id, public int $version)
     {
-        if (strlen($id) > 96 || !preg_match('/^[a-z][a-z0-9._-]*$/D', $id) || $version < 1) throw new \InvalidArgumentException('Invalid profile');
+        if (strlen($id) > 96 || !preg_match('/^[a-z][a-z0-9._-]*$/D', $id) || $version < 1 || $version > 2147483647) throw new \InvalidArgumentException('Invalid profile');
     }
 }
