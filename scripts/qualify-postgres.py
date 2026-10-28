@@ -44,6 +44,41 @@ def recovery_lane(lane,label,folder,env,checks,source):
  result={'lane':lane,'status':'passed','scope':'P4.1 regression plus real P4.2 lifecycle/recovery/installed IO; corpus ledger separately verified','sourceHashes':source,'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifests':[{'path':str(d/'lab-manifest.json'),'sha256':sha(d/'lab-manifest.json')} for d in [folder,recovery,installed]],'checks':checks}
  (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');return result
 
+def repair_install(lane,label):
+ php,host=LANES[lane];folder=ART.parent/'P4.2'/'lanes'/label/lane;progress=json.loads((folder/'progress.json').read_text())
+ assert progress['checks'][-1]['stage']=='installed-lifecycle' and progress['checks'][-1]['status']=='failed'
+ old=progress['sourceHashes'];current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
+ changes=[p for p in set(old)|set(current) if old.get(p)!=current.get(p)]
+ assert changes==['packages/tenant-postgres/composer.json'],changes
+ assert json.loads((ROOT/changes[0]).read_text())['require']['ramsey/uuid']=='^4.7'
+ fresh=folder/'uuid-dependency-repair';fresh.mkdir();installed=fresh/'installed';installed.mkdir()
+ env={**os.environ,'P4_ITEM':'P4.2','P41_ARTIFACT_DIR':str(installed),'P41_MANIFEST':str(installed/'lab-manifest.json'),'P41_PHP':php,'P41_LARAVEL_MAJOR':'12' if lane.endswith('l12') else '13','P41_INSTALL_DIR':str(fresh/'install-host')}
+ checks=[c for c in progress['checks'] if c['status']=='passed']
+ stages=[('repaired-fresh-install',['python3','-I',str(ROOT/'tests/postgres/package-install.py')]),('repaired-installed-setup',['python3','-I',str(ROOT/'tests/postgres/lab/setup.py')]),('repaired-installed-io',['python3','-I',str(ROOT/'tests/postgres/lifecycle-lab.py'),'lifecycle-setup','lifecycle-archive','lifecycle-public','lifecycle-recovery']),('repaired-installed-races',['python3','-I',str(ROOT/'tests/postgres/lifecycle-races.py')])]
+ for stage,args in stages:
+  actual={**env,'P42_INSTALLED':'1','P41_AUTOLOAD':str(fresh/'install-host/vendor/autoload.php')};started=stamp();t=time.monotonic();p=subprocess.run(args,cwd=ROOT,env=actual,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);log=fresh/(stage+'.log');log.write_bytes(p.stdout)
+  c={'stage':stage,'argv':args,'cwd':str(ROOT),'started':started,'durationSeconds':round(time.monotonic()-t,4),'exit':p.returncode,'status':'passed' if p.returncode==0 else 'failed','log':str(log),'sha256':sha(log)};checks.append(c)
+  (fresh/'progress.json').write_text(json.dumps({'checks':checks,'sourceHashes':current},indent=2)+'\n');print(lane,stage,c['status'],flush=True)
+  if p.returncode:raise RuntimeError('Repaired install failed; inspect '+str(log))
+ assert all(c['exit']==0 and sha(c['log'])==c['sha256'] for c in checks)
+ result={'lane':lane,'status':'passed','scope':'Original P4 runtime stages unchanged; explicit manifest-only UUID dependency correction proved by new no-dev install and actual installed archive/recovery/races','sourceHashes':current,'sourceAtOriginalRuntimeStages':old,'sourceReconciliation':{'changedPaths':changes,'reason':'Inherited manifest omitted required Ramsey UUID; runtime/test bodies unchanged','failedCheck':progress['checks'][-1],'repairChecks':[c['stage'] for c in checks if c['stage'].startswith('repaired')]},'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifests':[{'path':str(d/'lab-manifest.json'),'sha256':sha(d/'lab-manifest.json')} for d in [folder,folder/'recovery',folder/'installed',installed]],'checks':checks}
+ (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');return result
+
+def resume_install(lane,label):
+ php,host=LANES[lane];folder=ART.parent/'P4.2'/'lanes'/label/lane;fresh=folder/'uuid-dependency-repair'
+ original=json.loads((folder/'progress.json').read_text());saved=json.loads((fresh/'progress.json').read_text());checks=saved['checks'];assert checks[-1]['stage']=='repaired-installed-io' and all(c['status']=='passed' and c['exit']==0 and sha(c['log'])==c['sha256'] for c in checks)
+ current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts};assert current==saved['sourceHashes']
+ assert (ART.parent/'P4.2/enospc-state.json').is_file(),'Inspect original interrupted lab before continuing'
+ # Never replay DDL into the interrupted lab; use a new uniquely created server.
+ isolated=fresh/'race-after-enospc';isolated.mkdir()
+ env={**os.environ,'P4_ITEM':'P4.2','P41_ARTIFACT_DIR':str(isolated),'P41_MANIFEST':str(isolated/'lab-manifest.json'),'P41_PHP':php,'P42_INSTALLED':'1','P41_AUTOLOAD':str(fresh/'install-host/vendor/autoload.php')}
+ for stage,args in [('post-enospc-setup',['python3','-I',str(ROOT/'tests/postgres/lab/setup.py')]),('post-enospc-migrations',['python3','-I',str(ROOT/'tests/postgres/lifecycle-lab.py'),'lifecycle-setup']),('post-enospc-installed-races',['python3','-I',str(ROOT/'tests/postgres/lifecycle-races.py')])]:
+  started=stamp();t=time.monotonic();p=subprocess.run(args,cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);log=isolated/(stage+'.log');log.write_bytes(p.stdout)
+  c={'stage':stage,'argv':args,'cwd':str(ROOT),'started':started,'durationSeconds':round(time.monotonic()-t,4),'exit':p.returncode,'status':'passed' if p.returncode==0 else 'failed','log':str(log),'sha256':sha(log)};checks.append(c);(isolated/'progress.json').write_text(json.dumps({'checks':checks,'sourceHashes':current},indent=2)+'\n');print(lane,stage,c['status'],flush=True)
+  if p.returncode:raise RuntimeError('Fresh post-ENOSPC lab failed: '+str(log))
+ result={'lane':lane,'status':'passed','scope':'Manifest-only UUID dependency repaired in fresh installed archive/recovery IO and new isolated installed races after ENOSPC; interrupted original DDL never replayed','sourceHashes':current,'sourceAtOriginalRuntimeStages':original['sourceHashes'],'sourceReconciliation':{'changedPaths':['packages/tenant-postgres/composer.json'],'reason':'Required Ramsey UUID added; runtime and test bodies byte-identical','failedCheck':original['checks'][-1],'interruptedCheck':{'stage':'repaired-installed-races','status':'unavailable','reason':'ENOSPC prevented persisting stdout; original drop remains quarantined, enospc-state.json preserved'}},'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifests':[{'path':str(d/'lab-manifest.json'),'sha256':sha(d/'lab-manifest.json')} for d in [folder,folder/'recovery',folder/'installed',fresh/'installed',isolated]],'checks':checks}
+ (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');return result
+
 def finalize(lane,label):
  php,host=LANES[lane];folder=ART/'lanes'/label/lane;autoload=HOSTS/host/'vendor/autoload.php';progress=json.loads((folder/'progress.json').read_text());checks=progress['checks']
  assert len(checks)==len(STAGES)+3 and all(c['status']=='passed' and c['exit']==0 and sha(c['log'])==c['sha256'] for c in checks)
@@ -54,4 +89,4 @@ def finalize(lane,label):
  result={'lane':lane,'status':'passed','scope':'lab stages only; no automatic corpus or review claim','runtime':versions,'sourceHashes':source,'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifest':sha(folder/'lab-manifest.json'),'checks':checks}
  (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');return result
 if __name__=='__main__':
- p=argparse.ArgumentParser();p.add_argument('--item',choices=['P4.1','P4.2'],default='P4.1');p.add_argument('--lane',required=True,choices=LANES);p.add_argument('--finalize',action='store_true');p.add_argument('--run-label',default='qualification');args=p.parse_args();assert args.run_label.isidentifier();finalize(args.lane,args.run_label) if args.finalize else run(args.lane,args.run_label,args.item)
+ p=argparse.ArgumentParser();p.add_argument('--item',choices=['P4.1','P4.2'],default='P4.1');p.add_argument('--lane',required=True,choices=LANES);p.add_argument('--finalize',action='store_true');p.add_argument('--repair-install',action='store_true');p.add_argument('--resume-install',action='store_true');p.add_argument('--run-label',default='qualification');args=p.parse_args();assert args.run_label.isidentifier();resume_install(args.lane,args.run_label) if args.resume_install else (repair_install(args.lane,args.run_label) if args.repair_install else (finalize(args.lane,args.run_label) if args.finalize else run(args.lane,args.run_label,args.item)))

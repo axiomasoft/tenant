@@ -8,7 +8,8 @@
         "illuminate/database": "^12.0 || ^13.0",
         "axiomasoft/tenant": "^1.0",
         "ext-pdo": "*",
-        "ext-pdo_pgsql": "*"
+        "ext-pdo_pgsql": "*",
+        "ramsey/uuid": "^4.7"
     },
     "autoload": {
         "psr-4": {
