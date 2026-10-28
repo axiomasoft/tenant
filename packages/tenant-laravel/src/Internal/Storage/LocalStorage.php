@@ -9,7 +9,7 @@ use Tenant\Internal\Runtime\GenerationGuard;
 use Tenant\Laravel\Data\ResourceDescriptor;
 
 /** @internal Durable/ephemeral local roots; no native path or cloud claim. */
-final readonly class LocalStorage
+final readonly class LocalStorage implements \Tenant\Laravel\Contracts\ResourceStorage
 {
     public function __construct(private FilesystemManager $filesystems, private GenerationGuard $guard, private ResourceDescriptor $descriptor) {}
     public function disk(): GuardedFilesystem { return $this->build($this->descriptor->durableRoot); }

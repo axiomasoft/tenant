@@ -13,7 +13,7 @@ use Illuminate\Http\UploadedFile;
 use RuntimeException;
 
 /** @internal Adapted CoreX filesystem/path/symlink guards, with permanent generation and tracked streams. */
-final readonly class GuardedFilesystem
+final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\ResourceFilesystem
 {
     public function __construct(
         private Filesystem $filesystem,

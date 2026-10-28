@@ -29,8 +29,29 @@ final class GuardedConnection extends PostgresConnection
     {
         $this->guard->check();
         $release = $this->transactions === 0 ? $this->guard->acquire() : null;
-        try { parent::beginTransaction(); $this->transactionRelease ??= $release; }
-        catch (\Throwable $failure) { $release?->__invoke(); throw $failure; }
+        if ($release !== null) $this->transactionRelease = $release;
+        try { parent::beginTransaction(); }
+        catch (\Throwable $failure) {
+            $release?->__invoke();
+            if ($release !== null) $this->transactionRelease = null;
+            throw $failure;
+        }
+    }
+    protected function fireConnectionEvent($event)
+    {
+        if ($event === 'beganTransaction' && $this->transactions === 1 && $this->transactionsManager !== null) {
+            // Laravel records the transaction before this event. Register first,
+            // before host listeners: PDO commit must complete before the lease
+            // closes, and the lease must close before user afterCommit callbacks.
+            $this->transactionsManager->addCallback(function (): void {
+                if ($this->transactions === 0) {
+                    $release = $this->transactionRelease;
+                    $this->transactionRelease = null;
+                    $release?->__invoke();
+                }
+            });
+        }
+        return parent::fireConnectionEvent($event);
     }
     public function commit()
     {
