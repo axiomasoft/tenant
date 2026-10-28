@@ -87,10 +87,10 @@ def tests(stage,lanes,manifest):
         save(ART/lane/'framework-sources.json',provenance)
         for package,meta in archive.items():
             for path,h in meta['sourceFiles'].items():assert sha(host/'vendor/axiomasoft'/package/path)==h,('installed bytes mismatch',lane,package,path)
-        env=environment(lane,manifest);junit=ART/lane/(stage+'-junit.xml')
+        env=environment(lane,manifest);env['TENANT_OBSERVATIONS']=str(ART/lane/stage/'observations');junit=ART/lane/(stage+'-junit.xml')
         for fixture in {r['fixtureId'] for r in rows}:
             for variant in ['default','decorator']:
-                raw=ART/lane/'observations'/(fixture+'-'+variant+'.json')
+                raw=pathlib.Path(env['TENANT_OBSERVATIONS'])/(fixture+'-'+variant+'.json')
                 if raw.exists():raw.unlink()
         records.append(command([LANES[lane],host/'vendor/bin/pest','--configuration',ROOT/'packages/tenant-laravel/phpunit.xml','--compact','--log-junit',junit,*[ROOT/f for f in files]],ART/lane/(stage+'.log'),env))
         import xml.etree.ElementTree as ET
@@ -99,7 +99,7 @@ def tests(stage,lanes,manifest):
         observations={}
         for fixture in sorted({r['fixtureId'] for r in rows}):
             for variant in ['default','decorator']:
-                raw=ART/lane/'observations'/(fixture+'-'+variant+'.json');o=json.loads(raw.read_text());assert o['fixture']==fixture and o['assertions']>0 and o['variant']==variant
+                raw=pathlib.Path(env['TENANT_OBSERVATIONS'])/(fixture+'-'+variant+'.json');o=json.loads(raw.read_text());assert o['fixture']==fixture and o['assertions']>0 and o['variant']==variant
                 observations[fixture+'-'+variant]={'path':str(raw.relative_to(PLAN)),'sha256':sha(raw),'assertions':o['assertions']}
         result={'lane':lane,'sources':hashes,'sourceDigest':digest(hashes),'commands':records,'discovered':len(cases),'skipped':0,'observations':observations,'status':'passed','lockHash':sha(host/'composer.lock'),'archives':{k:v['sha256'] for k,v in archive.items()}}
         save(ART/lane/(stage+'.json'),result);results.append(result)
