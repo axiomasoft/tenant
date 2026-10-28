@@ -47,10 +47,13 @@ def load_evidence():
   h=read(ART/'core-plan/artifacts/P2.2'/(lane+'-host.json'))
   for rel,expected in h['sourceFiles'].items():guard(sha(ROOT/'packages/tenant'/rel)==expected,'core source drift '+rel)
   guard(sha(pathlib.Path(h['host'])/'observations.json')==h['hashes']['observations'],'core observations drift')
+ boundary=read(ART/'boundary-graph.json');guard(boundary['status']=='passed','boundary graph failure')
+ trace=read(ART/'flexcrm-trace-inputs.json');guard(sha(ART/'flexcrm-source-trace.json')==trace['traceSha256'],'source trace drift')
+ for name,expected in trace['files'].items():guard(sha(ART/'flex-dev'/name)==expected,'trace source drift '+name)
  archives=read(PLAN/'artifacts/P5.3/archives.json');hashes={}
  for k,m in archives.items():guard(sha(m['path'])==m['sha256'],'archive drift '+k);hashes['archive:'+k]=m['sha256']
  for k in ['corex','vaulter','flexcrm']:hashes['consumer:'+k]=sha(ART/k/'final/consumer.json')
- hashes['laravel-stages']=sha(ART/'laravel/stages.json');hashes['core-runs']=sha(ART/'core-runs.json')
+ hashes['laravel-stages']=sha(ART/'laravel/stages.json');hashes['core-runs']=sha(ART/'core-runs.json');hashes['boundary-graph']=sha(ART/'boundary-graph.json');hashes['trace-inputs']=sha(ART/'flexcrm-trace-inputs.json')
  return results,hashes
 
 def aggregate():
