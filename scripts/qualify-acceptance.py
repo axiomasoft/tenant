@@ -18,7 +18,7 @@ def check_scope(rows, portions):
  guard(len(actual)==len(set(actual)) and set(actual)==expected, 'missing, duplicate or foreign portion')
 
 def load_evidence():
- checks=read(ART/'producer-integrity.json');guard(checks['counts'].get('failed',0)==0 and checks['counts'].get('unavailable',0)==0,'producer input failures')
+ checks=read(ART/'producer-integrity.json');guard(sha(PLAN/'artifacts/P6-detail/producer-evidence.json')==checks['indexSha256'],'producer index drift');guard(checks['counts'].get('failed',0)==0 and checks['counts'].get('unavailable',0)==0,'producer input failures')
  for row in checks['rows']:
   if row['status']=='passed':guard(pathlib.Path(row['path']).is_file() and sha(row['path'])==row['expected'],'producer hash drift '+row['path'])
  core=read(ART/'core-runs.json');guard(len(core)==4 and all(x['exit']==0 and sha(x['log'])==x['sha256'] for x in core),'core runs missing or failed')
@@ -33,6 +33,25 @@ def load_evidence():
   collections=d['observations'];collections=collections.values() if k=='flexcrm' else (entry for lane in collections.values() for entry in lane.values())
   for entry in collections:raw(entry['path'],entry['sha256'])
   results[k]=d
+ # Bind current installed files and locks to the recorded coherent archive generation.
+ p51=read(PLAN/'artifacts/P5.1/archives.json');p52=read(PLAN/'artifacts/P5.2/archives.json');p53=read(PLAN/'artifacts/P5.3/archives.json')
+ for entry in installs:
+  selected=dict(p51 if entry['item']=='P5.1' else p52)
+  if entry['item']=='P5.1':selected.update({k:p52[k] for k in ['tenant','tenant-laravel']})
+  host=pathlib.Path(entry['cwd']);guard(sha(host/'composer.lock')==entry['lockSha256'],'consumer lock drift')
+  import zipfile
+  for k,meta in selected.items():
+   guard(sha(meta['path'])==meta['sha256'],'consumer archive drift '+k)
+   with zipfile.ZipFile(meta['path']) as z:name=json.loads(z.read(k+'/composer.json'))['name']
+   for rel,expected in meta['files'].items():guard(sha(host/'vendor'/name/rel)==expected,'installed consumer drift '+name+'/'+rel)
+ for entry in laravel:
+  host=pathlib.Path(entry['cwd']);guard(sha(host/'composer.lock')==entry['lockSha256'],'Laravel lock drift')
+  for k in ['tenant','tenant-laravel']:
+   for rel,expected in p52[k]['files'].items():guard(sha(host/'vendor/axiomasoft'/k/rel)==expected,'installed Laravel drift '+k+'/'+rel)
+ for name in ['fresh-flexcrm-php85-l13','fresh-flexcrm-php85-l13-repeat']:
+  host=ART/name
+  for meta in p53.values():
+   for rel,expected in meta['files'].items():guard(sha(host/'vendor'/meta['name']/rel)==expected,'installed FlexCRM drift '+meta['name']+'/'+rel)
  # Recheck source identities: producer output belongs to current owning bodies.
  c=runpy.run_path(str(ROOT/'scripts/qualify-consumers.py'));checkout=pathlib.Path('/home/vostrikov/.local/state/tenant-plan1-p53-01a18446/corex');guard(c['digest'](c['inputs'](checkout))==results['corex']['sourceDigest'],'CoreX inputs changed')
  v=runpy.run_path(str(ROOT/'tests/consumers/vaulter/qualify.py'));checkout=pathlib.Path('/home/vostrikov/.local/state/tenant-plan1-p53-01a18446/vaulter');guard(v['digest'](v['inputs'](checkout))==results['vaulter']['sourceDigest'],'Vaulter inputs changed')
