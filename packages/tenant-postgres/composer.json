@@ -1,0 +1,13 @@
+{
+    "name": "axiomasoft/tenant-postgres",
+    "description": "PostgreSQL physical isolation support for Tenant",
+    "type": "library",
+    "require": {
+        "php": ">=8.4 <8.6",
+        "ext-sodium": "*",
+        "illuminate/database": "^12.0 || ^13.0"
+    },
+    "autoload": {
+        "psr-4": { "Tenant\\Postgres\\": "src/" }
+    }
+}
