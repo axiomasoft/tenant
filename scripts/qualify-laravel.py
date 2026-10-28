@@ -26,7 +26,7 @@ def command(argv,log,env=None,cwd=ROOT,expect=0):
     if result.returncode!=expect: raise RuntimeError(json.dumps(row)+'\n'+result.stdout.decode(errors='replace')[-9000:])
     return row
 
-def preflight(manifest,lane):
+def preflight(manifest,lane,label):
     records=[]
     for service,cid in manifest['containers'].items():
         ins=json.loads(subprocess.check_output(['docker','inspect',cid]))[0]
@@ -37,7 +37,7 @@ def preflight(manifest,lane):
     system=subprocess.check_output(['docker','exec',manifest['containers']['pg'],'psql','-X','-At','-U',manifest['admin'],'-d',manifest['databases']['central'],'-c','select system_identifier from pg_control_system()'],text=True).strip()
     assert system==manifest['systemIdentifier']
     env=environment(lane,manifest)
-    records.append(command([LANES[lane],ROOT/'tests/laravel/Support/preflight.php'],ART/lane/'preflight.log',env))
+    records.append(command([LANES[lane],ROOT/'tests/laravel/Support/preflight.php'],ART/lane/(label+'-preflight.log'),env))
     return records
 
 def environment(lane,manifest,install=None):
@@ -81,7 +81,7 @@ def tests(stage,lanes,manifest):
     results=[]
     hashes=source_hashes();archive=json.loads((ART/'archives.json').read_text())
     for lane in lanes:
-        records=preflight(manifest,lane);host=ROOT/'tests/laravel/hosts'/lane
+        records=preflight(manifest,lane,stage);host=ROOT/'tests/laravel/hosts'/lane
         framework=['Foundation/Http/Kernel.php','Session/Middleware/StartSession.php','Database/Concerns/ManagesTransactions.php','Queue/Worker.php','Queue/SyncQueue.php','Queue/CallQueuedHandler.php']
         provenance={p:sha(host/'vendor/laravel/framework/src/Illuminate'/p) for p in framework}
         save(ART/lane/'framework-sources.json',provenance)
