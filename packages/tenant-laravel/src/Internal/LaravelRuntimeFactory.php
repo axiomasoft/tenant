@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Tenant\Laravel\Internal;
 
+use Tenant\Laravel\Data\ResourceDescriptor;
+
 use Closure;
 use Illuminate\Container\Container;
 use Tenant\Composition\CompositionBuilder;
 use Tenant\Contracts\{BindingVerifier, ContextResolver, Facility, ParticipantFactory};
 use Tenant\Data\{CapabilityId, ParticipantDeclaration, Selection};
 use Tenant\Runtime\SafeTenantRuntime;
-use Tenant\Laravel\Internal\Facilities\{DatabaseFacility, CacheFacility, SessionFacility, ScopeGenerationFacility, SessionGeneration, GuardedSessionHandler, FacilitiesValidator, ResourceDescriptor};
+use Tenant\Laravel\Internal\Facilities\{DatabaseFacility, CacheFacility, SessionFacility, ScopeGenerationFacility, SessionGeneration, GuardedSessionHandler, FacilitiesValidator};
 
 /** @internal Single owner construction; facilities are eagerly validated and acyclic. */
 final class LaravelRuntimeFactory

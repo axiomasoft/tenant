@@ -8,7 +8,7 @@ use Illuminate\Database\Connectors\PostgresConnector;
 use Tenant\Contracts\{ContextResolver, BindingVerifier};
 use Tenant\Data\{Selection, Purpose, ResolvedIsolation, ContextState, IsolationContext, FacetBindings, BindingExpectation, BindingVerificationInput, VerifiedBinding};
 use Tenant\Exceptions\{ContextDenied, BindingMismatch};
-use Tenant\Laravel\Internal\Facilities\ResourceDescriptor;
+use Tenant\Laravel\Data\ResourceDescriptor;
 
 /** Test-only physical owner. No CoreX catalog dependency or restore/replay capability. */
 final class LabBindingOwner implements ContextResolver, BindingVerifier

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tenant\Laravel\Internal\Facilities;
 
+use Tenant\Laravel\Data\ResourceDescriptor;
+
 use Illuminate\Cache\CacheManager;
 use Tenant\Contracts\{Facility, FrameState, PhaseContext, RestoreContext};
 use Tenant\Data\CapabilityId;

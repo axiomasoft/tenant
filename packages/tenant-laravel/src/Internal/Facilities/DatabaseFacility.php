@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tenant\Laravel\Internal\Facilities;
 
+use Tenant\Laravel\Data\ResourceDescriptor;
+
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\ConfigurationUrlParser;
 use Tenant\Contracts\{Facility, FrameState, PhaseContext, RestoreContext};

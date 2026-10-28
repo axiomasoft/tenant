@@ -6,7 +6,7 @@ namespace Tenant\Laravel\Internal\Storage;
 
 use Illuminate\Filesystem\FilesystemManager;
 use Tenant\Internal\Runtime\GenerationGuard;
-use Tenant\Laravel\Internal\Facilities\ResourceDescriptor;
+use Tenant\Laravel\Data\ResourceDescriptor;
 
 /** @internal Durable/ephemeral local roots; no native path or cloud claim. */
 final readonly class LocalStorage

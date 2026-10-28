@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tenant\Laravel\Internal\Facilities;
+namespace Tenant\Laravel\Data;
 
 use Tenant\Contracts\FacetAccess;
 
-/** @internal Trusted host facet. Never decode this descriptor from a payload. */
+/** Trusted host facet. Never decode this descriptor from a payload. */
 final readonly class ResourceDescriptor implements FacetAccess
 {
     /**

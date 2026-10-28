@@ -138,7 +138,7 @@ final class CorpusRunner
             $h->db()->transaction(fn()=>$this->identity($h,'a'));
         });
         foreach(['url','driver','host','port','database','username','read','write'] as $key){
-            try {new \Tenant\Laravel\Internal\Facilities\ResourceDescriptor($h->owner->route('a'),'p:','/tmp/a','/tmp/b','/tmp/c',[$key=>'evil']);throw new \RuntimeException('not denied');}
+            try {new \Tenant\Laravel\Data\ResourceDescriptor($h->owner->route('a'),'p:','/tmp/a','/tmp/b','/tmp/c',[$key=>'evil']);throw new \RuntimeException('not denied');}
             catch(\InvalidArgumentException){$this->check(true,'routing option denied '.$key);}
         }
         $central=$h->app['config']->get('database.connections.central');
