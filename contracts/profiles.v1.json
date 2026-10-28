@@ -1,0 +1,318 @@
+{
+  "contract": "tenant.profiles/1",
+  "semanticVersion": "1.0.0",
+  "spiVersion": 1,
+  "wire": "tenant.context/1",
+  "status": "frozen-contract; runtime qualification not-run",
+  "profileSelection": {
+    "rule": "Host selects implementation and trusted binding; wire profile is an expected constraint. Exact registered id+version, mode, required capabilities and extensions must match before mutation. No last-wins/default on failure.",
+    "capabilityIds": "open namespaced strings, never a closed kernel enum",
+    "unqualifiedIO": "Missing and Central deny default tenant IO; Central uses explicit named control ports only. Disabled facility with an active framework store requires explicit shared owner+purpose declaration or boot fails.",
+    "qualification": "Profile declarations are requirements, not evidence of support. Host extensions must pass applicable corpus; installing a plugin alone advertises nothing."
+  },
+  "profiles": [
+    {
+      "id": "php-scoped",
+      "version": 1,
+      "modes": [
+        "tenant",
+        "central"
+      ],
+      "package": "axiomasoft/tenant",
+      "requiredCapabilities": [],
+      "lanes": [
+        "php84-cli",
+        "php85-cli"
+      ],
+      "concurrency": "one sequential lane; no interleaved fibers",
+      "guarantee": "frame/lifetime/cleanup discipline; no isolation guarantee for arbitrary IO",
+      "binding": "host trusted synthetic binding mandatory for tenant mode; central carries no resource identity",
+      "runtimeStatus": "not-run"
+    },
+    {
+      "id": "single",
+      "version": 1,
+      "modes": [
+        "single"
+      ],
+      "package": "axiomasoft/tenant",
+      "requiredCapabilities": [],
+      "lanes": [
+        "php84-cli",
+        "php85-cli"
+      ],
+      "concurrency": "one sequential lane",
+      "guarantee": "one nonempty stable identity and verified host resourceRef/incarnation; fresh admission at every enter; no multi-resource switch",
+      "binding": "synthetic host binding is permitted without physical IO; never Central/null",
+      "runtimeStatus": "not-run"
+    },
+    {
+      "id": "laravel-pg-database",
+      "version": 1,
+      "modes": [
+        "tenant",
+        "central"
+      ],
+      "package": "axiomasoft/tenant-laravel",
+      "requiredCapabilities": [
+        "tenant:database",
+        "tenant:binding-verification",
+        "tenant:scope-generation"
+      ],
+      "optionalCapabilities": [
+        "tenant:cache",
+        "tenant:session",
+        "tenant:storage",
+        "tenant:queue"
+      ],
+      "lanes": [
+        "php84-l12",
+        "php84-l13",
+        "php85-l13"
+      ],
+      "concurrency": "FPM/CLI/sequential worker; pm.max_requests=1 for first FPM qualification",
+      "guarantee": "PG16 DB-per-resource with actual marker verification before IO; enabled facilities each require their own IO qualification",
+      "runtimeStatus": "not-run"
+    },
+    {
+      "id": "postgres-lifecycle",
+      "version": 1,
+      "modes": [],
+      "package": "axiomasoft/tenant-postgres",
+      "requiredCapabilities": [
+        "tenant:binding-verification",
+        "tenant:postgres-lifecycle"
+      ],
+      "lanes": [
+        "php84-pg16",
+        "php85-pg16"
+      ],
+      "concurrency": "one physical writer per resource; session advisory lock on pinned maintenance DB of frozen cluster",
+      "guarantee": "operation/receipt/reconcile/recovery only after physical qualification; additive host capability, not a selectable runtime mode",
+      "runtimeStatus": "not-run"
+    }
+  ],
+  "lanes": {
+    "php84-cli": {
+      "php": "8.4.x"
+    },
+    "php85-cli": {
+      "php": "8.5.x"
+    },
+    "php84-l12": {
+      "php": "8.4.x",
+      "laravel": "12.x",
+      "consumer": "Vaulter; separate future lock required"
+    },
+    "php84-l13": {
+      "php": "8.4.x",
+      "laravel": "13.x",
+      "consumer": "CoreX/Vaulter"
+    },
+    "php85-l13": {
+      "php": "8.5.x",
+      "laravel": "13.x",
+      "consumer": "actual FlexCRM; requested ^13.7; observed lock 13.31.0"
+    },
+    "php84-pg16": {
+      "php": "8.4.x",
+      "postgres": "16.x",
+      "tools": "pg_dump/pg_restore major 16"
+    },
+    "php85-pg16": {
+      "php": "8.5.x",
+      "postgres": "16.x",
+      "tools": "pg_dump/pg_restore major 16"
+    }
+  },
+  "toolchain": {
+    "composerConstraints": "P2.1 manifests must stay inside these lanes; concrete dev tool versions/locks and lab commands owned by P1.3, package locks by scaffolding/qualification. No dependency is installed by P1.1.",
+    "observedSources": {
+      "corex": "176382cdc1a0784079700f572408c87ae175bc3d",
+      "vaulter": "03dce04bbb5fd1c21e72454facc39f05723f3b63"
+    },
+    "vendoredTenancy": "none selected; no stancl/Spatie runtime owner. Historical branch comparison is not adoption/qualification."
+  },
+  "facilities": [
+    {
+      "id": "tenant:database",
+      "slot": "tenant:database/default",
+      "implementationId": "tenant:pg-database",
+      "stage": "resource",
+      "requires": [
+        "tenant:binding-verification"
+      ],
+      "drivers": [
+        "pgsql16"
+      ],
+      "controls": "named central metadata/auth/jobs/failed-jobs connections remain fixed; raw SQL through guarded tenant connection; transaction/cursor blocks switch"
+    },
+    {
+      "id": "tenant:cache",
+      "slot": "tenant:cache/default",
+      "implementationId": "tenant:laravel-cache",
+      "stage": "resource",
+      "requires": [],
+      "drivers": [
+        "array-smoke-only",
+        "redis7"
+      ],
+      "controls": "prefix from trusted descriptor, not product id; Redis IO required for multi-process isolation"
+    },
+    {
+      "id": "tenant:session",
+      "slot": "tenant:session/default",
+      "implementationId": "tenant:laravel-session",
+      "stage": "resource",
+      "requires": [
+        "tenant:database"
+      ],
+      "drivers": [
+        "file",
+        "redis7"
+      ],
+      "controls": "trusted host route before session IO; auth/admission after session; keep frame through save/terminate; host-secure ID cookie parameters"
+    },
+    {
+      "id": "tenant:storage",
+      "slot": "tenant:storage/default",
+      "implementationId": "tenant:laravel-local",
+      "stage": "resource",
+      "requires": [],
+      "drivers": [
+        "local"
+      ],
+      "controls": "trusted root/prefix; path traversal/symlink guards; tracked stream lease; raw path unavailable in guarded profile"
+    },
+    {
+      "id": "tenant:queue",
+      "slot": "tenant:queue/dispatch",
+      "implementationId": "tenant:laravel-queue",
+      "stage": "resource",
+      "requires": [],
+      "drivers": [
+        "sync",
+        "central-pg16-database"
+      ],
+      "controls": "explicit mode/frozen intent, pre-hydration enter, framework-attempt completion after all scoped callbacks"
+    },
+    {
+      "id": "tenant:scope-generation",
+      "slot": "tenant:scope/default",
+      "implementationId": "tenant:laravel-scope",
+      "stage": "resource",
+      "requires": [],
+      "drivers": [
+        "laravel-container"
+      ],
+      "controls": "invalidate scoped services on every transition and restore; old handles never revive after A-B-A"
+    },
+    {
+      "id": "tenant:binding-verification",
+      "slot": "tenant:binding/default",
+      "implementationId": "host:binding-verifier",
+      "stage": "resource",
+      "requires": [],
+      "drivers": [
+        "host-public-port"
+      ],
+      "controls": "exact protocol tenant.binding/1; one selected physical owner; no sibling catalog reads"
+    },
+    {
+      "id": "tenant:product-scope",
+      "slot": "host-specific; distinct slot per independent product scope",
+      "implementationId": "host:product-hook",
+      "stage": "product",
+      "requires": [],
+      "drivers": [
+        "host-public-port"
+      ],
+      "controls": "relation validation after resource activation, common journal; no second executor; per-frame state"
+    },
+    {
+      "id": "tenant:postgres-lifecycle",
+      "slot": "tenant:physical/default",
+      "implementationId": "tenant:postgres-owner",
+      "stage": "owner-control-plane",
+      "requires": [
+        "tenant:binding-verification"
+      ],
+      "drivers": [
+        "pgsql16",
+        "local-archive"
+      ],
+      "controls": "optional; never a second writer beside CoreX at runtime-only checkpoint"
+    }
+  ],
+  "streamPolicy": {
+    "guardedProfile": "laravel-pg-database",
+    "api": "TrackedStream read/write/close check generation; borrowed native stream only inside synchronous callback; never returned to application. Raw path() refuses unsupported_capability.",
+    "switch": "outstanding tracked stream/cursor/transaction on affected binding refuses enter/restore before mutation with open_resource",
+    "boundary": "unclosed stream/token is fatal frame_leak: quarantine/poison and stop worker before sentinel; run cannot return successful result with leaked stream",
+    "escape": "arbitrary fread on escaped PHP resource or direct absolute path IO cannot be guarded; trusted-host escape outside qualified profile only, no portable guarantee"
+  },
+  "deferred": [
+    "PHP8.5/Laravel12",
+    "PG17/18",
+    "S3",
+    "cookie session driver",
+    "Redis queue/Horizon",
+    "Octane/RoadRunner/Swoole",
+    "interleaved Fibers",
+    "RLS/schema/row tenancy",
+    "remote control plane",
+    "Dart"
+  ],
+  "extensions": {
+    "unknownRequired": "unsupported_extension before activation; no fallback",
+    "unknownOptional": "bounded decode then ignore without effects, never reclassify a required extension",
+    "known": "exact registered type+version and handler allowlist; duplicate type rejected; typed refs validated after resource activation",
+    "product": "basic A/W validation mandatory for FlexCRM; company/employment/city/commercial policies conditional, owned by product"
+  },
+  "extPortions": {
+    "EXT-01": {
+      "owners": [
+        "P2.1",
+        "P2.2",
+        "P3.1"
+      ],
+      "contract": "open capability + resolver decorator + explicit replacement, no kernel imports"
+    },
+    "EXT-02": {
+      "owners": [
+        "P2.2",
+        "P3.1"
+      ],
+      "contract": "permutation-stable compile, slot/dependency/cycle/version/late errors before prepare"
+    },
+    "EXT-03": {
+      "owners": [
+        "P2.2",
+        "P3.1",
+        "P5.3"
+      ],
+      "contract": "frame-local state, two hooks, reverse started journal and poison"
+    },
+    "EXT-04": {
+      "owners": [
+        "P2.2",
+        "P3.1",
+        "P3.2"
+      ],
+      "contract": "post-publication observations, isolated observer/diagnostic errors, reentry refusal"
+    },
+    "EXT-05": {
+      "owners": [
+        "P2.2",
+        "P3.1"
+      ],
+      "contract": "one runtime owner across facade/provider/decorators; same corpus for replacement"
+    },
+    "EXT-06": {
+      "owners": [
+        "P3.1"
+      ],
+      "contract": "tracked stream switch refusal, fatal boundary leak; no raw path/stream guarantee"
+    }
+  }
+}

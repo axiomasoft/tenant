@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:axiomasoft:tenant:context:1",
+  "title": "tenant.context/1 durable reference",
+  "description": "Frozen wire shape only. Decode never grants authority or creates an active frame. Semantic byte/registry/producer checks in api.v1.json are mandatory.",
+  "$defs": {
+    "namespace": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "opaqueId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "profileId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[a-z][a-z0-9._-]*$"
+    },
+    "resourceRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "incarnation": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "extension": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9._/-]*$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "refs": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 16,
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 48,
+            "pattern": "^[a-z][a-zA-Z0-9]*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "version",
+        "required",
+        "refs"
+      ],
+      "additionalProperties": false
+    },
+    "instanceMarker": {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "const": "tenant.binding/1"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-z][a-z0-9._-]*:[a-z][a-z0-9._/-]*$"
+        },
+        "resourceRef": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "incarnation": {
+          "$ref": "#/$defs/incarnation"
+        },
+        "recoveryGeneration": {
+          "$ref": "#/$defs/revision"
+        }
+      },
+      "required": [
+        "protocol",
+        "ownerId",
+        "resourceRef",
+        "incarnation",
+        "recoveryGeneration"
+      ],
+      "additionalProperties": false
+    },
+    "bindingExpectation": {
+      "type": "object",
+      "properties": {
+        "resourceRef": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "incarnation": {
+          "$ref": "#/$defs/incarnation"
+        },
+        "routeRevision": {
+          "$ref": "#/$defs/revision"
+        }
+      },
+      "required": [
+        "resourceRef",
+        "incarnation",
+        "routeRevision"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "tenant.context/1"
+    },
+    "mode": {
+      "enum": [
+        "tenant",
+        "central",
+        "single"
+      ]
+    },
+    "namespace": {
+      "$ref": "#/$defs/namespace"
+    },
+    "isolationId": {
+      "$ref": "#/$defs/opaqueId"
+    },
+    "profileId": {
+      "$ref": "#/$defs/profileId"
+    },
+    "profileVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "resourceRef": {
+      "$ref": "#/$defs/resourceRef"
+    },
+    "incarnation": {
+      "$ref": "#/$defs/incarnation"
+    },
+    "routeRevision": {
+      "$ref": "#/$defs/revision"
+    },
+    "extensions": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/extension"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "mode",
+    "profileId",
+    "profileVersion",
+    "extensions"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "central"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "extensions": {
+            "maxItems": 0
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "namespace"
+              ]
+            },
+            {
+              "required": [
+                "isolationId"
+              ]
+            },
+            {
+              "required": [
+                "resourceRef"
+              ]
+            },
+            {
+              "required": [
+                "incarnation"
+              ]
+            },
+            {
+              "required": [
+                "routeRevision"
+              ]
+            }
+          ]
+        }
+      },
+      "else": {
+        "required": [
+          "namespace",
+          "isolationId",
+          "resourceRef",
+          "incarnation",
+          "routeRevision"
+        ]
+      }
+    }
+  ]
+}

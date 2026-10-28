@@ -1,0 +1,1814 @@
+{
+  "date": "2026-10-28",
+  "scope": "Owner M6/M7: adapt Vaulter autopilot prompt and handoff into Tenant PLAN1; verify native admission/readiness/context/route constraints; documentation preparation only",
+  "authority": "Owner M6/M7 authorizes two control artifacts and plan admission repairs; no implementation, owner grants, start/finish, dependency setup, code/DDL/consumer/canon changes or publication",
+  "review_attribution": {
+    "current": "Codex adaptation/integration plus bounded GPT-6.1-Terra native admission/source check and targeted candidate-prompt check; remaining multi-repo receipt issue fixed with immutable reviewed cohort manifest and immediate pre-finish recheck",
+    "grok": "Unavailable in current toolset; not run",
+    "opus": "Historical 2026-10-24 verdict does not cover current edits"
+  },
+  "previous_evidence": {
+    "date": "2026-10-28",
+    "scope": "Repeated PLAN1 consistency pass and owner M5 Codex Terra/Sol routing with four selective review checkpoints; documentation/planner corrections only",
+    "sha256": "8f3c09b47291a93962e866522b5dc6a73ba05ba7b7abff557f99f38cf2420a7a",
+    "planner_check": {
+      "command": "python3 -I .swissknifeman/launcher.py planner check PLAN1 --json",
+      "exit_code": 0,
+      "result": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 3,
+        "issues": [
+          {
+            "level": "warning",
+            "code": "execution_prompt_heavy",
+            "where": "phases/P1/P1.1.json",
+            "message": "rules, guidance and whole-file reads weigh 582168 bytes (warning threshold 16384); audit whether this item fits one or two executor rounds"
+          },
+          {
+            "level": "warning",
+            "code": "execution_prompt_heavy",
+            "where": "phases/P1/P1.2.json",
+            "message": "rules, guidance and whole-file reads weigh 450678 bytes (warning threshold 16384); audit whether this item fits one or two executor rounds"
+          },
+          {
+            "level": "warning",
+            "code": "execution_prompt_heavy",
+            "where": "phases/P1/P1.3.json",
+            "message": "rules, guidance and whole-file reads weigh 321448 bytes (warning threshold 16384); audit whether this item fits one or two executor rounds"
+          }
+        ]
+      }
+    },
+    "note": "Complete baseline before owner M6/M7 autopilot task; no transient overflow-repair report is treated as final evidence."
+  },
+  "checks": {
+    "documentation_consistency": {
+      "status": "passed",
+      "knowledge_snapshots": [
+        "acceptance",
+        "adoption",
+        "canon",
+        "contracts",
+        "design",
+        "execution",
+        "relationships",
+        "review"
+      ],
+      "item_count": 15,
+      "phase_count": 6,
+      "all_items_todo_result_null": true,
+      "item_DAG_unchanged": true,
+      "plans_tasks_symlinks_preserved": true,
+      "local_markdown_file_links_checked": 29
+    },
+    "executor_review_policy": {
+      "status": "passed",
+      "provider": "codex",
+      "terra_items": [
+        "P1.2",
+        "P1.3",
+        "P2.1",
+        "P4.1",
+        "P6.1",
+        "P6.2"
+      ],
+      "sol_items": [
+        "P1.1",
+        "P2.2",
+        "P3.1",
+        "P3.2",
+        "P4.2",
+        "P5.1",
+        "P5.2",
+        "P5.3",
+        "P5.4"
+      ],
+      "independent_review_items": [
+        "P2.2",
+        "P3.2",
+        "P4.2",
+        "P5.4"
+      ],
+      "reviewer": "codex/gpt-6.1-sol",
+      "max_review_iterations": 2,
+      "other_items": "self-check plus all validations",
+      "global_design_audit": "none",
+      "actual_context_route_review_match": true
+    },
+    "planner_check": {
+      "command": "python3 -I .swissknifeman/launcher.py planner check PLAN1 --json",
+      "exit_code": 0,
+      "result": {
+        "ok": true,
+        "errors": 0,
+        "warnings": 3,
+        "issues": [
+          {
+            "level": "warning",
+            "code": "execution_prompt_heavy",
+            "where": "phases/P1/P1.1.json",
+            "message": "rules, guidance and whole-file reads weigh 626336 bytes (warning threshold 16384); audit whether this item fits one or two executor rounds"
+          },
+          {
+            "level": "warning",
+            "code": "execution_prompt_heavy",
+            "where": "phases/P1/P1.2.json",
+            "message": "rules, guidance and whole-file reads weigh 463397 bytes (warning threshold 16384); audit whether this item fits one or two executor rounds"
+          },
+          {
+            "level": "warning",
+            "code": "execution_prompt_heavy",
+            "where": "phases/P1/P1.3.json",
+            "message": "rules, guidance and whole-file reads weigh 334153 bytes (warning threshold 16384); audit whether this item fits one or two executor rounds"
+          }
+        ]
+      }
+    },
+    "planner_render": {
+      "command": "python3 -I .swissknifeman/launcher.py planner render PLAN1",
+      "exit_code": 0,
+      "result": "rendered: nothing changed"
+    },
+    "autopilot_admission": {
+      "status": "passed_with_explicit_future_authority_conditions",
+      "preflight_path": "plans/2026.10.24-№1-TENANT/artifacts/autopilot/preflight-2026-10-28.json",
+      "preflight_sha256": "cf4457d866801d59cc382e87401547063b83a05e225f66fa1a6ba61dd5e5e3d8",
+      "P1_readiness": {
+        "proof_path": "plans/2026.10.24-№1-TENANT/artifacts/autopilot/readiness-after-2026-10-28.json",
+        "record_order": "Final certificate after all knowledge writes, then native status proof in raw artifact; never create a report/certificate digest loop."
+      },
+      "native_next": {
+        "kind": "waiting",
+        "exact": "waiting: gate TENANT-IMPLEMENTATION",
+        "phase": "P1",
+        "batch": "BP1-1",
+        "items": [],
+        "route": null,
+        "launch": null,
+        "command": null,
+        "reason": "gate TENANT-IMPLEMENTATION",
+        "mode": null,
+        "batch_line": null
+      },
+      "all_contexts_within_budget": true,
+      "control_files": [
+        {
+          "path": "plans/2026.10.24-№1-TENANT/autopilot-prompt.txt",
+          "sha256": "0f880c8d07a97860e322d99920414f978275a9a25e2bbfbee03b64254f91c2b9"
+        },
+        {
+          "path": "plans/2026.10.24-№1-TENANT/autopilot-handoff.md",
+          "sha256": "7f83dc2ed2b753b78b52951b0b025ae5d696ac9f3549ef88672a7dd4a2afc417"
+        }
+      ],
+      "no_execution_or_grants": true,
+      "note": "Actual owner startup message is still required; example approval was not registered. P2-P6 skeleton detail is future authorized coordinator work."
+    }
+  },
+  "context_packs": [
+    {
+      "item": "P1.1",
+      "bytes_utf8": 190586,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "f38700148ee3f081b64b49c77b902c1d0be3a4cc0e7e00f15c53927389b05f7a",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P1.2",
+      "bytes_utf8": 155807,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "dd334800e81b9e0d3cba763cc5279d655e55b34d615f9569040c65278c46f29c",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P1.3",
+      "bytes_utf8": 105123,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "49ac8038e70f6781841a722532f44fab950bde818c72a6987602fba3c626ad87",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-corpus",
+          "producer": "P1.2",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P2.1",
+      "bytes_utf8": 212314,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "281ad95615c45277e4899fad937356881f534ec972410bd1cb1291b29fc61384",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P2.2",
+      "bytes_utf8": 237867,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "b2b25e763f95a0f1c58a1c91b2224c0c02489bf1c2c4ec3be5b55f44c68949fe",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P3.1",
+      "bytes_utf8": 201840,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "20a64d02e9e04f2012c9714f87d6ce4ac16acbfd3477663c07da45a55b4952f8",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P3.2",
+      "bytes_utf8": 230743,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "b2290fd5887e95a49f47bca682a1a5cf8273800365747ad973f8febe02719164",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P4.1",
+      "bytes_utf8": 207073,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "9f4c2e1b784a58a4741bb5a54072e03590708e1d5b6fa3fab895d8236a66319c",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P4.2",
+      "bytes_utf8": 205328,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "0390fc0d711453e302c0ecee07cfa36ba39f38f13120120af19faa4dbc464cdd",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P5.1",
+      "bytes_utf8": 238456,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "f84b07bf6beeafd4e96c0102488ece1f7612aec4e22b8f8b42edca74a8986d01",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P5.2",
+      "bytes_utf8": 225177,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "cc80431e93155578ca6d5dc71ff56434d68ae813989e470f9107dbe7b5322675",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P5.3",
+      "bytes_utf8": 226042,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "f67615bf848b3b35402ced9e30c8eda51ce481075f25cb9914d3aad2b07c7836",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P5.1",
+          "producer": "P5.1",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P5.4",
+      "bytes_utf8": 245092,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "e10cefae1cd010101e82ec0a6a9cd089fda90fad279b6fcdc8b81b1cc7e6368e",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/reuse-P4.1",
+          "producer": "P4.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P4.1",
+          "producer": "P4.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/reuse-P4.2",
+          "producer": "P4.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P4.2",
+          "producer": "P4.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/reuse-P5.1",
+          "producer": "P5.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P5.1",
+          "producer": "P5.1",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P6.1",
+      "bytes_utf8": 226721,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "9c7b26c33281d818b55cbc09acbb74009982fa4d5fc662e129920abde0552357",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P2.1",
+          "producer": "P2.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P2.2",
+          "producer": "P2.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P3.1",
+          "producer": "P3.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P3.2",
+          "producer": "P3.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P5.1",
+          "producer": "P5.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P5.2",
+          "producer": "P5.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P5.3",
+          "producer": "P5.3",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    },
+    {
+      "item": "P6.2",
+      "bytes_utf8": 223336,
+      "budget_bytes": 262144,
+      "over_budget": false,
+      "sha256": "9ceebf7fc0f3da8478a722e4087ca258da41af845bbe4955983d8e273046d756",
+      "required_refs_unique": true,
+      "normative_reads_available": true,
+      "pending_declared_outputs": [
+        {
+          "ref": "artifact/p1-context",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-profiles",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-ownership",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-api",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-errors",
+          "producer": "P1.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixtures",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-fixture-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-result-schema",
+          "producer": "P1.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/p1-contract-proof",
+          "producer": "P1.3",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P4.1",
+          "producer": "P4.1",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P4.2",
+          "producer": "P4.2",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P5.4",
+          "producer": "P5.4",
+          "status": "todo"
+        },
+        {
+          "ref": "artifact/acceptance-P6.1",
+          "producer": "P6.1",
+          "status": "todo"
+        }
+      ],
+      "decision_ids": [
+        "D1",
+        "D2",
+        "D4",
+        "D5",
+        "D6",
+        "D7",
+        "D8",
+        "D9",
+        "D10"
+      ]
+    }
+  ],
+  "normative_sources": [
+    {
+      "path": "docs/architecture/README.md",
+      "sha256": "4c7cf25d19e892976792ce9415768cd426e2985ae6aa8cbc735ca27f6b3265e2"
+    },
+    {
+      "path": "docs/architecture/acceptance.md",
+      "sha256": "c3b0b9dda45c75546428f742d3c235a5933ec589cf347052a6da26476acb58a9"
+    },
+    {
+      "path": "docs/architecture/canon-proposal.md",
+      "sha256": "a9e2a83b683554ae4e54c4e8b71d76077df6dcde4beac0a2a2ee735af3378816"
+    },
+    {
+      "path": "docs/architecture/contracts.md",
+      "sha256": "7bbeda348cb2bddfa8335d986cf63c4a76f722431569e3a74edf3f15d411dc00"
+    },
+    {
+      "path": "docs/architecture/corex-adoption.md",
+      "sha256": "20f33eb2d61f9b34b292e76d97776528abc2c0e030dfc5ade96c309e1de81799"
+    },
+    {
+      "path": "docs/architecture/design.md",
+      "sha256": "4f0b1aaac7057e9cbaaf45d4963293adff04c4f288e1f1545477ef0e1a957138"
+    },
+    {
+      "path": "docs/architecture/execution.md",
+      "sha256": "7ea780dde03dc94ec4e01c91c3e5db7c27f71674da34f6e6068189d211896718"
+    },
+    {
+      "path": "docs/architecture/relationships.md",
+      "sha256": "38d6d6496a53b36574a2d4674821b762ca7f19f44bb6ad9d3160cdb5ac09f2ab"
+    },
+    {
+      "path": "docs/architecture/review.md",
+      "sha256": "5a27c8cfb4a9191c0008054408c00465f861ef8b7d221bc1ba8b7563b717b838"
+    },
+    {
+      "path": "/home/vostrikov/Vaults/Brain/05-Projects/03-Packages/Tenant/Requirements (Tenant).md",
+      "sha256": "57817c7683161cf67da45de5e95c95b31c2cf4ea99c2277d43df10cffc9008a9"
+    },
+    {
+      "path": "/home/vostrikov/Vaults/Brain/Infrastructure/Workspace/Package-Boundary-Policy.md",
+      "sha256": "90c0cb29eda420a55acc2023d5568f600e79808932b408856f9a711c0dbadfdc"
+    },
+    {
+      "path": "contracts/tenant.context.v1.schema.json",
+      "sha256": "c426a28971f97ac0c567f9e7dd279db67c9c676381664818690c4f5e57d46cfd"
+    },
+    {
+      "path": "contracts/api.v1.json",
+      "sha256": "5cab4cb0b3e1e19d2ad80f010da461709a12b15010472b1690c8daed65ef6d34"
+    },
+    {
+      "path": "contracts/errors.v1.json",
+      "sha256": "88fb4da71c72bf76ddf929009aeff2b6f5a70acb2ee040624c98047775b795e9"
+    },
+    {
+      "path": "contracts/profiles.v1.json",
+      "sha256": "492cb288f96e09f2033c651c73f77615f0dddfed97d18d7b80b0f8c3c47795bb"
+    },
+    {
+      "path": "contracts/ownership.v1.json",
+      "sha256": "f0db2f63db1e6699cfdd539eb8733d70c899909d32cb4afc211645d390edc97d"
+    }
+  ],
+  "changed_documents": [
+    {
+      "path": "docs/architecture/execution.md",
+      "sha256": "7ea780dde03dc94ec4e01c91c3e5db7c27f71674da34f6e6068189d211896718",
+      "previous_sha256": "2fa2a55e7b41397381c83213f7fa49f01a287169058fd25ea6f80089e955faa7"
+    },
+    {
+      "path": "docs/architecture/review.md",
+      "sha256": "5a27c8cfb4a9191c0008054408c00465f861ef8b7d221bc1ba8b7563b717b838",
+      "previous_sha256": "2a78c8f6dcaf86d52f7a0603d0ffa70cf3d9ecda32a2b9f182d9f809ab742f17"
+    }
+  ],
+  "source_seeds": [
+    {
+      "path": "/home/vostrikov/projects/flexcrm/tests/Feature/Auth/ProfileWorkspaceTest.php",
+      "sha256": "a3ca49d0d14f5e05d43362c6d73b5cd8b35a827ef6ee2ce8cfbb79474e4b47c4",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/flexcrm/tests/Feature/Tenancy/WorkspaceScopeTest.php",
+      "sha256": "449bb9ce4f64fea6fccc45037d161669a323a4182a4e258054fb52252f58f674",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/flexcrm/tests/Unit/Auth/PhysicalAccountContextResolverTest.php",
+      "sha256": "35f8d553e98e189e215edf289a86e027bb1a1643babfc082323a37cec8f9c0c3",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/flexcrm/tests/Unit/Auth/SessionWorkspaceResolverTest.php",
+      "sha256": "cd41365128f48171643f72efd66b0693e5d57844950e0f5cce30946b347acd61",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/flexcrm/tests/Unit/Tenancy/WorkspaceTenantTest.php",
+      "sha256": "46f81abb0fed3d6a04ee58b2d20b5cc3b04a246fa0e376131fbdad3d667d659b",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/src/Context/Contracts/TenancyManager.php",
+      "sha256": "2c8c0547ac684b11193fb4a49d0ee77e5bc0eaf17d849ee67ac4fcda26bf2511",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/src/Context/Contracts/TenantDatabaseLifecycle.php",
+      "sha256": "bfde29937814dd15edea343931b822961f0b7f5adbfa26e1a684c9bc0f29591e",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/src/Context/Internal/GuardedTenantContextRestorer.php",
+      "sha256": "3118f363b9fc592abb89c1bb2bfbf06c2163b2d8b824a8ca31cd4a6d77d0900d",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/src/Context/Laravel/ContextRegistrar.php",
+      "sha256": "420ef125e9818671c625164c8cb8989ded7bd374d16a50fc3f3efccbf544ac8a",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/src/Storage/Internal/ScopedFilesystem.php",
+      "sha256": "e4fdc998fe0b325e3c0f448296b643c32708c5d5644ec9c224ea91e0b447ceb7",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/tests/Unit/DataScopeCodecTest.php",
+      "sha256": "d61b1f59ee20e81913c713bfc9715b4150b2d9a0a12baec1c1dd576fd7107775",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/core/tests/Unit/TenantContextRestorerTest.php",
+      "sha256": "7a9dcf1cce9773c1600c8436edd802b3d49d24f33dc947028e21db793ddf8ed8",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/database/migrations/root/2026_10_01_020010_create_root_clusters.php",
+      "sha256": "3412228e706a6e5c09ada0f5b9240cf6bb0f74f0d3abeb77ddc8a0c73775b794",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/database/migrations/root/2026_10_01_020020_create_root_templates.php",
+      "sha256": "bf85ad565747ebdd2433a2c4af66f321e1d342de90d4d60c6f6e3a2d6c648486",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/database/migrations/root/2026_10_01_020040_create_root_accounts.php",
+      "sha256": "73f92e57f97d7d7e6bb00a0a9afb543ad82f3fdcde3be27253bfadf33f68a978",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/database/migrations/root/2026_10_01_020160_create_root_account_events.php",
+      "sha256": "d876d9f4f254b1ad47d478ffd20c36eac149629e7c65777f52ed8a3ccbc4ef6b",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/database/migrations/root/2026_10_01_020170_create_root_account_exports.php",
+      "sha256": "7912b67e39749accbfa1d89fe63175a13331327d5177998be8b1ef87d8499aeb",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Account/Internal/DatabaseTenantProvisioner.php",
+      "sha256": "8700a926f23e03aeeebdfaf00b0ec9ac7bae0cf796d28f2e65f1c4bd504f24b7",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Account/Internal/Jobs/CreateDatabaseFromTemplate.php",
+      "sha256": "f4cad6437ee34744784beca60706517795b25162e6fc44cf0a06e803cf09009e",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Account/Internal/Lifecycle/AccountLifecycle.php",
+      "sha256": "5bab7faafaecfa109a6d8b3b775ed3a2dceb39acf75a8d1e245fe50c4918dd91",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Account/Internal/Lifecycle/AccountLifecycleFsm.php",
+      "sha256": "023e95c2573bb7233177024e4262260f4b18591f69179c492a8752ad9dc226cc",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Account/Internal/PendingPool.php",
+      "sha256": "ac88e8716190d28ddb039fcf837763e9571f5facf23e4a3d5e69b91474f8de54",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Account/Laravel/AccountTemplateSnapshot.php",
+      "sha256": "3ff731dab84ed6d71a1663f370562ec5fbd1a33fa181c81c8815bad8a1ed0303",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Contracts/ProvisioningClaim.php",
+      "sha256": "7a8cbbfde860a31cd2dd807ce30ec4e0b4485afbd884df0bed3043b54f59eea6",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Internal/TenancySchemaSets.php",
+      "sha256": "14782e9cb7564c75a91a4f278d5f08a9e69062c4873d81844793e2d2b8b7fcf8",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/DatabaseRegistrar.php",
+      "sha256": "f63d6bb5be851211826ed79749b18d6ce01455b236cd3004e27256ea7095303b",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/EventsRegistrar.php",
+      "sha256": "5e51ac1f9a0cf83739fb25b021b58f35c8fcb4dd2938d92989dc4ae8abe1f832",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/Http/Middleware/ResolveTenantFromHost.php",
+      "sha256": "86e2a0ef276848c33228f6988ce7a64c9fb078b3b94c99b6adb0e1c0ffeab23b",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/Http/Middleware/ScopeSessionToTenant.php",
+      "sha256": "b2c1071ac7b696b26e1da5dfc02e63daa624889561cc7a0192ad4d092af3d126",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/HttpRegistrar.php",
+      "sha256": "2855e9a940d58fd6882641be406ccb35470f247d48b4ed2dbdfa13979cc0cd93",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/ProvisioningRegistrar.php",
+      "sha256": "a885159f71d8510e7835b266483fe24f677c1a77e4ef8e4d09101ced3d9a07f4",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/RuntimeRegistrar.php",
+      "sha256": "ae2e6c2190bd09d5d65cadb3be72237a35d0be0b16d922073c6b3c18d67598ac",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/TenancyPortBindings.php",
+      "sha256": "8361cc4251e3c88148e15ac5a01de25e64192737c4b9624cb8518448ac75163b",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Laravel/TenancyRuntimeFactory.php",
+      "sha256": "fa6ab54d9e7fd5969f9b3009a345ecf5a2617a999a12f07c78fbe20bec1580cc",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/ClaimAccountSignup.php",
+      "sha256": "316094b49006130d4d1758e79ac7a4c4cf1f7714afeb535804e8421d3128480c",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/ClusterAccountConnectionResolver.php",
+      "sha256": "1c130168da30eda446de5d4792b49df120c4236f2a2c37b86ff90edf9cdb982f",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/Database/SchemaCatalogueSerializer.php",
+      "sha256": "940d1dacbaef735df80d15add6ed4e4f3dcbd2192aaaf438a6446b56addadcc3",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/Database/TemplateClonePostgreSQLManager.php",
+      "sha256": "77fa5c1d4464b27902ab94b9d36c28a7cbbfffe658c8a31e918cf3dc2dbaaaee",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/Database/TemplateIntegrityVerifier.php",
+      "sha256": "9315b0223355ac6932e2983d15484d0bb8ba22001b84f70635cb98f4717e75da",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/Database/TemplateManifest.php",
+      "sha256": "d4e90a316bc45e2851985e63b652267877730bd3221b964047a993edefe0eb16",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Provisioning/Internal/DatabaseTenantLifecycle.php",
+      "sha256": "f244eedb3b3cc5aa02ccd0e0a05514d6d1b4a6b97ec4249a5806d8fd513e358a",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Contracts/TenantBootstrapper.php",
+      "sha256": "888da4426e044a3699c51e4077516f47b0554331c44fa34fc4a560011c2b443a",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/Bootstrappers/CachePrefixBootstrapper.php",
+      "sha256": "84c053b840ab39a9bdd70d33ae0f977eb61cd1669a4b437905226496dfe4ac21",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/Bootstrappers/ConnectionBootstrapper.php",
+      "sha256": "4655088330a7aac91cc65142b56b182f548499016f10b87b686e7b7d32cad2fe",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/Bootstrappers/SessionConnectionBootstrapper.php",
+      "sha256": "2d6325f16d9561fe5683e8cb0bf143f64a5d28923ffea993692e6b49c9486d84",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/CentralTemplateConnectionResolver.php",
+      "sha256": "1a21d3ae533ebf4cb9147b83a450d3183e5c5d0748432d6104e259129dfa80ec",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/ConnectionGuardedTenantContextRestorer.php",
+      "sha256": "e74f21f4865db8a73363c77b6758dec04f76d227c804bdbc14703a47326b83e0",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/DatabaseTenancyManager.php",
+      "sha256": "953de9048b755a212f0f1422be7623d30ea0246b2dfd26203581c45e8bc6134d",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/FrameworkConfig.php",
+      "sha256": "61ef5798acc217185e5479bb8f1d45a444e2504f176e3aa78da4fa0e9be273db",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/HostAccountResolver.php",
+      "sha256": "f6c508fb8be502f78f5b23b1ce9858c67247d6be996f4a187461efb02ed9e923",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/QueueTenantContext.php",
+      "sha256": "23347db7fc5bd0d7d05f7441f3bd7a66e7e7e21c3f1daf3e37b9e044c94b6db7",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/Storage/ContextTenantStorage.php",
+      "sha256": "9119228ec0ef52eafcceaa1b687d01497e4d240719e40f0eeba3af417586718a",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/Storage/ObjectTenantStorage.php",
+      "sha256": "895b5d2ed89c15aa3e60fab57a6eaa30589a74a0cc3074b54808925a60e6538e",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/TenantCleanupFailure.php",
+      "sha256": "f7d3083d7483d8eab168fe44d9811ed2fc9e71e8b46768a0edcb382aa4993f3f",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/src/Runtime/Internal/TenantFacilitiesValidator.php",
+      "sha256": "5d87e1f6ca0df6d8ddc597037ad195709710a95af5f6e37af4b09a43767f7da7",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/AccountLifecycleTest.php",
+      "sha256": "a350968e379ebd2e73bbfbe8e0c942874114714df93544ffa9655a7e095b3f93",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/ClaimLifecycleConformanceTest.php",
+      "sha256": "7a06dcfcca7aeced0b4fd0c322e89b8c6855d20a271f1c50075131586607b88c",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/CompositionBindingsTest.php",
+      "sha256": "e55df8f5fe07bd2f36966de08cd9c2e0dcd2f92d47751e5f477108de28ba8ce8",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/PendingPoolTest.php",
+      "sha256": "c107e6362d3f2f4909fc45efd8ebb5205b4ed0b7c22e1222e63695f0237a2542",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/ProvisioningTest.php",
+      "sha256": "e9c80230e20951c92b840a6f1f382ef128b530edb8fd24142395b384ec5ae2ac",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/QueueTenancyRevertTest.php",
+      "sha256": "d44045f3b6de76a2cd31801a8291f08e433a9616644482773ee486efad108797",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/QueueTenantContextTest.php",
+      "sha256": "72b23d40c9c4462f6ae2fac3c0605d94f54c2dc995760ff9be51d84d6bf7782e",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/StorageContextConformanceTest.php",
+      "sha256": "9018fae5fa8e86ff571ac22d55578dde84dc16316e0ccc3eea9c3dd22ef53e88",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TemplateIntegrityTest.php",
+      "sha256": "274692b8d403e26ea6a7991b9947dee38f465bfc491cb3ef9f14966e372f1ef5",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TenancyEngineTest.php",
+      "sha256": "bac915d5b0486af92b02c944c7fd50ad2320449fd1547fec64411f108efd104a",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TenancyManagerTest.php",
+      "sha256": "c3f08798c76699f90252ab175d22a271dc9c6bf94f310682133e820ba8e8f507",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TenantCacheIsolationTest.php",
+      "sha256": "0625adffbd55ee7c8b2b2ff713233e347c137a799231efb91ee341da985f1536",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TenantSessionScopeHttpTest.php",
+      "sha256": "5ddfe924545e4b05e52cdefd8a60c623f6b57c0785f75eeb120cdf04e0061a37",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TenantSessionScopeTest.php",
+      "sha256": "1192fc29bcb8976be9a3c0dd4ee05658519115b51ffc4a20e4549fdf126cd576",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/TenantStorageTest.php",
+      "sha256": "6224a91cf25085555924a8588363ebc7d7e95b00fe7708d8507aaca461c2bdc6",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Feature/WorkspaceScopeTest.php",
+      "sha256": "1ca21db29b62c6cd813ed3e746b5543465a385c68338683dfc048f3cc522dbfc",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Pg/ClaimLifecycleConcurrencyTest.php",
+      "sha256": "9f71a76fc596c87c69ef2d8e3df3bbd3bcca858da71e7cb03817a036c568a086",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Pg/PhysicalContextConformanceTest.php",
+      "sha256": "285090a9e880d42348c96400a756f2981ad02922d7a74563f4e8db6e11bd648f",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Pg/ResidentTenantSwitchPgTest.php",
+      "sha256": "16426d52ecaa827fd9cd0b9b557e4e93a7ae865a846c6245fd148dac1defaacb",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Pg/ScopeBoundaryPgTest.php",
+      "sha256": "a8f32952c62e9fa9517e103a4257c70e6467f341351d6b83fcb1996612a87180",
+      "evidence_level": "path/content fingerprint; detailed source review reported separately; test execution not performed"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Pg/WakeupRoutingTest.php",
+      "sha256": "ef48c2f341e80db500af63e8ad683951a998e42a83f6cef47f026064bd4473a4",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Unit/SchemaCatalogueSerializerTest.php",
+      "sha256": "75a9912d168a79a603b0f48130bd8169f19f774be3edb2ac2951a119c9291797",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/packages/tenancy/tests/Unit/TemplateManifestTest.php",
+      "sha256": "3a15b94fedec4b0403e7ba610c1dca21113ef958e18c92bfce908b0a9cb2371a",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/corex/products/flex-crm/tests/Feature/ContextSecurityTest.php",
+      "sha256": "696efc74716ea9cc726cecf91f4e298aad8a6f96b5e4d9d583866cb7e3a30cc9",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/src/Actions/Drives/DeleteDriveAction.php",
+      "sha256": "5e05376fbe8a00a89861eff7b7b86a815eddd3ec579183ff3ab180751db1d6f0",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/src/Content/ScanWorkReconciler.php",
+      "sha256": "5dff2df774057881d1651d096a26c84a55a79e9f7b652c2bc549b845d894b01d",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/src/Jobs/PurgeDriveJob.php",
+      "sha256": "f4ccaf3a6c0880a31851f1525bf92fe585b3afd7cf6aad3d2846ba9d31f39432",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/tests/Drive/DrivePurgeTest.php",
+      "sha256": "05d1de041d2d5c0c5fb9905c318364f06c1192d6effeefb05510bb5b69f69002",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/tests/Tenancy/PrivateScannerTenantBoundaryTest.php",
+      "sha256": "5d6f04a3776ce84e54c84961d48016f487473861a326ced2bf823f43a4ab9d4b",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/tests/Tenancy/TenantIdentifierPredicateTest.php",
+      "sha256": "e84a1eacaf8df058e65f0a2550f32c3eab27d083ce873e92990e51f2fdf90904",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/tests/Tenancy/TenantJobBoundaryTest.php",
+      "sha256": "3285fed5aee5a4198b4fbf6f074bcba28e68dd586bb339d7107bb8213200a24d",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/tests/Uploads/P3/ScanJobBoundaryTest.php",
+      "sha256": "91a47c5cfb87903313e8f1ad557842feebec8fb53a4cb1690a9f553ed9155e3b",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/vaulter/packages/drive/tests/Uploads/P3/ScanWorkRecoveryTest.php",
+      "sha256": "753a57db18f6e582a9eb59d6faf50df839e47ebda30c0fce6b6e280e415697a6",
+      "evidence_level": "path/content fingerprint; not test execution; detailed new review scope is named in review.md"
+    }
+  ],
+  "composition_source_seeds": [
+    {
+      "path": "/home/vostrikov/projects/packages/chatom/packages/core/src/Plugins/Contracts/Plugin.php",
+      "sha256": "f8a9b8fa6169df5b11050c807fa6c21eefce3a6208dd784fb72915129420ae75",
+      "evidence_level": "local source/design analogy; no runtime qualification"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/chatom/packages/core/src/Plugins/Internal/PluginGraphCompiler.php",
+      "sha256": "a8d568d61d1d12f7664651b09304193e587bb6bff5bd946328401d458f1814ec",
+      "evidence_level": "local source/design analogy; no runtime qualification"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/azguard/packages/core/src/Contracts/Plugins/Plugin.php",
+      "sha256": "cdfd30901c669ae4a9b9dad453c98a20349d00df1e251a96deb02918f75104a3",
+      "evidence_level": "local source/design analogy; no runtime qualification"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/azguard/packages/core/src/Contracts/Panels/PanelRegistry.php",
+      "sha256": "615c5af6df86ad0b147de07ab47fb4477f64f80a96a8a35cee9de2a71cd7f929",
+      "evidence_level": "local source/design analogy; no runtime qualification"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/azguard/packages/core/src/Panels/Internal/PanelCompiler.php",
+      "sha256": "1038a1ec4bbd6fb64b27fdef57d1d06df0fdcfe46aef95dbe6505c97c25fc3b9",
+      "evidence_level": "local source/design analogy; no runtime qualification"
+    },
+    {
+      "path": "/home/vostrikov/projects/packages/azguard/packages/core/src/Contracts/Authorization/AfterHook.php",
+      "sha256": "9787cf1121a4b32cc57ca63b623507ffa38e5122b8a356e5beca31cb57b5e7b2",
+      "evidence_level": "local source/design analogy; no runtime qualification"
+    }
+  ],
+  "item_contract_hash_algorithm": "sha256 of canonical UTF-8 JSON item excluding updated_at; keys sorted; separators comma/colon",
+  "item_contract_hashes": {
+    "P1.1": "b394bd3b63dc47254b160cc97cc7b076ea0e7b190765d204fe19f3b1450fb824",
+    "P1.2": "856353d5fb8868c014466dcb6ac2355366f2ae5136b8f5d2afedb1d04c010ff6",
+    "P1.3": "23c9307edc17cbe1b0f36e6792d86d38a77c8c59778ed87a1c96caf7f99526f1",
+    "P2.1": "059919367284afc9556acf96f61d2d2d7de1d0d3900ee556182fad82addab729",
+    "P2.2": "77340e754cdbf5c2ec3fb68c4ba832fa00f282f427932a574c32283d5cfab650",
+    "P3.1": "6a4b60296b178460c9b4c010f9fd1c02c8d8c71dd3569ac5d17be2598c6f67e1",
+    "P3.2": "eab995aa0254f171f448f96dab5536992533a83c5d4ba0990047e295538a8b00",
+    "P4.1": "d78ee201542975a5e46fe4480172db5e4ad61b56cafc4764b289a059e6b3efd6",
+    "P4.2": "4c9d9c3ccc48132b6921e359847dc33727f264db31e16edcf80ae176eeda8abc",
+    "P5.1": "c0e5ea20c7ee42875af30b47056d5d41af7303599486f0f383f8f3ca3dc6f5c6",
+    "P5.2": "3eebfb82a3d1c7d3260fdd0c369e30f8d13e868f8e3b8cd2421e3322ce33c8a1",
+    "P5.3": "9b3c7d8027d15e374c65147ec362ff3aa3b12d28b83ffbebf8abc19366872cf3",
+    "P5.4": "cbb89078c051d16e0333f3dfa18290a1059e958b49b6f4bc46ccf3e35b6713f2",
+    "P6.1": "4039cb282bf630b06da3e6d532d0c51b14e382142ddfaafd8caca359955b0771",
+    "P6.2": "00ca2436728c29a97b854ddfaa04503567327129d7806e5c05e52fef6bc22768"
+  },
+  "limitations": [
+    "Three existing execution_prompt_heavy warnings remain; actual context sizes reported below; no threshold changed.",
+    "Implementation/runtime/worker/IO/DDL/consumer tests and dependency installation were not performed; Tenant still has no Composer/source/tests.",
+    "All 15 implementation items are todo/result=null; missing future artifact inputs have named todo producers.",
+    "No whole-system runtime correctness claim; signatures/final paths remain future P1/progressive-detail outputs.",
+    "No runtime code review or execution: four requested reviewer checkpoints remain future work. Current Terra pass covered native admission and prompt; historical source/design reviews remain separate.",
+    "Canon proposal remains proposed; source checkouts and user changes preserved.",
+    "Current context hashes cover sources section only; report section is intentionally on-demand to avoid recursive hash dependence."
+  ],
+  "report_role": "Historical preparation fields preserved; current authorized P1.1 freeze in execution_updates[-1]. Sources reflect current files; preparation checks do not prove runtime.",
+  "execution_updates": [
+    {
+      "at": "2026-10-28T11:42:09.749259+00:00",
+      "scope": "P1.1 only; actual codex/gpt-6.1-sol/high session 01a18241-201a-7230-aa5b-afe8f437e015",
+      "report": {
+        "path": "@plan/artifacts/P1.1/freeze-report.json",
+        "sha256": "5ea306e8d9660de7b5c8399eaf1ed9a2dc9ab897d686d271251c5f648f385dee"
+      },
+      "outputs": [
+        {
+          "path": "contracts/tenant.context.v1.schema.json",
+          "sha256": "c426a28971f97ac0c567f9e7dd279db67c9c676381664818690c4f5e57d46cfd"
+        },
+        {
+          "path": "contracts/api.v1.json",
+          "sha256": "5cab4cb0b3e1e19d2ad80f010da461709a12b15010472b1690c8daed65ef6d34"
+        },
+        {
+          "path": "contracts/errors.v1.json",
+          "sha256": "88fb4da71c72bf76ddf929009aeff2b6f5a70acb2ee040624c98047775b795e9"
+        },
+        {
+          "path": "contracts/profiles.v1.json",
+          "sha256": "492cb288f96e09f2033c651c73f77615f0dddfed97d18d7b80b0f8c3c47795bb"
+        },
+        {
+          "path": "contracts/ownership.v1.json",
+          "sha256": "f0db2f63db1e6699cfdd539eb8733d70c899909d32cb4afc211645d390edc97d"
+        },
+        {
+          "path": "docs/architecture/contracts.md",
+          "sha256": "7bbeda348cb2bddfa8335d986cf63c4a76f722431569e3a74edf3f15d411dc00"
+        }
+      ],
+      "checks": "V1/V3/V4 command exit0; V2/V5/V6 manual pass; API/errors syntax and static cross-reference inspection exit0. Runtime/corpus/metaschema not-run.",
+      "blockers": []
+    }
+  ]
+}

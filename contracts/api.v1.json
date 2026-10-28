@@ -1,0 +1,744 @@
+{
+  "contract": "tenant.api/1",
+  "semanticVersion": "1.0.0",
+  "spiVersion": 1,
+  "wire": "tenant.context/1",
+  "status": "frozen specification; no PHP implementation",
+  "namespace": "Tenant\\",
+  "packageGraph": {
+    "axiomasoft/tenant": [],
+    "axiomasoft/tenant-laravel": [
+      "axiomasoft/tenant",
+      "Illuminate components for declared lanes"
+    ],
+    "axiomasoft/tenant-postgres": [
+      "axiomasoft/tenant",
+      "PG/Illuminate components as qualified"
+    ]
+  },
+  "visibility": {
+    "Api": "documented application surface",
+    "Spi": "host implement/decorate surface with version 1 and same conformance corpus",
+    "Internal": "no inheritance/import contract; persistence/Eloquent/factories internal",
+    "markers": "package-local Api/Spi attributes, no Common dependency; facade/VO final readonly; interfaces implement/decorate"
+  },
+  "kernelImports": [
+    "PHP builtins",
+    "Closure",
+    "Throwable",
+    "Tenant public/internal types"
+  ],
+  "kernelForbiddenResponsibilities": [
+    "product entity models or policy",
+    "ORM/framework/container/event dispatcher requirement",
+    "PG commands/catalog/receipt FSM",
+    "physical DDL",
+    "second executor",
+    "credentials in durable data"
+  ],
+  "types": {
+    "IsolationIdentity": {
+      "kind": "final readonly",
+      "fields": {
+        "namespace": "nonempty normalized Namespace",
+        "id": "nonempty normalized opaque string"
+      },
+      "invariants": [
+        "namespace is ASCII pattern from schema; id UTF-8 NFC, no controls, <=96 UTF-8 bytes; no lossy normalization",
+        "identity equality is exact namespace+id bytes; integer inputs must be converted once by owning host with explicit canonical policy"
+      ]
+    },
+    "Purpose": {
+      "kind": "final readonly",
+      "fields": {
+        "id": "namespaced string"
+      },
+      "invariants": [
+        "host-known purpose; not an actor/grant/permission; handler authorizes again before effect"
+      ]
+    },
+    "ProfileRef": {
+      "kind": "final readonly",
+      "fields": {
+        "id": "string",
+        "version": "positive int"
+      }
+    },
+    "Selection": {
+      "kind": "tagged immutable input",
+      "variants": {
+        "tenant": "identity + expectedProfile + list<ExtensionRef> + optional ExpectedBinding",
+        "single": "identity + expectedProfile(single/1) + list<ExtensionRef> + optional ExpectedBinding",
+        "central": "expectedProfile + no identity/binding/extensions"
+      },
+      "invariants": [
+        "explicit intent, no implicit central/default; expected binding required on durable restore",
+        "no route, DSN, credentials, object model or policy verdict"
+      ]
+    },
+    "ContextState": {
+      "kind": "tagged immutable output",
+      "variants": {
+        "Missing": "no context",
+        "Central": "explicit central frame, no isolation identity",
+        "Active": "IsolationContext"
+      },
+      "invariants": [
+        "Single is Active with mode single",
+        "transition throws; no Switching enum variant; poisoned current throws"
+      ]
+    },
+    "IsolationContext": {
+      "kind": "final readonly",
+      "fields": {
+        "mode": "tenant|single",
+        "identity": "IsolationIdentity",
+        "profile": "ProfileRef",
+        "binding": "BindingExpectation",
+        "extensions": "list<ExtensionRef>"
+      },
+      "invariants": [
+        "observed metadata only; cannot be fed to enter as authority; no handles/secrets",
+        "must not contain mutable product objects"
+      ]
+    },
+    "BindingExpectation": {
+      "kind": "final readonly",
+      "fields": {
+        "resourceRef": "opaque string",
+        "incarnation": "opaque string",
+        "routeRevision": "opaque string"
+      },
+      "invariants": [
+        "incarnation is replacement/restore identity, route revision is routing freshness only"
+      ]
+    },
+    "ResolvedIsolation": {
+      "kind": "trusted nonserializable resolver result",
+      "fields": {
+        "context": "ContextState (Central|Active)",
+        "facets": "FacetBindings"
+      },
+      "invariants": [
+        "fresh host catalog result; private resource access supplied through opaque typed FacetAccess",
+        "no public credential properties; cannot be created from wire and accepted without fresh resolve/verify"
+      ]
+    },
+    "FacetBindings": {
+      "kind": "immutable typed registry",
+      "methods": [
+        "require(CapabilityId $id): FacetAccess"
+      ],
+      "invariants": [
+        "only compiled enabled capabilities; no arbitrary container get; implementation can privately hold access material",
+        "all prefixes/routes from one trusted descriptor; no independent product-id derivation"
+      ]
+    },
+    "FacetAccess": {
+      "kind": "Spi opaque in-process interface",
+      "methods": [],
+      "invariants": [
+        "implemented by qualified facility/owner, not serializable, never stored in wire/logs/observation; purpose-limited use"
+      ]
+    },
+    "ExtensionRef": {
+      "kind": "final readonly",
+      "fields": {
+        "type": "namespaced string",
+        "version": "positive int",
+        "required": "bool",
+        "refs": "map<string,string>"
+      },
+      "invariants": [
+        "shape is schema $defs/extension; typed host decoder validates exact refs and handler allowlist"
+      ]
+    },
+    "FrameToken": {
+      "kind": "opaque runtime-issued Api token",
+      "fields": {},
+      "invariants": [
+        "unforgeable runtime/lane/frame/nonce ownership; single-use LIFO; not serializable, cloneable or authorizable from caller bytes",
+        "no destructor cleanup guarantee"
+      ]
+    },
+    "FrameState": {
+      "kind": "Spi frame-local participant state",
+      "methods": [
+        "put(string $key, mixed $value): void",
+        "get(string $key): mixed"
+      ],
+      "invariants": [
+        "allocated by runtime per frame and participant before prepare; private in-process state only, never shared across nested frames",
+        "facility uses declared keys/types; no state bag on wire/public context; restore reads only own state"
+      ]
+    },
+    "PhaseContext": {
+      "kind": "Spi phase-bound capability",
+      "methods": [
+        "candidate(): ContextState",
+        "require(CapabilityId $id): FacetAccess"
+      ],
+      "invariants": [
+        "valid only inside owning transition/phase; resource facets available before product stage; cannot call enter/restore or retain for later IO"
+      ]
+    },
+    "RestoreContext": {
+      "kind": "Spi phase-bound capability",
+      "fields": {
+        "previous": "freshly resolved ContextState",
+        "facets": "FacetBindings"
+      },
+      "invariants": [
+        "prior existence/incarnation verified separately from ordinary maintenance admission; saved connection name is not authority",
+        "same lease constraints as PhaseContext"
+      ]
+    },
+    "CapabilityId": {
+      "kind": "final readonly string value",
+      "invariants": [
+        "open namespaced ID, same grammar as schema extension type; no kernel enum"
+      ]
+    },
+    "ParticipantDeclaration": {
+      "kind": "final readonly Spi declaration",
+      "fields": {
+        "id": "namespaced implementation ID",
+        "spiVersion": "1",
+        "stage": "resource|product",
+        "provides": "list<CapabilityId>",
+        "requires": "list<CapabilityId>",
+        "exclusiveSlots": "list<namespaced slot>",
+        "before": "list<implementation ID>",
+        "after": "list<implementation ID>",
+        "replaces": "optional exact implementation ID",
+        "factory": "ParticipantFactory"
+      },
+      "invariants": [
+        "not serializable; declaration/factory construction no tenant IO",
+        "same capability may serve different explicit slots; slot uniqueness separate from capability vocabulary"
+      ]
+    },
+    "ParticipantFactory": {
+      "kind": "Spi interface",
+      "methods": [
+        "create(): Facility"
+      ],
+      "invariants": [
+        "called per frame; each instance belongs to that frame; no dependency back to runtime/resolver",
+        "declaration/factory metadata immutable after compile"
+      ]
+    },
+    "CompiledComposition": {
+      "kind": "opaque immutable compiled value",
+      "fields": {
+        "version": "1",
+        "orderedIds": "list<string>",
+        "profiles": "qualified profile declarations"
+      },
+      "invariants": [
+        "factories/decorators owned by host; compiled order same under all registration permutations",
+        "no mutable stack or current state in manifest"
+      ]
+    },
+    "RuntimeObservation": {
+      "kind": "final readonly Api event data",
+      "fields": {
+        "version": "1",
+        "kind": "entered|restored|activation_failed|callback_failed|restore_failed|poisoned",
+        "outcome": "success|failure|poisoned",
+        "frameCorrelation": "opaque diagnostic string",
+        "subject": "ContextState or null when unresolved",
+        "reason": "registered reason or null",
+        "causes": "sanitized list<reason>"
+      },
+      "invariants": [
+        "observed subject and outcome explicit; no credentials/raw exception text/handles/token authority; never infer target from ambient current",
+        "entered != callback success; restored != business receipt; physical lifecycle events owned elsewhere"
+      ]
+    },
+    "Diagnostic": {
+      "kind": "final readonly Spi diagnostic",
+      "fields": {
+        "reason": "observer_failed|diagnostic_failed",
+        "observerId": "namespaced ID",
+        "frameCorrelation": "opaque string"
+      },
+      "invariants": [
+        "sanitized; original Throwable only within trusted error channel, never emitted to wire/log automatically"
+      ]
+    },
+    "TenantFailure": {
+      "kind": "Api exception base",
+      "methods": [
+        "reason(): string",
+        "causes(): array /* list<Throwable> */"
+      ],
+      "invariants": [
+        "reasons from errors.v1.json; original and every cleanup failure retained in order",
+        "raw causes not safe for public logs; sanitized observations separate"
+      ]
+    },
+    "VerifiedBinding": {
+      "kind": "opaque nonserializable Spi proof",
+      "fields": {
+        "expected": "BindingExpectation",
+        "ownerId": "namespaced ID",
+        "recoveryGeneration": "opaque string"
+      },
+      "invariants": [
+        "bound to exact actual connection/facet and current frame generation; cannot reuse on another handle/reconnect",
+        "not emitted on wire; verifier must re-observe changed connection before IO"
+      ]
+    },
+    "BindingVerificationInput": {
+      "kind": "nonserializable Spi request",
+      "fields": {
+        "expected": "BindingExpectation",
+        "access": "FacetAccess"
+      },
+      "invariants": [
+        "actual access independently resolved by trusted owner, caller cannot choose DSN",
+        "expected route revision must match fresh catalog; only trusted route refresh on logical entry, never wire retarget"
+      ]
+    },
+    "ContextReference": {
+      "kind": "final readonly Api decoded data",
+      "fields": {
+        "envelope": "exact tenant.context/1 scalar shape"
+      },
+      "invariants": [
+        "not active context or admission proof; central has no identity/resource fields"
+      ]
+    },
+    "FrozenDispatch": {
+      "kind": "immutable Api dispatch intent",
+      "fields": {
+        "reference": "ContextReference",
+        "purpose": "Purpose"
+      },
+      "invariants": [
+        "only original scalar reference retained across deferred callback; no frame token/handle or authority; fresh check at publish and consume"
+      ]
+    },
+    "TrackedStream": {
+      "kind": "Api guarded IO lease",
+      "methods": [
+        "read(int $length): string",
+        "write(string $bytes): int",
+        "close(): void"
+      ],
+      "invariants": [
+        "generation checked per operation; close idempotent, after close no read/write; outstanding lease blocks switch/exit; no raw stream/path return"
+      ]
+    }
+  },
+  "surfaces": {
+    "Tenant": {
+      "package": "axiomasoft/tenant",
+      "kind": "Api final readonly facade",
+      "signatures": [
+        "__construct(TenantRuntime $runtime)",
+        "current(): ContextState",
+        "enter(Selection $selection, Purpose $purpose): FrameToken",
+        "run(Selection $selection, Purpose $purpose, Closure $callback): mixed /* template T; Closure(ContextState):T */",
+        "restore(FrameToken $token): void"
+      ],
+      "delegates": "exactly one TenantRuntime; instance API, :: in design tables denotes responsibility, not static global state"
+    },
+    "TenantRuntime": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface",
+      "version": 1,
+      "signatures": [
+        "current(): ContextState",
+        "enter(Selection $selection, Purpose $purpose): FrameToken",
+        "run(Selection $selection, Purpose $purpose, Closure $callback): mixed /* Closure(ContextState):T */",
+        "restore(FrameToken $token): void"
+      ],
+      "replacement": "host explicit replacement or decorator to one delegate; same token/LIFO/cleanup/poison corpus, never an additional frame stack"
+    },
+    "ContextResolver": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface",
+      "version": 1,
+      "signatures": [
+        "resolve(Selection $selection, Purpose $purpose): ResolvedIsolation"
+      ],
+      "semantics": "every enter including same identity/single, and previous-frame restore; durable selection carries expected binding; fresh host routing, availability and authorized origin. Does not return cached permission verdict."
+    },
+    "Facility": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface",
+      "version": 1,
+      "signatures": [
+        "prepare(PhaseContext $context, FrameState $state): void",
+        "activate(PhaseContext $context, FrameState $state): void",
+        "restore(RestoreContext $context, FrameState $state): void",
+        "verify(RestoreContext $context, FrameState $state): void"
+      ],
+      "semantics": "journal/state recorded before prepare; prepare snapshots and does no external mutations; activate changes facility; restore compensates partial activation idempotently; verify observes restored state. All started restore attempts run even if previous lookup or another cleanup fails."
+    },
+    "CompositionBuilder": {
+      "package": "axiomasoft/tenant",
+      "kind": "Api host-only builder",
+      "signatures": [
+        "register(ParticipantDeclaration $declaration): void",
+        "compile(): CompiledComposition"
+      ],
+      "semantics": "host SPI bindings and profiles constructor-configured; compile performs version/slot/replacement/dependency checks before resolver/prepare/IO, freezes builder; any later register/rebind/compile fails composition_frozen"
+    },
+    "ContextCodec": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface",
+      "version": 1,
+      "signatures": [
+        "encode(ContextReference $reference): string",
+        "decode(string $json): ContextReference"
+      ],
+      "semantics": "strict JSON/UTF-8/schema/byte/depth checks first; no lookup or activation; host registry validation still mandatory. Duplicate JSON keys rejected before decoder overwrites them."
+    },
+    "ExtensionDecoder": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface",
+      "version": 1,
+      "signatures": [
+        "validate(ExtensionRef $reference, PhaseContext $context, Purpose $purpose): void"
+      ],
+      "semantics": "registered exact type/version/handler, after resource activation and before current publication; may only read candidate facets, no effects. Product mutation admission rechecked by owning handler."
+    },
+    "BindingVerifier": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface",
+      "version": 1,
+      "signatures": [
+        "verify(BindingVerificationInput $input): VerifiedBinding"
+      ],
+      "semantics": "public resource-owner port; sole protocol tenant.binding/1; same semantic algorithm/corpus for CoreX checkpoint and tenant-postgres, with owner-specific persistence adapter. No catalog access by Laravel sibling."
+    },
+    "ObservationSink": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface, zero or more independently registered sinks",
+      "version": 1,
+      "signatures": [
+        "observe(RuntimeObservation $observation): void"
+      ],
+      "semantics": "runtime iterates every observer, catches each Throwable and diagnostic failure; non-veto/no tenant effect; reentry guard active; no dispatcher required"
+    },
+    "DiagnosticSink": {
+      "package": "axiomasoft/tenant",
+      "kind": "Spi interface; optional",
+      "version": 1,
+      "signatures": [
+        "report(Diagnostic $diagnostic): void"
+      ],
+      "semantics": "best-effort, exceptions swallowed without recursive diagnostics or state change"
+    },
+    "ContextDispatcher": {
+      "package": "axiomasoft/tenant-laravel",
+      "kind": "Api adapter interface",
+      "version": 1,
+      "signatures": [
+        "freezeTenant(ContextReference $reference, Purpose $purpose): FrozenDispatch",
+        "freezeCentral(Purpose $purpose): FrozenDispatch",
+        "enqueue(FrozenDispatch $intent, object $job): void"
+      ],
+      "semantics": "job is framework-local and must have scalar payload; no class-string in Tenant envelope. freeze validates explicit target; enqueue freshly verifies same frozen target, never recaptures ambient. Sync uses nested run. No default ambient dispatch."
+    },
+    "PostgresLifecycle": {
+      "package": "axiomasoft/tenant-postgres",
+      "kind": "Spi optional owner interface; types in Tenant\\Postgres, not kernel",
+      "version": 1,
+      "signatures": [
+        "claim(ProvisionIntent $intent, OperationKey $key, Admission $admission): OperationReceipt",
+        "queryOperation(OperationRef $operation, Admission $admission): OperationReceipt",
+        "reconcile(OperationRef $operation, Admission $admission): OperationReceipt",
+        "requestExport(ExportIntent $intent, OperationKey $key, Admission $admission): OperationReceipt",
+        "queryExport(ExportRef $export, Admission $admission): ExportReceipt",
+        "requestDelete(DeleteIntent $intent, OperationKey $key, Admission $admission): OperationReceipt",
+        "cancelIntent(OperationRef $operation, Admission $admission): OperationReceipt",
+        "admitRecovery(RecoveryIntent $intent, Admission $admission): RecoveryPlan"
+      ],
+      "semantics": "no actor authority on wire; Admission is fresh trusted host callback/capability, not a serialized grant; commands/receipts/FSM owned wholly by optional package; automatic restore/clone unsupported v1, controlled operator runbook only"
+    }
+  },
+  "composition": {
+    "bindingSlots": [
+      "tenant:runtime/default",
+      "tenant:resolver/default",
+      "tenant:codec/default",
+      "tenant:binding/default"
+    ],
+    "algorithm": [
+      "collect immutable declarations; validate unique namespaced IDs and SPI versions",
+      "resolve explicit replacements by exact existing target before graph: one replacer per target, same stage/slots and provides superset; reject chains/ambiguous replacements; rewrite edges naming replaced target to replacement",
+      "decorators wrap exactly one explicitly named delegate; no additional slot claim/stack; decorator dependency/order also acyclic",
+      "reject duplicate exclusive slots and missing required capabilities/dependency IDs; no priority/registration-order winner",
+      "build requires-provider/before/after edges; ambiguous capability provider requires explicit host selection, not arbitrary first match",
+      "resource stage precedes product stage; reject any edge that forces product before required resource",
+      "stable Kahn topological order with ready IDs sorted by ASCII bytes; cycles rejected",
+      "freeze profile/SPI bindings, factories and graph before first resolve/IO; every binding replacement before compile; all late mutation fails"
+    ],
+    "errors": [
+      "duplicate_implementation",
+      "exclusive_slot_conflict",
+      "replacement_target_missing",
+      "replacement_incompatible",
+      "replacement_conflict",
+      "missing_dependency",
+      "unsupported_capability",
+      "ambiguous_capability",
+      "dependency_cycle",
+      "incompatible_spi",
+      "composition_frozen",
+      "invalid_stage_order"
+    ],
+    "lifetime": "each factory creates participant per frame; runtime creates separate FrameState per participant before prepare. Never reuse singleton saved-original state. Manifest/factories reusable; mutable states and proofs not reusable.",
+    "hostReplacement": "public resolver/facility/codec/verifier/runtime SPI only, same version/profile/capabilities and corpus. Full runtime replacement removes default binding; facade/provider share it. No runtime/resolver constructor cycle from participants.",
+    "registrationReentry": "register rejected after freeze even inside observations; enter/restore in participant/observer transition rejected before mutation; application callback can nest after transition.",
+    "hostServices": "Selected resolver/codec/verifier/runtime service bindings declare exact SPI version, implementation ID, slot and capabilities before compile; service capabilities satisfy requirements. Only participant-provider edges enter resource/product graph; service construction has no dependency back to runtime or tenant IO."
+  },
+  "runtimeProtocol": {
+    "order": [
+      "healthy/lane/transition guard, token and open resource preflight",
+      "compiled profile/capabilities/extension versions before mutations",
+      "fresh resolve+expected binding and origin/purpose checks, same-ID included",
+      "save baseline and create frame-local participant state, append started before prepare",
+      "resource prepare/activate, public binding verifier before tenant IO; candidate-only reads",
+      "product decoder/relation hooks, then publish Active/Central + new generation atomically",
+      "entered success observation with protected observer iteration",
+      "application callback; nested run allowed; handler fresh admission/effect belongs to host",
+      "restore verifies top token and no open leases; fresh previous resource existence/incarnation then reverse started restore+verify, all attempts despite errors",
+      "publish verified previous state with new generation and restored observation, invalidate old handles permanently",
+      "if callback failed rethrow it after successful cleanup; if cleanup failed throw RestoreFailed with original+all cleanup causes and poison; no success result"
+    ],
+    "failure": "unresolved/denied enter causes no resource change; partial failure restores every started participant including failing one; failed previous lookup still performs available cleanup and poisons; invalid foreign/out-of-order/consumed token refuses without popping valid top. No force-central success.",
+    "transitions": "current throws transition_in_progress during prepare/activate/restore; Missing|Central|Active are the only public states. restore verification of maintenance resource is distinct from ordinary effect admission.",
+    "generations": "scope instances invalidated for every switch/restore, same-resource nesting included; retained A handle invalid after B and after returning to A; re-resolve new A service.",
+    "poison": "guard prevents further IO even within callback catching failure; worker stops before next job; FPM first profile requires pm.max_requests=1; token/stream boundary leak is fatal, destructor not safety proof.",
+    "observationOrder": "entered/restored only after successful state+generation publication; failed activation emits activation_failed not entered; callback_failed separate; restore_failed then poisoned on fatal cleanup. Every observer gets immutable subject, no ambient lookup; exceptions do not alter transition/callback outcome; diagnostics exceptions do not mask causes.",
+    "lane": "one sequential lane, no Fibers/global-facility interleaving; concurrent enter is concurrent_entry refusal",
+    "central": "Central profile activates deny-default tenant bindings and fixed explicit named control access; no tenant identity/marker lookup. Missing baseline remains Missing after nested run. Central resolution validates trusted explicit intent and profile without synthesizing tenant identity.",
+    "openLease": "Direct restore with outstanding tracked lease refuses open_resource before mutation; caller can close then retry. run detects leaked leases/tokens on callback completion and raises fatal frame_leak, suppresses result and poisons/quarantines rather than claiming successful restore."
+  },
+  "bindingProtocol": {
+    "id": "tenant.binding/1",
+    "markerSchema": "urn:axiomasoft:tenant:context:1#/$defs/instanceMarker",
+    "markerFields": [
+      "protocol",
+      "ownerId",
+      "resourceRef",
+      "incarnation",
+      "recoveryGeneration"
+    ],
+    "catalogFields": [
+      "resourceRef",
+      "incarnation",
+      "routeRevision",
+      "ownerId",
+      "recoveryGeneration",
+      "availability",
+      "clusterBinding",
+      "facets"
+    ],
+    "verify": [
+      "resolve actual access only through selected trusted catalog owner",
+      "compare exact expected resourceRef/incarnation and current routeRevision to catalog",
+      "read actual instance marker over that resource access via owner-public verifier, not Laravel private table query",
+      "compare protocol/ownerId/resourceRef/incarnation/recoveryGeneration between actual marker and catalog",
+      "compare external recovery anchor when capability declared; incomplete reconciliation/anchor loss denies admission",
+      "return opaque proof bound to actual access and frame generation; recheck on reconnect/new connection and every guarded handle access freshness boundary"
+    ],
+    "synthetic": "php-scoped/single no-IO hosts use trusted synthetic verifier/marker in host authority; not advertised as PG or arbitrary IO isolation",
+    "write": "sole physical owner stamps new resourceRef/incarnation after provision/clone before ready; template signature != instance marker. Clone has new resource identity; restore logical resource has new incarnation; reconnect may keep incarnation only with verified routing.",
+    "checkpointOwners": {
+      "P5.1": "CoreX current physical/catalog/schema owner; implement new catalog incarnation/marker/public verifier/ref emission without extracting physical engine",
+      "P5.4": "tenant-postgres after atomic fresh-baseline ownership switch; same protocol/helper/tests, remove CoreX physical registration"
+    },
+    "recovery": "anchor outside catalog backup; full-control-plane restore changes recoveryGeneration and affected incarnations before admission/workers reopen; old in-flight DDL excluded or quarantine. Without anchor full restore/replay unsupported and fail-closed; runtime-only profile does not wait for P4.",
+    "nonProofs": [
+      "database name",
+      "connectionIdentity",
+      "restoreEpoch inside restored catalog",
+      "database OID alone",
+      "template marker copied into clone",
+      "signed wire DTO without fresh verification"
+    ]
+  },
+  "wireValidation": {
+    "schema": "contracts/tenant.context.v1.schema.json",
+    "maxBytes": 16384,
+    "maxDepth": 4,
+    "maxExtensions": 16,
+    "maxRefsPerExtension": 16,
+    "order": [
+      "reject oversize/depth/duplicate-key/non-UTF8 input and non-object root",
+      "validate strict JSON Schema shape/version/mode/bounds, no additional properties",
+      "check id NFC and UTF8 byte limits; no int-string coercion or trimming",
+      "exact host-registered namespace/profileId+version/mode, required capability and handler extension type+version allowlists; reject duplicate extension types",
+      "verify trusted producer/origin/purpose independently of payload",
+      "fresh catalog lookup and exact expected resourceRef/incarnation/routeRevision; no caller routing/credentials",
+      "activate verified resource then validate required product refs; fresh owning handler admission before effect"
+    ],
+    "central": "no identity/resource fields (including explicit null); no extensions. Central dispatch creates clean explicit named-control frame, never inherits tenant stamp. Missing envelope rejects unless known central job/producer explicitly allowlisted.",
+    "single": "all tenant identity/resource fields mandatory, even synthetic no-IO host; single != null/central. Exact one boot configured identity.",
+    "route": "durable routeRevision mismatch refuses stale_route; logical fresh selection may use new authoritative route. Never retarget durable ref automatically; maintenance/recovery emits explicit new reference.",
+    "extensions": "refs map scalar strings only; no nested objects, credentials/authority/class names. Semantic decoder allows exact field names only for each type; unknown required fails before activation, unknown optional ignored with no effects. Type/version may be referenced but implementation never chosen by payload.",
+    "encoding": "UTF8 JSON, no duplicate keys/NaN/Infinity. Canonical bytes for hashes are recursively key-sorted compact UTF8 JSON without ASCII escaping; arrays preserve order, extensions sorted by type and unique. Kernel reference contains no floats."
+  },
+  "vaulterSeam": {
+    "owner": "prospective public neutral Vaulter core SPI implemented/wired in P5.2; neutral Drive/Core have no Tenant import",
+    "namespace": "Vaulter\\Contracts\\Jobs\\",
+    "interfaces": {
+      "JobPublisher": [
+        "prepare(JobRequest $request, ?PublicationContext $origin = null): PreparedJob",
+        "publish(PreparedJob $job): void"
+      ]
+    },
+    "types": {
+      "JobRequest": {
+        "kind": "final readonly public neutral DTO",
+        "fields": {
+          "task": "namespaced public task ID",
+          "refs": "map<string,string>",
+          "queue": "optional host-allowlisted queue name"
+        },
+        "rule": "no Drive private class type; owning Drive maps public task ID to its internal job factory, not bridge"
+      },
+      "PublicationContext": {
+        "kind": "final readonly public neutral DTO",
+        "fields": {
+          "type": "namespaced host stamp type",
+          "version": "positive int",
+          "refs": "map<string,string>"
+        },
+        "rule": "bounded scalar stamp, host allowlist decoder; Tenant bridge uses type tenant:context version1 with refs.envelope containing validated tenant.context/1 JSON and refs.purpose. No actor/permission/credentials."
+      },
+      "PreparedJob": {
+        "kind": "final readonly public neutral DTO",
+        "fields": {
+          "request": "JobRequest",
+          "context": "optional PublicationContext"
+        },
+        "rule": "immutable request+original stamp; no Eloquent models/closures/live token/connection; no serializer-driven PHP object trust across queue boundary"
+      }
+    },
+    "producerProtocol": [
+      "DeleteDriveAction prepares vaulter.drive:purge with scalar driveId and captures current verified target BEFORE registering afterCommit; deferred callback publishes that PreparedJob only",
+      "ScanWorkReconciler prepares vaulter.drive:scan with scalar obligation/generation/driveId/claimedTenant BEFORE registering afterCommit; publish immediate/reconciler path also requires verified explicit target",
+      "PurgeDriveJob continuation passes received original PublicationContext into prepare; bridge validates it and keeps exact mode/ref/incarnation/extensions, never captures a different current target",
+      "publish freshly checks frozen target availability/incarnation and purpose through host policy; may publish A from B context without changing target, or refuse; never replace A with B",
+      "consumer pre-hydration host restoration then Vaulter fresh owner/current/claimed tenant validator then actor/admission and effect; real A/B same driveId IO/scan/purge/continuation tests required in P5.2",
+      "unique locks partition by original resourceRef/incarnation+task+scalar operation refs; central lock store does not imply central execution; no driveId-only cross-resource suppression"
+    ],
+    "defaultNeutral": "when tenancy disabled, Vaulter default publisher may use framework dispatcher without Tenant. With bridge enabled+strict, Missing/Central capture refuses missing/denied, never silent untagged fallback. No guaranteed hook based only on ambient Laravel payload callback.",
+    "scalarProjection": {
+      "format": "t1. + unpadded base64url(uint8(namespace UTF8 byte length) || namespace UTF8 bytes || normalized id UTF8 bytes)",
+      "limits": {
+        "namespaceBytes": 32,
+        "idBytes": 96,
+        "maxCombinedIdentityBytes": 44,
+        "maxEncodedAsciiBytes": 63,
+        "requiredHostKeyType": "string",
+        "observedTenantColumnLimit": 64,
+        "observedIdempotencyTenantColumnLimit": 191
+      },
+      "rule": "Both current() and tenantOf(fresh owner mapping) use the identical injective function. General Tenant namespace<=48 ASCII bytes/id<=96 UTF8 bytes; this bridge requires namespace<=32 and combined namespace+id<=44 UTF8 bytes. UUID36 permits namespace<=8. No trim/hash/int-string coercion/fallback. Out-of-profile input refuses identity_encoding_unsupported before writing. Boot requires host_keys=string and fresh actual tenant columns >=64; bigint/uuid/ulid host-key modes refuse this profile. Single is nonempty; incarnation verified separately, not part of business scalar.",
+      "source": "Vaulter packages/core/src/Schema/VaulterSchema.php::tenant -> HostKeyColumns::add string(64); KernelSchema idempotency tenant_id string(191). Actual configured/fresh installed columns must be verified by P5.2, runtime/install evidence still not-run."
+    },
+    "changedSourceExpectation": "Queue fake/purge batch tests and host middleware validator tests retained/adapted; they do not prove pre-afterCommit target capture, cross-resource unique lock partition or real worker IO. Current source SHA 03dce04bbb5fd1c21e72454facc39f05723f3b63.",
+    "stampBounds": {
+      "maxEnvelopeBytes": 16384,
+      "maxPublicationContextBytes": 32768,
+      "maxDepth": 4,
+      "allowedTenantRefs": [
+        "envelope",
+        "purpose"
+      ],
+      "nonEnvelopeRefMaxBytes": 128,
+      "rule": "publication stamp is neutral host context, not a Tenant extension refs field; envelope decoded by ContextCodec, never arbitrary PHP deserialize"
+    }
+  },
+  "optionalLifecycleTypes": {
+    "namespace": "Tenant\\Postgres\\",
+    "OperationKey": "namespace + nonempty opaque command key; never recycled across tombstones/replay horizon",
+    "ProvisionIntent": "schemaVersion=1, operationKind=provision, hostIntentRef, frozen clusterBinding, templateRef/version/manifestHash, canonical parameters; original allocation stored before physical effect",
+    "ExportIntent": "schemaVersion=1, operationKind=export, resourceRef/incarnation, archive destination ref and retention profile ref; no credentials",
+    "DeleteIntent": "schemaVersion=1, operationKind=delete, resourceRef/incarnation, verified original exportRef if retention profile requires, policy intent ref",
+    "RecoveryIntent": "schemaVersion=1, operationKind=restore|clone, original archiveRef/hash/resource/incarnation, target frozen binding and privileged host purpose; no automatic execution v1",
+    "Admission": "fresh trusted host authorization capability/callback bound to purpose and exact target, nonserializable; repeat before effects/replay/query visibility",
+    "OperationRef": "namespace + original operationId + resourceRef/incarnation; no redirect to newer operation",
+    "ExportRef": "original exportId + operationRef; not latest export timestamp",
+    "OperationReceipt": "original operationId/key/intentDigest, resourceRef/incarnation, attemptGeneration, status accepted|running|unknown|succeeded|failed|cancelled, observedEffect, original exportRef/result if any, receiptVersion; safe refs only",
+    "ExportReceipt": "original exportId/operationId + archive manifest/hash/destinationRef + state; no signed URLs/secrets in durable record exposed by Tenant",
+    "RecoveryPlan": "operator-only verified steps, external anchor generation, quarantine/admission requirements; not an authorization or completed restore receipt",
+    "idempotency": "canonical intent compact sorted UTF8 JSON over all semantic fields; SHA256 includes cluster/template and stable original target, excludes fresh actor/admission/attempt/time. Same key different digest conflicts even after deletion. Repeated same key returns original receipt after fresh admission; unknown outcome query/reconcile same operation.",
+    "physicalProtocol": "claim metadata + freeze target/attempt -> same-session advisory lock and DDL outside metadata Tx -> observe exact marker/catalog -> CAS attempt/incarnation -> durable receipt/outbox -> publish. No second host SQL; lock loss/timeout unknown, quarantine until old backend excluded; cancellation not undo of submitted DDL."
+  },
+  "requirementTrace": {
+    "R01": [
+      "packageGraph",
+      "kernelImports",
+      "visibility"
+    ],
+    "R02": [
+      "types.IsolationIdentity",
+      "wireValidation",
+      "bindingProtocol"
+    ],
+    "R03": [
+      "surfaces.TenantRuntime",
+      "types.ContextState",
+      "runtimeProtocol"
+    ],
+    "R04": [
+      "runtimeProtocol",
+      "surfaces.Facility"
+    ],
+    "R05": [
+      "types.TrackedStream",
+      "runtimeProtocol.generations",
+      "profiles.v1.json#streamPolicy"
+    ],
+    "R06": [
+      "profiles.v1.json#facilities",
+      "wireValidation.central"
+    ],
+    "R07": [
+      "surfaces.ContextCodec",
+      "surfaces.ContextDispatcher",
+      "wireValidation",
+      "vaulterSeam"
+    ],
+    "R08": [
+      "surfaces.PostgresLifecycle",
+      "optionalLifecycleTypes"
+    ],
+    "R09": [
+      "bindingProtocol.recovery",
+      "optionalLifecycleTypes.RecoveryIntent"
+    ],
+    "R10": [
+      "ownership.v1.json",
+      "bindingProtocol.checkpointOwners"
+    ],
+    "R11": [
+      "surfaces.ExtensionDecoder",
+      "composition",
+      "runtimeProtocol"
+    ],
+    "R12": [
+      "ownership.v1.json#reuse",
+      "bindingProtocol"
+    ],
+    "R13": [
+      "vaulterSeam",
+      "profiles.v1.json#lanes",
+      "ownership.v1.json#nonTenantOwners"
+    ],
+    "R14": [
+      "status",
+      "ownership.v1.json#authority",
+      "profiles.v1.json#profileSelection.qualification"
+    ]
+  }
+}
