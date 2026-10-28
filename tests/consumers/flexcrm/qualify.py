@@ -80,7 +80,7 @@ def consumer(checkout,manifest,source):
  compile_record=run([PHP,ROOT/'tests/consumers/flexcrm/Compile.php'],checkout,env(manifest,checkout),folder/'source-compile.log');commands.append(compile_record);assert compile_record['exit']==0 and 'Wrote compiled registry' in (PLAN/compile_record['raw']).read_text()
  junit=folder/'source-junit.xml';e={**env(manifest,checkout),'FLEXCRM_TENANT_LAB_ENV':str(ROOT/'tests/consumers/flexcrm/Environment.php')}
  rec=run([PHP,checkout/'vendor/bin/pest','-c',checkout/'phpunit-tenant-lab.xml','--compact','--log-junit',junit],checkout,e,folder/'source-regressions.log');commands.append(rec);assert rec['exit']==0,(rec,(PLAN/rec['raw']).read_text()[-2200:])
- tree=ET.parse(junit);cases=tree.findall('.//testcase');assert len(cases)==34 and not tree.findall('.//skipped') and not tree.findall('.//failure') and not tree.findall('.//error');assert any('boxed context' in c.attrib['name'] for c in cases)
+ tree=ET.parse(junit);cases=tree.findall('.//testcase');assert len(cases)==37 and not tree.findall('.//skipped') and not tree.findall('.//failure') and not tree.findall('.//error');assert any('boxed context' in c.attrib['name'] for c in cases)
  source_suite={'tests':len(cases),'assertions':sum(int(c.attrib.get('assertions',0)) for c in cases),'skipped':0,'raw':rec,'junit':{'path':str(junit.relative_to(PLAN)),'sha256':sha(junit)}}
  outputs.append('PASS INSTALL-02 two fresh no-dev actual app installs public composition\nPASS INSTALL-03 actual boxed admission source tests passed and qualified PHP85 L13 boot\n')
  observations={};text='\n'.join(outputs)

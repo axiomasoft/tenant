@@ -2,7 +2,8 @@
 import pathlib,json,zipfile,hashlib,subprocess,tarfile,io,shutil,os,time,datetime
 ROOT=pathlib.Path(__file__).resolve().parents[3]
 PLAN=next((ROOT/'plans').glob('*TENANT')).resolve();ART=PLAN/'artifacts/P5.3'
-manifest=json.loads((ART/'checkout-manifest.json').read_text());CHECKOUT=pathlib.Path(manifest['checkout']);assert CHECKOUT.is_relative_to('/tmp') and str(CHECKOUT)!=manifest['original'] and not CHECKOUT.is_symlink()
+manifest=json.loads((ART/'checkout-manifest.json').read_text());CHECKOUT=pathlib.Path(manifest['checkout']);assert CHECKOUT.is_absolute() and CHECKOUT.resolve()!=pathlib.Path(manifest['original']).resolve() and not CHECKOUT.is_symlink()
+assert pathlib.Path(subprocess.check_output(['git','rev-parse','--show-toplevel'],cwd=CHECKOUT,text=True).strip()).resolve()==CHECKOUT.resolve()
 records=[]
 def sha(p):return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()
 def save(p,d):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n')
