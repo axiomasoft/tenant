@@ -1,0 +1,9 @@
+{
+    "name": "axiomasoft/tenant-workspace",
+    "description": "Development workspace for Tenant",
+    "type": "project",
+    "require": { "php": ">=8.4 <8.6", "ext-intl": "*" },
+    "require-dev": { "pestphp/pest": "^4.0", "phpstan/phpstan": "^2.1" },
+    "autoload": { "psr-4": { "Tenant\\": "packages/tenant/src/" } },
+    "config": { "allow-plugins": { "pestphp/pest-plugin": true }, "sort-packages": true }
+}

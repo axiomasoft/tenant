@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tenant\Contracts;
+
+use Tenant\Attributes\Spi;
+use Tenant\Data\{BindingVerificationInput, CapabilityId, ContextReference, ContextState, Diagnostic, ExtensionRef, FrameToken, Purpose, ResolvedIsolation, RuntimeObservation, Selection, VerifiedBinding};
+
+#[Spi]
+interface ContextResolver
+{
+    public function resolve(Selection $selection, Purpose $purpose): ResolvedIsolation;
+}

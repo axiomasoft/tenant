@@ -1,0 +1,12 @@
+{
+    "name": "axiomasoft/tenant",
+    "description": "Portable isolation context and scoped execution contracts",
+    "type": "library",
+    "require": {
+        "php": ">=8.4 <8.6",
+        "ext-intl": "*"
+    },
+    "autoload": {
+        "psr-4": { "Tenant\\": "src/" }
+    }
+}
