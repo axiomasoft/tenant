@@ -195,8 +195,15 @@ final class WorkerProbe
             $this->dispatch('success','central');$this->worker();
             $this->dispatch('release','b');$this->worker();$this->check($h->app['queue']->size($this->queue)===1,'released pending');$this->worker();$this->check($h->app['queue']->size($this->queue)===0,'released retry completes');
             $this->dispatch('throw','a');$this->worker();
-            $this->dispatch('retry-once','a');$this->worker();$failed=$h->app['queue.failer']->all();$retry=end($failed);
+            $this->dispatch('retry-once','a');$this->worker();
+            $retry=$h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->orderByDesc('id')->first();
+            $this->check($retry!==null,'own failed job persisted centrally');
+            $failedPayload=json_decode($retry->payload,true,flags:JSON_THROW_ON_ERROR);
+            $this->check(json_decode($failedPayload['data']['wire'],true)['isolationId']==='a','stored retry retains original A');
             $cmd=new \Illuminate\Queue\Console\RetryCommand();$cmd->setLaravel($h->app);$status=$cmd->run(new \Symfony\Component\Console\Input\ArrayInput(['id'=>[$retry->uuid]]),new \Symfony\Component\Console\Output\BufferedOutput());$this->check($status===0,'actual queue:retry');$this->worker();
+            $retries=array_values(array_filter($this->trace,fn($r)=>$r[0]==='handle'&&$r[1]==='retry-once'));
+            $this->check(count($retries)===2&&$retries[0][2]==='a'&&$retries[1][2]==='a','queue:retry actually re-executes own failed payload in A');
+            $this->check(!$h->app['db']->connection('central')->table('failed_jobs')->where('uuid',$retry->uuid)->exists(),'queue:retry removes exact failed entry');
             $boundary=$h->app->make(QueueContextBoundary::class);$foreign=new \Illuminate\Queue\Jobs\SyncJob($h->app,'{}','sync',$this->queue);$boundary->finished($foreign,true);$this->check($h->runtime->current()->kind==='central','foreign completion no pop');
             $a=$h->runtime->enter($h->selection('a'),$h->purpose());$b=$h->runtime->enter($h->selection('b'),$h->purpose());$this->refuse(fn()=>$h->runtime->restore($a));$h->runtime->restore($b);$this->refuse(fn()=>$h->runtime->restore($b));$h->runtime->restore($a);
             $other=new LabHost($this->manifest);$f=$other->runtime->enter($other->selection(),$other->purpose());$this->refuse(fn()=>$h->runtime->restore($f));$other->runtime->restore($f);
