@@ -77,7 +77,7 @@ def tests(stage,lanes,manifest):
     source_item='P3.1' if stage in ['facilities','integration'] else ITEM
     rows=[r for r in mapping if r['item']==source_item and r['stage']==stage]
     files=sorted({r['targetTest'].split('::')[0] for r in rows})
-    if stage=='facilities':files.append('packages/tenant-laravel/tests/Facilities/CacheSessionTest.php')
+    if stage=='facilities':files.extend(['packages/tenant-laravel/tests/Facilities/CacheSessionTest.php','packages/tenant-laravel/tests/Facilities/AtomicCacheAddTest.php','packages/tenant-laravel/tests/Facilities/SessionRecreationTest.php'])
     if stage=='integration':files.append('packages/tenant-laravel/tests/Http/SessionBindingTest.php')
     assert rows and files
     results=[]

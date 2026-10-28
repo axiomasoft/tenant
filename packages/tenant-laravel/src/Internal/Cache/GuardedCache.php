@@ -19,6 +19,20 @@ final readonly class GuardedCache implements Store, LockProvider
      */
     public function many(array $keys) { $this->guard->check(); return $this->store->many($keys); }
     public function put($key, $value, $seconds) { $this->guard->check(); return $this->store->put($key, $value, $seconds); }
+    /** Preserve RedisStore's atomic Lua add; Repository detects this optional method. */
+    public function add(string $key, mixed $value, int $seconds): bool
+    {
+        $this->guard->check();
+        if (method_exists($this->store, 'add')) {
+            $result = (\Closure::fromCallable([$this->store, 'add']))($key, $value, $seconds);
+            if (!is_bool($result)) throw new \LogicException('Invalid cache add result');
+            return $result;
+        }
+        // The qualified process-local ArrayStore has no native add operation.
+        if (!$this->store instanceof \Illuminate\Cache\ArrayStore) throw new TenantFailure('unsupported_capability');
+        if ($this->store->get($key) !== null) return false;
+        return $this->store->put($key, $value, $seconds);
+    }
     /** @param array<string, mixed> $values */
     public function putMany(array $values, $seconds) { $this->guard->check(); return $this->store->putMany($values, $seconds); }
     public function increment($key, $value = 1) { $this->guard->check(); return $this->store->increment($key, $value); }

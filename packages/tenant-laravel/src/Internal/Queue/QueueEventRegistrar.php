@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Tenant\Laravel\Internal\Queue;
 
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Queue\Events\{JobProcessing, JobAttempted};
+use Illuminate\Queue\Events\{JobProcessing, JobAttempted, JobFailed};
 
 /** @internal Verified locked Laravel12/13: processing precedes hydration; attempted follows failure/release callbacks. */
 final readonly class QueueEventRegistrar
@@ -12,12 +12,19 @@ final readonly class QueueEventRegistrar
     public function __construct(private QueueContextBoundary $boundary) {}
     public function boot(Dispatcher $events): void
     {
-        $events->listen(JobProcessing::class, function (JobProcessing $event): void {
+        $events->listen(JobProcessing::class, function (JobProcessing $event) use ($events): void {
             try { $this->boundary->processing($event->job); }
             catch (\Throwable $error) {
-                // Prevent Laravel's failure path from resolving/deserialising rejected jobs.
-                $event->job->markAsFailed();
-                $event->job->delete();
+                if (!$this->boundary->allowsFailureCallback($event->job)) {
+                    // Untrusted transport must never reach Job::failed()/hydration.
+                    // Persist the original raw payload through normal failed-job listeners
+                    // before deleting it, so quarantine remains observable and retryable.
+                    $event->job->markAsFailed();
+                    $events->dispatch(new JobFailed($event->connectionName, $event->job, $error));
+                    $event->job->delete();
+                }
+                // Valid transport keeps Laravel's release/backoff/max-attempt semantics.
+
                 throw $error;
             }
         });

@@ -44,20 +44,19 @@ final class TenantServiceProvider extends ServiceProvider
         });
         $this->app->singleton(\Tenant\Tenant::class, fn (Container $app) => new \Tenant\Tenant(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class)));
         $this->app->singleton(\Tenant\Laravel\Internal\Boundary\ProcessBoundary::class, fn (Container $app) => new \Tenant\Laravel\Internal\Boundary\ProcessBoundary(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class)));
-        if ($this->app->bound(\Tenant\Laravel\Queue\QueueRegistry::class)) {
-            $this->app->extend('queue', function ($original, Container $app) {
-                $control = FrameworkConfig::service($app, 'cache', \Illuminate\Cache\CacheManager::class)->store('central');
-                $manager = new \Tenant\Laravel\Internal\Queue\ControlQueueManager($this->container, $control);
-                (new \Illuminate\Queue\QueueServiceProvider($this->container))->registerConnectors($manager);
-                return $manager;
-            });
-            $this->app->afterResolving('queue.worker', function ($worker): void {
-                if ($worker instanceof \Illuminate\Queue\Worker) $worker->setCache(FrameworkConfig::service($this->container, 'cache', \Illuminate\Cache\CacheManager::class)->store('central'));
-            });
-            $this->app->singleton(\Tenant\Contracts\ContextCodec::class, fn () => new \Tenant\Laravel\Codec\JsonContextCodec());
-            $this->app->singleton(\Tenant\Laravel\Queue\ContextDispatcher::class, fn (Container $app) => new \Tenant\Laravel\Internal\Queue\LaravelContextDispatcher(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class), FrameworkConfig::service($app, \Tenant\Contracts\ContextCodec::class, \Tenant\Contracts\ContextCodec::class), FrameworkConfig::service($app, \Tenant\Laravel\Queue\QueueRegistry::class, \Tenant\Laravel\Queue\QueueRegistry::class), FrameworkConfig::service($app, 'queue', \Illuminate\Queue\QueueManager::class)));
-            $this->app->singleton(\Tenant\Laravel\Internal\Queue\QueueContextBoundary::class);
-        }
+        $this->app->extend('queue', function ($original, Container $app) {
+            if (!$app->bound(\Tenant\Laravel\Queue\QueueRegistry::class)) return $original;
+            $control = FrameworkConfig::service($app, 'cache', \Illuminate\Cache\CacheManager::class)->store('central');
+            $manager = new \Tenant\Laravel\Internal\Queue\ControlQueueManager($this->container, $control);
+            (new \Illuminate\Queue\QueueServiceProvider($this->container))->registerConnectors($manager);
+            return $manager;
+        });
+        $this->app->afterResolving('queue.worker', function ($worker): void {
+            if ($this->app->bound(\Tenant\Laravel\Queue\QueueRegistry::class) && $worker instanceof \Illuminate\Queue\Worker) $worker->setCache(FrameworkConfig::service($this->container, 'cache', \Illuminate\Cache\CacheManager::class)->store('central'));
+        });
+        $this->app->singleton(\Tenant\Contracts\ContextCodec::class, fn () => new \Tenant\Laravel\Codec\JsonContextCodec());
+        $this->app->singleton(\Tenant\Laravel\Queue\ContextDispatcher::class, fn (Container $app) => new \Tenant\Laravel\Internal\Queue\LaravelContextDispatcher(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class), FrameworkConfig::service($app, \Tenant\Contracts\ContextCodec::class, \Tenant\Contracts\ContextCodec::class), FrameworkConfig::service($app, \Tenant\Laravel\Queue\QueueRegistry::class, \Tenant\Laravel\Queue\QueueRegistry::class), FrameworkConfig::service($app, 'queue', \Illuminate\Queue\QueueManager::class)));
+        $this->app->singleton(\Tenant\Laravel\Internal\Queue\QueueContextBoundary::class);
         $this->app->scoped('tenant.storage', fn (Container $app) => new LocalStorage(FrameworkConfig::service($app, 'filesystem', \Illuminate\Filesystem\FilesystemManager::class), FrameworkConfig::service($app, SafeTenantRuntime::class, SafeTenantRuntime::class)->guard(), LaravelRuntimeFactory::descriptor($app)));
     }
     public function boot(): void
@@ -118,9 +117,21 @@ final class TenantServiceProvider extends ServiceProvider
         }
         // Materialize configured live store without IO so every transition swaps its handler.
         if ($config->get('tenant.facilities.session', true) && $config->get('session.driver') !== null) {
-            $store = FrameworkConfig::service($this->container, 'session', \Illuminate\Session\SessionManager::class)->driver();
-            if (!$store instanceof \Illuminate\Session\Store) throw new TenantFailure('facility_configuration');
-            $store->setHandler(new GuardedSessionHandler($store->getHandler(), FrameworkConfig::service($this->container, SessionGeneration::class, SessionGeneration::class)->checker()));
+            $sessions = FrameworkConfig::service($this->container, 'session', \Illuminate\Session\SessionManager::class);
+            $generation = FrameworkConfig::service($this->container, SessionGeneration::class, SessionGeneration::class);
+            // Manager custom creators survive forgetDrivers(). Return handlers so Laravel
+            // still constructs its normal Store/EncryptedStore from current config.
+            foreach (['file', 'redis'] as $driver) {
+                $sessions->extend($driver, function () use ($driver, $generation): GuardedSessionHandler {
+                    $fresh = (new \Illuminate\Session\SessionManager($this->container))->driver($driver);
+                    if (!$fresh instanceof \Illuminate\Session\Store) throw new TenantFailure('facility_configuration');
+                    return new GuardedSessionHandler($fresh->getHandler(), $generation->checker());
+                });
+            }
+            $sessions->driver();
+            foreach (FrameworkConfig::stores($sessions) as $store) {
+                if (!$store->getHandler() instanceof GuardedSessionHandler) $store->setHandler(new GuardedSessionHandler($store->getHandler(), $generation->checker()));
+            }
         }
         $this->app->afterResolving(\Illuminate\Contracts\Http\Kernel::class, function ($kernel): void {
             if ($kernel instanceof \Illuminate\Foundation\Http\Kernel) {

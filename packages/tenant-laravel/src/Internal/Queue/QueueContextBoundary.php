@@ -15,7 +15,9 @@ final class QueueContextBoundary
 {
     /** @var \WeakMap<Job, array{token: FrameToken, attempt: int, data: ScalarPayload|null}> */
     private \WeakMap $frames;
-    public function __construct(private readonly TenantRuntime $runtime, private readonly ContextCodec $codec, private readonly QueueRegistry $registry, private readonly ProcessBoundary $process) { $this->frames = new \WeakMap(); }
+    /** @var \WeakMap<Job, bool> Transport validated; framework failure callbacks are safe. */
+    private \WeakMap $trusted;
+    public function __construct(private readonly TenantRuntime $runtime, private readonly ContextCodec $codec, private readonly QueueRegistry $registry, private readonly ProcessBoundary $process) { $this->frames = new \WeakMap(); $this->trusted = new \WeakMap(); }
     public function processing(Job $job): void
     {
         $this->process->check();
@@ -30,6 +32,7 @@ final class QueueContextBoundary
             $selection = $this->registry->selection($this->codec->decode($data->wire), $data->handler);
             $purpose = $data->purpose;
         }
+        $this->trusted[$job] = true;
         if ($job->getConnectionName() !== 'sync') {
             $state = $this->runtime->current();
             if ($state->kind === 'missing') $this->runtime->enter(Selection::central($this->registry->centralProfile), new Purpose('tenant:worker'));
@@ -39,6 +42,12 @@ final class QueueContextBoundary
         $this->frames[$job] = ['token'=>$token,'attempt'=>$job->attempts(),'data'=>$data];
         // Fresh owning handler admission AFTER verified activation, BEFORE hydration/effect.
         if ($data !== null) $this->admit($data);
+    }
+    public function allowsFailureCallback(Job $job): bool
+    {
+        // Poison must stop before any destructive failure completion or ACK.
+        $this->process->check();
+        return $this->trusted[$job] ?? false;
     }
     private function admit(ScalarPayload $data): void
     {
@@ -65,6 +74,7 @@ final class QueueContextBoundary
     public function finished(Job $job, bool $successful): void
     {
         $this->process->check();
+        unset($this->trusted[$job]);
         $frame = $this->frames[$job] ?? null;
         if ($frame === null || $frame['attempt'] !== $job->attempts()) return;
         // A foreign/out-of-order/duplicate completion never pops another frame.

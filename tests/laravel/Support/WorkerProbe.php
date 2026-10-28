@@ -193,7 +193,16 @@ final class WorkerProbe
             $h->runtime->restore($outer);$this->check($h->runtime->current()->kind==='central','outer closes to worker Central');
             $this->dispatch('success','a');$this->worker();$this->check($h->runtime->current()->kind==='central','async ends explicit Central');
             $this->dispatch('success','central');$this->worker();
-            $this->dispatch('release','b');$this->worker();$this->check($h->app['queue']->size($this->queue)===1,'released pending');$this->worker();$this->check($h->app['queue']->size($this->queue)===0,'released retry completes');
+            $failedBefore=$h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->count();
+            $releaseStart=count($this->trace);
+            $this->dispatch('release','b');$this->worker(2);$this->check($h->app['queue']->size($this->queue)===1,'released pending');$this->worker(2);
+            $released=array_values(array_filter($this->trace,fn($r)=>$r[0]==='handle'&&$r[1]==='release'));
+            $this->check($released===[['handle','release','b',1],['handle','release','b',2]],'release executes both attempts in original B');
+            $callbacks=array_values(array_filter(array_slice($this->trace,$releaseStart),fn($r)=>$r[0]==='JobProcessed'));
+            $this->check($callbacks===[['JobProcessed','active','b'],['JobProcessed','active','b']],'both release attempts retain B through final framework callback');
+            $this->check($h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->count()===$failedBefore,'released retry has no failed entry');
+            $this->check($h->runtime->current()->kind==='central'&&$h->app['queue']->size($this->queue)===0,'released retry restores Central and completes');
+            $this->admissionFailures();
             $this->dispatch('throw','a');$this->worker();
             $this->dispatch('retry-once','a');$this->worker();
             $retry=$h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->orderByDesc('id')->first();
@@ -233,6 +242,34 @@ final class WorkerProbe
         }elseif(in_array($fixture,['WIRE-01','CODEC-01'],true)){$this->wire($codec,$d);}
         else throw new \LogicException('Unsupported fixture '.$fixture);
         return ['fixture'=>$fixture,'variant'=>$this->decorated?'decorator':'default','pid'=>getmypid(),'assertions'=>$this->assertions,'trace'=>$this->trace,'queue'=>$this->queue];
+    }
+    private function admissionFailures(): void
+    {
+        $h=$this->h;
+        foreach(['resolve','activate'] as $failure){
+            $before=count(array_filter($this->trace,fn($r)=>$r[0]==='handle'));
+            $failedBefore=$h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->count();
+            $this->dispatch('success','b');
+            if($failure==='resolve')$h->owner->available=false;else $this->fault->activate='database';
+            $this->worker(3);
+            $this->check(count(array_filter($this->trace,fn($r)=>$r[0]==='handle'))===$before,'pre-hydration '.$failure.' failure has no handler effect');
+            $this->check($h->app['queue']->size($this->queue)===1,'pre-hydration '.$failure.' failure preserves durable job for release');
+            $this->check($h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->count()===$failedBefore,'retryable failure is not prematurely failed');
+            $h->owner->available=true;$this->fault->activate=null;$this->worker(3);
+            $last=array_values(array_filter($this->trace,fn($r)=>$r[0]==='handle'));
+            $this->check(end($last)===['handle','success','b',2]&&$h->app['queue']->size($this->queue)===0,'recovered '.$failure.' retry performs original B effect at attempt2');
+        }
+        $this->dispatch('success','b');$this->fault->activate='database';
+        $this->worker(2);$this->worker(2);$this->fault->activate=null;
+        $failed=$h->app['db']->connection('central')->table('failed_jobs')->where('queue',$this->queue)->orderByDesc('id')->first();
+        $this->check($failed!==null&&$h->app['queue']->size($this->queue)===0,'exhausted activation failure persists failed job');
+        $payload=json_decode($failed->payload,true,flags:JSON_THROW_ON_ERROR);
+        $this->check(json_decode($payload['data']['wire'],true)['isolationId']==='b','failed activation keeps original signed B payload');
+        $cmd=new \Illuminate\Queue\Console\RetryCommand();$cmd->setLaravel($h->app);
+        $status=$cmd->run(new \Symfony\Component\Console\Input\ArrayInput(['id'=>[$failed->uuid]]),new \Symfony\Component\Console\Output\BufferedOutput());
+        $this->check($status===0,'queue:retry accepts failed activation UUID');$this->worker(2);
+        $last=array_values(array_filter($this->trace,fn($r)=>$r[0]==='handle'));
+        $this->check(end($last)===['handle','success','b',1]&&!$h->app['db']->connection('central')->table('failed_jobs')->where('uuid',$failed->uuid)->exists(),'failed activation retry actually executes in B and removes exact failure');
     }
     private function wire(JsonContextCodec $codec,ContextDispatcher $d): void
     {

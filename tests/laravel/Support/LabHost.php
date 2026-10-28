@@ -49,8 +49,9 @@ final class LabHost
         if ($decorate !== null) $app->instance('tenant.decorate', $decorate);
         $app->instance('tenant.observers', $observers);
         if ($diagnostics !== null) $app->instance('tenant.diagnostics', $diagnostics);
-        if ($queueSetup !== null) $queueSetup($this);
         $app->register(TenantServiceProvider::class);
+        // Host registration may follow auto-discovered adapter registration, before boot.
+        if ($queueSetup !== null) $queueSetup($this);
         $app->boot();
         $this->runtime = $app->make(TenantRuntime::class);
     }
