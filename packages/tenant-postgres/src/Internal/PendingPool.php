@@ -16,7 +16,7 @@ final readonly class PendingPool
 {
     /** @param Closure(Closure, ResourceSnapshot): \Tenant\Postgres\Internal\Database\TemplateClonePostgreSQLManager $clonerFactory
      * @param Closure(ResourceSnapshot): void $verifyBinding */
-    public function __construct(private Connection $connection, private TemplateIntegrityVerifier $integrity, private ProvisionJournal $journal, private Closure $clonerFactory, private Closure $verifyBinding, private Closure $databaseNameFor) {}
+    public function __construct(private Connection $connection, private TemplateIntegrityVerifier $integrity, private ProvisionJournal $journal, private Closure $clonerFactory, private Closure $verifyBinding, private Closure $databaseNameFor, private ?\Tenant\Postgres\Contracts\RecoveryAnchor $anchor=null) {}
 
     public function leastLoadedCluster(int $templateVersion): ?string
     {
@@ -29,7 +29,7 @@ final readonly class PendingPool
         if(! $this->journal->usesConnection($this->connection))throw new ClaimUnavailable('Pool and journal must share the catalog connection.');
         $admission->assertAllowed('provision',$intent->hostIntentRef);
         $pair=$this->connection->transaction(function()use($intent,$key,$admission):array{
-            $hash=$key->storageKey();$this->connection->select('SELECT pg_advisory_xact_lock(hashtextextended(?,0))',['tenant:provision-key:'.$hash]);
+            $hash=$key->storageKey();OperationKeys::lock($this->connection,$key,false);
             $old=$this->connection->table('tenant_pg_provision_attempts')->where('key_hash',$hash)->lockForUpdate()->first();
             if($old!==null){
                 $snapshot=new ResourceSnapshot($old->resource_ref,$old->incarnation,(int)$old->template_version,$old->cluster_id,$old->database_name);
@@ -43,7 +43,7 @@ final readonly class PendingPool
             $id=(string)Str::uuid7();$database=($this->databaseNameFor)($id);
             if(!is_string($database)||preg_match('/^[A-Za-z0-9_]{1,63}$/D',$database)!==1)throw new ClaimUnavailable('Invalid allocated database name.');
             $snapshot=new ResourceSnapshot('pg:'.$id,(string)Str::uuid7(),$intent->templateVersion,$intent->clusterId,$database);
-            $this->connection->table('tenant_pg_resources')->insert(['id'=>$id,'cluster_id'=>$intent->clusterId,'template_version'=>$intent->templateVersion,'status'=>'provisioning','resource_ref'=>$snapshot->resourceRef,'incarnation'=>$snapshot->incarnation,'database_name'=>$snapshot->databaseName,'route_revision'=>'1','recovery_generation'=>(string)Str::uuid7()]);
+            $this->connection->table('tenant_pg_resources')->insert(['id'=>$id,'cluster_id'=>$intent->clusterId,'template_version'=>$intent->templateVersion,'status'=>'provisioning','resource_ref'=>$snapshot->resourceRef,'incarnation'=>$snapshot->incarnation,'database_name'=>$snapshot->databaseName,'route_revision'=>'1','recovery_generation'=>$this->anchor===null?(string)Str::uuid7():AnchorHistory::assertCurrent($this->connection,$this->anchor)]);
             $this->connection->table('tenant_pg_clusters')->where('id',$intent->clusterId)->increment('database_count');
             return [$this->journal->register($intent,$key,$snapshot,$template->db_name,$admission),$snapshot];
         });

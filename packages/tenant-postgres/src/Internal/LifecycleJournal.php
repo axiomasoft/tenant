@@ -68,7 +68,7 @@ final readonly class LifecycleJournal
             }
             // Absence is accepted only after the original attempt was submitted and old backend excluded.
             if ($this->database($r->database_name)!==null) return $this->unknown($r);
-            $this->verifiedDeleteArchive($r);$fence();return $this->publish($r,null,'dropped');
+            $this->verifiedDeleteArchive($r);$this->assertPolicy($r);$fence();return $this->publish($r,null,'dropped');
         });
     }
     public function verifiedArchiveFor(ExportRef $ref, Admission $admission): ArchiveManifest
@@ -121,6 +121,7 @@ final readonly class LifecycleJournal
             $r=$this->find($id);
             try {
                 $this->checkpoint('before-effect',$r);$this->guard($r,$fence);$admission->assertAllowed($r->kind,$r->resource_ref);
+                $this->assertPolicy($r);
                 if ($this->find($id)->cancel_requested) return $this->publish($r,null,'none');
                 if ($r->kind==='export') {
                     $manifest=$this->archives->write($this->resource($r),$id,$r->export_id,$r->destination_ref);
@@ -200,6 +201,16 @@ final readonly class LifecycleJournal
     {
         $admission->assertAllowed($purpose,$ref->resourceRef);$r=$this->find($ref->operationId);
         if ($r->key_namespace!==$ref->namespace || $r->resource_ref!==$ref->resourceRef || $r->incarnation!==$ref->incarnation) throw new ClaimConflict('Original operation reference differs.');return $r;
+    }
+    private function assertPolicy(object $r): void
+    {
+        if ($r->kind==='export') $intent=new ExportIntent($r->resource_ref,$r->incarnation,$r->destination_ref,$r->retention_ref);
+        else {
+            $e=$r->export_ref===null?null:json_decode($r->export_ref,true,flags:JSON_THROW_ON_ERROR);
+            $ref=$e===null?null:new ExportRef($e['exportId'],new OperationRef(...$e['operation']));
+            $intent=new DeleteIntent($r->resource_ref,$r->incarnation,$ref,$r->purpose_ref);
+        }
+        if ($this->policy===null || ($this->policy)($r->kind,$intent,$this->resource($r,allowDeleted:true))!==true) throw new ClaimUnavailable('retention_history_missing: fresh policy refused');
     }
     private function configured(): void { if ($this->archives===null || $this->policy===null) throw new ClaimUnavailable('Qualified archive writer/verifier and explicit retention policy required.');$this->history(); }
     private function history(): string { return AnchorHistory::assertCurrent($this->connection,$this->recoveryAnchor()); }

@@ -14,7 +14,7 @@ use Tenant\Postgres\Exceptions\{ClaimConflict,ClaimUnavailable};
 final readonly class ClaimReceiptStore
 {
     /** @param Closure(object): void $verifyCurrentBinding A fresh physical verifier, not a wire-supplied callback. */
-    public function __construct(private Connection $connection, private ClaimResource $claims, private Closure $verifyCurrentBinding) {}
+    public function __construct(private Connection $connection, private ClaimResource $claims, private Closure $verifyCurrentBinding, private ?\Tenant\Postgres\Contracts\RecoveryAnchor $anchor=null) {}
 
     public function claim(ProvisionIntent $intent, OperationKey $key, Admission $admission): OperationReceipt
     {
@@ -23,6 +23,7 @@ final readonly class ClaimReceiptStore
         $digest=$intent->digest(); $storageKey=$key->storageKey();
         return $this->connection->transaction(function () use ($intent,$key,$admission,$digest,$storageKey): OperationReceipt {
             OperationKeys::lock($this->connection, $key, false);
+            if ($this->anchor!==null) AnchorHistory::assertCurrent($this->connection,$this->anchor);
             $existing=$this->connection->table('tenant_pg_operations')->where('key_hash',$storageKey)->lockForUpdate()->first();
             if ($existing !== null) {
                 if (! hash_equals($existing->intent_digest,$digest) || $existing->key_namespace !== $key->namespace || $existing->operation_key !== $key->key) throw new ClaimConflict('Operation key already binds a different intent.');
@@ -36,6 +37,7 @@ final readonly class ClaimReceiptStore
             $provision=$this->connection->table('tenant_pg_provision_attempts')->where('key_hash',$storageKey)->lockForUpdate()->first();
             if($provision!==null && (!hash_equals($provision->intent_digest,$digest)||$provision->status!=='succeeded'||$provision->resource_ref!==$resource->resource_ref||$provision->incarnation!==$resource->incarnation||(bool)$provision->cancel_requested)) throw new ClaimConflict('Original physical operation differs from claim.');
             $row=['id'=>$provision?->id ?? (string)Str::uuid7(),'key_hash'=>$storageKey,'key_namespace'=>$key->namespace,'operation_key'=>$key->key,'host_intent_ref'=>$intent->hostIntentRef,'intent_digest'=>$digest,'resource_id'=>$resource->id,'resource_ref'=>$resource->resource_ref,'incarnation'=>$resource->incarnation,'status'=>'succeeded','attempt_generation'=>$provision?->attempt_generation ?? 1,'receipt_version'=>$provision?->receipt_version ?? 1,'observed_effect'=>$provision?->observed_effect ?? 'verified_pool'];
+            if ($this->anchor!==null) AnchorHistory::remember($this->connection,$this->anchor,'tenant_pg_operations',$row);
             $this->connection->table('tenant_pg_operations')->insert($row);
             return $this->receipt((object)$row);
         });
@@ -56,6 +58,7 @@ final readonly class ClaimReceiptStore
 
     private function verified(object $row): OperationReceipt
     {
+        if ($this->anchor!==null) AnchorHistory::assertCurrent($this->connection,$this->anchor);
         $resource=$this->connection->table('tenant_pg_resources')->where('id',$row->resource_id)->first();
         if ($resource === null || $resource->deleted_at !== null || $resource->status === 'deleted' || $resource->resource_ref !== $row->resource_ref || $resource->incarnation !== $row->incarnation) throw new ClaimConflict('Original resource is unavailable or changed.');
         ($this->verifyCurrentBinding)($resource);

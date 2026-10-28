@@ -6,7 +6,9 @@
         "php": ">=8.4 <8.6",
         "ext-sodium": "*",
         "illuminate/database": "^12.0 || ^13.0",
-        "axiomasoft/tenant": "^1.0"
+        "axiomasoft/tenant": "^1.0",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*"
     },
     "autoload": {
         "psr-4": {

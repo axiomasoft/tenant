@@ -12,7 +12,7 @@ use Tenant\Postgres\Exceptions\ClaimUnavailable;
 final readonly class RecoveryOperator
 {
     /** @param Closure(object):array $managementRoute Owner-only route, restricted to the catalog server. */
-    public function __construct(private Connection $catalog, private LifecycleJournal $journal, private Closure $managementRoute, private string $runtimeRole) {}
+    public function __construct(private Connection $catalog, private LifecycleJournal $journal, private Closure $managementRoute, private string $runtimeRole, private ?Closure $runtimeRoute=null) {}
     public function admit(RecoveryIntent $intent, Admission $admission): RecoveryPlan
     {
         $admission->assertAllowed($intent->purpose,$intent->targetResourceRef);$generation=$this->journal->assertHistory();
@@ -45,6 +45,7 @@ final readonly class RecoveryOperator
      * Caller retains original operation history. Other resources remain quarantined pending reconciliation. */
     public function complete(RecoveryPlan $plan, string $generation, Admission $admission): ResourceRecovery
     {
+        if ($this->runtimeRoute===null) throw new ClaimUnavailable('Recovery requires actual runtime verification.');
         $intent=$plan->intent;$admission->assertAllowed($intent->purpose,$intent->targetResourceRef);
         if ($plan->intentDigest!==$intent->digest() || $generation===$plan->externalGeneration || $generation!==$this->journal->assertHistory()) throw new ClaimUnavailable('Recovery generation not advanced.');
         $currentArchive=$this->journal->verifiedArchiveFor($intent->archiveRef,$admission);
@@ -72,8 +73,44 @@ final readonly class RecoveryOperator
             if ($pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM tenant_binding')->fetchAll(\PDO::FETCH_ASSOC)!==[$expected]) throw new ClaimUnavailable('Replacement marker verification failed.');
             $fence();$this->journal->assertHistory();
             $this->catalog->table('tenant_pg_resources')->where('resource_ref',$row->resource_ref)->where('incarnation',$incarnation)->update(['status'=>'quarantined','deleted_at'=>null]);
-            return new ResourceRecovery($row->resource_ref,$incarnation,$revision,$generation);
+            $recovery=new ResourceRecovery($row->resource_ref,$incarnation,$revision,$generation);
+            $this->verifyReplacement($recovery);return $recovery;
         });
+    }
+    /** Explicit separate operator admission after complete() and host checks; no implicit grant. */
+    public function reopen(ResourceRecovery $recovery, Admission $admission): void
+    {
+        $admission->assertAllowed('recovery:reopen',$recovery->resourceRef);$this->journal->assertHistory();
+        $row=$this->catalog->table('tenant_pg_resources')->where('resource_ref',$recovery->resourceRef)->first() ?? throw new ClaimUnavailable('Unknown recovery target.');
+        (new PhysicalFence($this->catalog))->run($row->database_name,function(Closure $fence)use($recovery):void {
+            $this->verifyReplacement($recovery);$fence();
+            if ($this->catalog->table('tenant_pg_resources')->where('resource_ref',$recovery->resourceRef)->where('incarnation',$recovery->incarnation)->where('route_revision',$recovery->routeRevision)->where('recovery_generation',$recovery->recoveryGeneration)->where('status','quarantined')->update(['status'=>'ready'])!==1) throw new ClaimUnavailable('Recovery admission CAS failed.');
+        });
+    }
+    /** After a control-plane backup is restored, old generation stays closed until all retained
+     * receipts and old backends are reconciled. Missing history cannot be waived here. */
+    public function reconcileCatalogGeneration(string $generation, Admission $admission): void
+    {
+        $admission->assertAllowed('recovery:catalog','catalog');
+        $anchor=$this->journal->recoveryAnchor();
+        if ($generation!==$anchor->generation()) throw new ClaimUnavailable('External recovery generation differs.');
+        AnchorHistory::assertComplete($this->catalog,$anchor);
+        $names=$this->catalog->table('tenant_pg_resources')->orderBy('database_name')->pluck('database_name')->all();
+        $this->fenced($names,0,function()use($generation):void {
+            if ($this->catalog->table('tenant_pg_lifecycle_operations')->whereIn('status',['accepted','running','unknown'])->exists() || $this->catalog->table('tenant_pg_provision_attempts')->whereIn('status',['accepted','running','unknown'])->exists()) throw new ClaimUnavailable('Restored operations need reconciliation.');
+            $this->catalog->transaction(function()use($generation):void {
+                $this->catalog->table('tenant_pg_resources')->whereNull('deleted_at')->update(['status'=>'quarantined']);
+                $this->catalog->table('tenant_pg_control')->where('id',1)->update(['recovery_generation'=>$generation]);
+            });
+        });
+    }
+    private function verifyReplacement(ResourceRecovery $r): void
+    {
+        if ($this->runtimeRoute===null) throw new ClaimUnavailable('Recovery requires actual runtime verification.');
+        $row=$this->catalog->table('tenant_pg_resources')->where('resource_ref',$r->resourceRef)->first();
+        if ($row===null || $row->recovery_generation!==$r->recoveryGeneration || $r->recoveryGeneration!==$this->journal->assertHistory()) throw new ClaimUnavailable('Replacement generation differs.');
+        $verifier=new \Tenant\Postgres\Internal\PostgresBindingVerifier($this->catalog,$this->runtimeRoute,$this->journal->recoveryAnchor(),maintenance:true);
+        $verifier->verify(new \Tenant\Data\BindingVerificationInput(new \Tenant\Data\BindingExpectation($r->resourceRef,$r->incarnation,$r->routeRevision),new \Tenant\Postgres\Data\PhysicalAccess(($this->runtimeRoute)($row))));
     }
     private function target(RecoveryIntent $intent): object
     {

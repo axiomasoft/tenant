@@ -16,7 +16,7 @@ use Tenant\Postgres\Internal\Database\TemplateClonePostgreSQLManager;
 final readonly class ProvisionJournal
 {
     /** @param Closure(ResourceSnapshot): void $verifyBinding */
-    public function __construct(private Connection $connection, private TemplateIntegrityVerifier $integrity, private Closure $verifyBinding) {}
+    public function __construct(private Connection $connection, private TemplateIntegrityVerifier $integrity, private Closure $verifyBinding, private ?\Tenant\Postgres\Contracts\RecoveryAnchor $anchor=null) {}
 
     public function register(ProvisionIntent $intent, OperationKey $key, ResourceSnapshot $snapshot, string $templateDatabase, Admission $admission): OperationReceipt
     {
@@ -26,12 +26,14 @@ final readonly class ProvisionJournal
         $keyHash=$key->storageKey();$digest=$intent->digest();
         return $this->connection->transaction(function()use($intent,$key,$snapshot,$templateDatabase,$keyHash,$digest):OperationReceipt{
             OperationKeys::lock($this->connection, $key, false);
+            if ($this->anchor!==null) AnchorHistory::assertCurrent($this->connection,$this->anchor);
             $r=$this->connection->table('tenant_pg_provision_attempts')->where('key_hash',$keyHash)->lockForUpdate()->first();
             if($r!==null){
                 if($r->key_namespace!==$key->namespace||$r->operation_key!==$key->key||!hash_equals($r->intent_digest,$digest)||$r->resource_ref!==$snapshot->resourceRef||$r->incarnation!==$snapshot->incarnation||$r->database_name!==$snapshot->databaseName||$r->template_database!==$templateDatabase)throw new ClaimConflict('Original provision target differs.');
                 return $this->receipt($r);
             }
             $r=['id'=>(string)Str::uuid7(),'key_hash'=>$keyHash,'key_namespace'=>$key->namespace,'operation_key'=>$key->key,'intent_digest'=>$digest,'host_intent_ref'=>$intent->hostIntentRef,'resource_ref'=>$snapshot->resourceRef,'incarnation'=>$snapshot->incarnation,'cluster_id'=>$intent->clusterId,'template_id'=>$intent->templateId,'template_version'=>$intent->templateVersion,'manifest_hash'=>$intent->manifestHash,'template_database'=>$templateDatabase,'database_name'=>$snapshot->databaseName,'status'=>'accepted','attempt_generation'=>0,'receipt_version'=>1,'observed_effect'=>'none','cancel_requested'=>false];
+            if ($this->anchor!==null) AnchorHistory::remember($this->connection,$this->anchor,'tenant_pg_provision_attempts',$r);
             $this->connection->table('tenant_pg_provision_attempts')->insert($r);return $this->receipt((object)$r);
         });
     }
@@ -119,6 +121,10 @@ final readonly class ProvisionJournal
 
     private function verifyTemplate(object $r): void
     {
+        if ($this->anchor!==null) {
+            $generation=AnchorHistory::assertCurrent($this->connection,$this->anchor);
+            if ($this->connection->table('tenant_pg_resources')->where('resource_ref',$r->resource_ref)->value('recovery_generation')!==$generation) throw new ClaimUnavailable('Stale recovery generation.');
+        }
         $q=$this->integrity->qualify(new ClaimRequest('reconcile',$r->cluster_id,$r->template_id,$r->intent_digest));
         if($q->templateVersion!==(int)$r->template_version || !hash_equals($r->manifest_hash,$q->artifactDigest))throw new ClaimUnavailable('Frozen template proof changed.');
     }
