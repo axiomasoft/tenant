@@ -28,3 +28,34 @@ it('retains the outer lease on savepoint rollback and discards rolled back callb
     });
     expect($callbacks)->toBe(0)->and($h->runtime->current()->kind)->toBe('missing');
 });
+
+it('releases the committed lease before callbacks on nested transaction records', function (): void {
+    $manifest = json_decode(file_get_contents(getenv('TENANT_LAB_MANIFEST')), true, flags: JSON_THROW_ON_ERROR);
+    foreach (['manual', 'helper'] as $mode) {
+        $host = new \TenantLab\LabHost($manifest);
+        $calls = 0;
+        $host->runtime->run($host->selection('a'), $host->purpose(), function () use ($host, $mode, &$calls): void {
+            $connection = $host->db();
+            $body = function () use ($connection, $host, &$calls): void {
+                $connection->transaction(function () use ($connection, $host, &$calls): void {
+                    $connection->afterCommit(function () use ($host, &$calls): void {
+                        $host->runtime->run($host->selection('b'), $host->purpose(), function () use ($host, &$calls): void {
+                            expect($host->db()->table('probes')->where('name', 'identity')->value('value'))->toBe('b');
+                            $calls++;
+                        });
+                    });
+                });
+                expect(fn () => $host->runtime->enter($host->selection('b'), $host->purpose()))
+                    ->toThrow(\Tenant\Exceptions\OpenResource::class);
+            };
+            if ($mode === 'manual') {
+                $connection->beginTransaction();
+                $body();
+                $connection->commit();
+            } else {
+                $connection->transaction($body);
+            }
+        });
+        expect($calls)->toBe(1)->and($host->runtime->current()->kind)->toBe('missing');
+    }
+});

@@ -39,10 +39,12 @@ final class GuardedConnection extends PostgresConnection
     }
     protected function fireConnectionEvent($event)
     {
-        if ($event === 'beganTransaction' && $this->transactions === 1 && $this->transactionsManager !== null) {
+        if ($event === 'beganTransaction' && $this->transactionsManager !== null) {
             // Laravel records the transaction before this event. Register first,
             // before host listeners: PDO commit must complete before the lease
             // closes, and the lease must close before user afterCommit callbacks.
+            // Laravel executes child records before their parent. Every savepoint
+            // needs this first callback, while only the outermost commit releases.
             $this->transactionsManager->addCallback(function (): void {
                 if ($this->transactions === 0) {
                     $release = $this->transactionRelease;
