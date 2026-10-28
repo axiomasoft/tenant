@@ -5,7 +5,7 @@ ROOT=pathlib.Path(__file__).resolve().parents[2];PLAN=ROOT/'plans/2026.10.24-№
 def sha(p):return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()
 def save(p,x):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(x,ensure_ascii=False,indent=2)+'\n')
 def fixtureproof():
- fixture_stages={'LIFE-01':['receipt-race-lab','receipt-conflicts','receipt-unique-race','fallback-lab'],'LIFE-02':['template-lab','clone-lab','negative-template','replay-lab','template-replay-drift','marker-privileges'],'LIFE-03':['provision-lab','provision-cancel','provision-late','provision-precreate','provision-poststamp','pool-lab'],'LIFE-DELETED-01':['receipt-deleted']}
+ fixture_stages={'LIFE-01':['receipt-race-lab','receipt-conflicts','receipt-unique-race','fallback-lab'],'LIFE-02':['template-lab','clone-lab','negative-template','replay-lab','template-replay-drift','marker-privileges'],'LIFE-03':['provision-lab','provision-cancel','provision-late','provision-precreate','provision-poststamp','pool-lab','pool-progress'],'LIFE-DELETED-01':['receipt-deleted']}
  out={}
  for fixture,stages in fixture_stages.items():
   checks=[]
@@ -16,7 +16,7 @@ def fixtureproof():
     if path.startswith('packages/tenant-postgres/'):assert sha(ROOT/path)==digest,('source changed',path)
    bystage={x['stage']:x for x in result['checks']}
    for stage in stages:
-    x=bystage[stage];log=pathlib.Path(x['log']);assert x['status']=='passed' and x['exit']==0 and sha(log)==x['sha256']
+    x=json.loads((folder/'pool-progress.json').read_text()) if stage=='pool-progress' else bystage[stage];log=pathlib.Path(x['log']);assert x['status']=='passed' and x['exit']==0 and sha(log)==x['sha256']
     text=log.read_text();assert '"status"' in text and 'passed' in text
     checks.append({'lane':lane,'stage':stage,'path':'@plan/'+str(log.resolve().relative_to(PLAN.resolve())),'sha256':sha(log),'observation':text.strip(),'exit':0})
    install=bystage['package-install'];assert install['exit']==0 and sha(install['log'])==install['sha256']
@@ -66,6 +66,7 @@ def reuse():
    else:target='clone-lab.php'
   elif src=='PendingPoolTest.php':
    if 'fixture left behind' in name:disposition='not-applicable';reason='Legacy test deletes a fixed fixture; disposable unique labs quarantine unknown outcomes and never blind-drop an interrupted fixture.';target='provision-precreate.py'
+   elif 'before provisioning completes' in name:target='pool-progress.py'
    elif 'empty pool' in name:target='fallback-lab.php'
    elif 'concurrent' in name:target='receipt-unique-race.py'
    else:target='pool-lab.php'
