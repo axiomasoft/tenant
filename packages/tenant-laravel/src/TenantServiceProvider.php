@@ -43,10 +43,31 @@ final class TenantServiceProvider extends ServiceProvider
             return $runtime;
         });
         $this->app->singleton(\Tenant\Tenant::class, fn (Container $app) => new \Tenant\Tenant(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class)));
+        $this->app->singleton(\Tenant\Laravel\Internal\Boundary\ProcessBoundary::class, fn (Container $app) => new \Tenant\Laravel\Internal\Boundary\ProcessBoundary(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class)));
+        if ($this->app->bound(\Tenant\Laravel\Queue\QueueRegistry::class)) {
+            $this->app->extend('queue', function ($original, Container $app) {
+                $control = FrameworkConfig::service($app, 'cache', \Illuminate\Cache\CacheManager::class)->store('central');
+                $manager = new \Tenant\Laravel\Internal\Queue\ControlQueueManager($this->container, $control);
+                (new \Illuminate\Queue\QueueServiceProvider($this->container))->registerConnectors($manager);
+                return $manager;
+            });
+            $this->app->afterResolving('queue.worker', function ($worker): void {
+                if ($worker instanceof \Illuminate\Queue\Worker) $worker->setCache(FrameworkConfig::service($this->container, 'cache', \Illuminate\Cache\CacheManager::class)->store('central'));
+            });
+            $this->app->singleton(\Tenant\Contracts\ContextCodec::class, fn () => new \Tenant\Laravel\Codec\JsonContextCodec());
+            $this->app->singleton(\Tenant\Laravel\Queue\ContextDispatcher::class, fn (Container $app) => new \Tenant\Laravel\Internal\Queue\LaravelContextDispatcher(FrameworkConfig::service($app, TenantRuntime::class, TenantRuntime::class), FrameworkConfig::service($app, \Tenant\Contracts\ContextCodec::class, \Tenant\Contracts\ContextCodec::class), FrameworkConfig::service($app, \Tenant\Laravel\Queue\QueueRegistry::class, \Tenant\Laravel\Queue\QueueRegistry::class), FrameworkConfig::service($app, 'queue', \Illuminate\Queue\QueueManager::class)));
+            $this->app->singleton(\Tenant\Laravel\Internal\Queue\QueueContextBoundary::class);
+        }
         $this->app->scoped('tenant.storage', fn (Container $app) => new LocalStorage(FrameworkConfig::service($app, 'filesystem', \Illuminate\Filesystem\FilesystemManager::class), FrameworkConfig::service($app, SafeTenantRuntime::class, SafeTenantRuntime::class)->guard(), LaravelRuntimeFactory::descriptor($app)));
     }
     public function boot(): void
     {
+        if ($this->app->bound(\Tenant\Laravel\Queue\QueueRegistry::class)) {
+            $this->protectBinding(\Tenant\Laravel\Queue\QueueRegistry::class, FrameworkConfig::service($this->container, \Tenant\Laravel\Queue\QueueRegistry::class, \Tenant\Laravel\Queue\QueueRegistry::class));
+            $queueConfig = FrameworkConfig::service($this->container, 'config', \Illuminate\Contracts\Config\Repository::class);
+            if ($queueConfig->get('queue.failed.database') !== $queueConfig->get('tenant.central_connection') || $queueConfig->get('queue.connections.database.driver') !== 'database' || $queueConfig->get('queue.connections.database.connection') !== $queueConfig->get('tenant.central_connection') || $queueConfig->get('queue.connections.database.after_commit') !== false || $queueConfig->get('queue.connections.sync.after_commit') !== false) throw new TenantFailure('facility_configuration');
+            (new \Tenant\Laravel\Internal\Queue\QueueEventRegistrar(FrameworkConfig::service($this->container, \Tenant\Laravel\Internal\Queue\QueueContextBoundary::class, \Tenant\Laravel\Internal\Queue\QueueContextBoundary::class)))->boot(FrameworkConfig::service($this->container, 'events', \Illuminate\Contracts\Events\Dispatcher::class));
+        }
         // Validate before altering default framework access. Explicit central names remain fixed.
         FrameworkConfig::service($this->container, TenantRuntime::class, TenantRuntime::class);
         $owner = FrameworkConfig::service($this->container, SafeTenantRuntime::class, SafeTenantRuntime::class);

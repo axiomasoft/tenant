@@ -15,7 +15,7 @@ final class LabHost
     public readonly Application $app;
     public readonly LabBindingOwner $owner;
     public readonly TenantRuntime $runtime;
-    public function __construct(public readonly array $manifest, string $session = 'file', ?\Closure $compose = null, ?\Closure $decorate = null, array $observers = [], ?\Tenant\Contracts\DiagnosticSink $diagnostics = null)
+    public function __construct(public readonly array $manifest, string $session = 'file', ?\Closure $compose = null, ?\Closure $decorate = null, array $observers = [], ?\Tenant\Contracts\DiagnosticSink $diagnostics = null, ?\Closure $queueSetup = null)
     {
         $credentials = json_decode(file_get_contents($manifest['credentials']), true, flags: JSON_THROW_ON_ERROR);
         $this->owner = new LabBindingOwner($manifest, $credentials);
@@ -49,6 +49,7 @@ final class LabHost
         if ($decorate !== null) $app->instance('tenant.decorate', $decorate);
         $app->instance('tenant.observers', $observers);
         if ($diagnostics !== null) $app->instance('tenant.diagnostics', $diagnostics);
+        if ($queueSetup !== null) $queueSetup($this);
         $app->register(TenantServiceProvider::class);
         $app->boot();
         $this->runtime = $app->make(TenantRuntime::class);

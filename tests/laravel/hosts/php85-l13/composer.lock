@@ -4,14 +4,14 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "341ddf87d762db07e39d679fb852e091",
+    "content-hash": "3493583e518f8ed2430cfc654bdb03ff",
     "packages": [
         {
             "name": "axiomasoft/tenant",
             "version": "1.0.0",
             "dist": {
                 "type": "zip",
-                "url": "/home/vostrikov/projects/packages/tenant/plans/2026.10.24-№1-TENANT/artifacts/P3.1/archive/f55a603948b72afc209d/tenant.zip",
+                "url": "/home/vostrikov/projects/packages/tenant/plans/2026.10.24-№1-TENANT/artifacts/P3.2/archive/e02bfb8ad16c92da04bc/tenant.zip",
                 "shasum": "6bdf40ae8ddd52bb3e29962b21561e414f03ec6d"
             },
             "require": {
@@ -31,15 +31,19 @@
             "version": "1.0.0",
             "dist": {
                 "type": "zip",
-                "url": "/home/vostrikov/projects/packages/tenant/plans/2026.10.24-№1-TENANT/artifacts/P3.1/archive/f55a603948b72afc209d/tenant-laravel.zip",
-                "shasum": "d304b4e37d5d36b469c9b8f173faece962d674df"
+                "url": "/home/vostrikov/projects/packages/tenant/plans/2026.10.24-№1-TENANT/artifacts/P3.2/archive/e02bfb8ad16c92da04bc/tenant-laravel.zip",
+                "shasum": "aab49b9e44efa739b57883198f759761469c7751"
             },
             "require": {
                 "axiomasoft/tenant": "^1.0",
+                "ext-intl": "*",
+                "ext-posix": "*",
                 "illuminate/cache": "^12.0 || ^13.0",
                 "illuminate/database": "^12.0 || ^13.0",
+                "illuminate/events": "^12.0 || ^13.0",
                 "illuminate/filesystem": "^12.0 || ^13.0",
                 "illuminate/http": "^12.0 || ^13.0",
+                "illuminate/queue": "^12.0 || ^13.0",
                 "illuminate/session": "^12.0 || ^13.0",
                 "illuminate/support": "^12.0 || ^13.0",
                 "laravel/framework": "^12.0 || ^13.0",

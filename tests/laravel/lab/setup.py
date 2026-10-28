@@ -1,5 +1,8 @@
-import pathlib,secrets,json,subprocess,os,time,hashlib,ipaddress
-P=pathlib.Path('plans/2026.10.24-№1-TENANT/artifacts/P3.1')
+import pathlib,secrets,json,subprocess,os,time,hashlib,ipaddress,argparse
+parser=argparse.ArgumentParser();parser.add_argument('--item',choices=['P3.1','P3.2'],default='P3.1');args=parser.parse_args()
+P=pathlib.Path('plans/2026.10.24-№1-TENANT/artifacts')/args.item
+P.mkdir(parents=True,exist_ok=True)
+assert not (P/'lab-manifest.json').exists(), 'Do not overwrite an existing immutable lab manifest'
 def run(args,**kw):return subprocess.check_output(args,text=True,**kw).strip()
 id=secrets.token_hex(6);name='tenant_lab_'+id
 root=pathlib.Path('/tmp')/name;root.mkdir(mode=0o700)
@@ -18,7 +21,7 @@ compose=['docker','compose','--env-file',str(root/'compose.env'),'-f',str(pathli
 subprocess.run(compose+['up','-d'],check=True,stdout=subprocess.DEVNULL)
 containers={k:run(compose+['ps','-q',k]) for k in ['pg','redis']}
 for i in range(100):
- q=subprocess.run(['docker','exec',containers['pg'],'pg_isready','-U',admin,'-d',dbs['central']],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+ q=subprocess.run(['docker','exec',containers['pg'],'pg_isready','-h','127.0.0.1','-U',admin,'-d',dbs['central']],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  if q.returncode==0:break
  time.sleep(.2)
 else:raise RuntimeError('PG not ready')
@@ -41,6 +44,12 @@ for key,db in dbs.items():
  GRANT USAGE ON SCHEMA public TO {runtime};
  GRANT SELECT ON tenant_binding TO {runtime};
  GRANT SELECT,INSERT,UPDATE,DELETE ON probes TO {runtime};''')
+if args.item=='P3.2':
+ sql(dbs['central'],f'''CREATE TABLE jobs (id bigserial PRIMARY KEY, queue varchar(255) NOT NULL, payload text NOT NULL, attempts smallint NOT NULL, reserved_at bigint NULL, available_at bigint NOT NULL, created_at bigint NOT NULL);
+ CREATE INDEX jobs_queue_idx ON jobs(queue);
+ CREATE TABLE failed_jobs (id bigserial PRIMARY KEY, uuid varchar(255) UNIQUE NOT NULL, connection text NOT NULL, queue text NOT NULL, payload text NOT NULL, exception text NOT NULL, failed_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP);
+ GRANT SELECT,INSERT,UPDATE,DELETE ON jobs,failed_jobs TO {runtime};
+ GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA public TO {runtime};''')
 ports={k:int(run(['docker','port',containers[k],port]).split(':')[-1]) for k,port in [('pg','5432/tcp'),('redis','6379/tcp')]}
 secret={'runtimePassword':runtime_password,'adminPassword':password};(root/'credentials.json').write_text(json.dumps(secret));(root/'credentials.json').chmod(0o600)
 inspect={k:json.loads(run(['docker','inspect',v]))[0] for k,v in containers.items()}
