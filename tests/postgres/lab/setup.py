@@ -3,7 +3,9 @@
 import hashlib, ipaddress, json, os, pathlib, secrets, subprocess, time
 
 ROOT=pathlib.Path(__file__).resolve().parents[3]
-ART=ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1'
+ART=pathlib.Path(os.environ.get('P41_ARTIFACT_DIR',str(ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1'))).resolve()
+allowed=(ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1').resolve()
+if ART!=allowed and allowed not in ART.parents: raise SystemExit('Unsafe artifact directory')
 ART.mkdir(parents=True, exist_ok=True)
 manifest=ART/'lab-manifest.json'
 if manifest.exists(): raise SystemExit('Refusing to overwrite lab manifest')

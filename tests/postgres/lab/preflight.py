@@ -2,7 +2,7 @@
 """Fail closed unless this is the uniquely created P4.1 PG16 test server."""
 import json, os, pathlib, re, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[3]
-m=json.loads((ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1/lab-manifest.json').read_text())
+m=json.loads(pathlib.Path(os.environ.get('P41_MANIFEST',str(ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1/lab-manifest.json'))).read_text())
 assert re.fullmatch(r'[0-9a-f]{12}',m['runId'])
 name='tenant_p41_'+m['runId']; assert m['project']==name and m['central']==name+'_central_test'
 assert m['admin']==name+'_admin' and m['runtime']==name+'_runtime' and m['host']=='127.0.0.1'
@@ -22,5 +22,5 @@ assert sql("SELECT count(*) FROM pg_database WHERE datname='"+m['central']+"'")=
 assert sql("SELECT rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication FROM pg_roles WHERE rolname='"+m['runtime']+"'")=='f'
 credentials=json.loads(secret.read_text());env={**os.environ,'P41_HOST':m['host'],'P41_PORT':str(m['port']),'P41_DB':m['central'],'P41_USER':m['runtime'],'P41_PASSWORD':credentials['runtimePassword']}
 php='''$p=new PDO("pgsql:host=".getenv("P41_HOST").";port=".getenv("P41_PORT").";dbname=".getenv("P41_DB"),getenv("P41_USER"),getenv("P41_PASSWORD"),[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$r=$p->query("select current_database(),current_user,current_setting('server_version_num')")->fetch(PDO::FETCH_NUM);if($r[0]!==getenv("P41_DB")||$r[1]!==getenv("P41_USER")||!str_starts_with($r[2],"16"))exit(1);if($p->query("select has_schema_privilege(current_user, 'public', 'CREATE')")->fetchColumn())exit(2);'''
-subprocess.run(['php','-r',php],env=env,check=True)
+subprocess.run([os.environ.get('P41_PHP','php'),'-r',php],env=env,check=True)
 print(json.dumps({'status':'passed','mode':'host','container':m['container'],'systemIdentifier':m['systemIdentifier'],'database':m['central'],'runtime':m['runtime'],'version':m['version']}))

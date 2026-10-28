@@ -11,5 +11,7 @@ final readonly class ClaimRequest
         public string $clusterId,
         public string $templateId,
         public string $requestDigest,
+        public ?int $expectedTemplateVersion = null,
+        public ?string $expectedManifestHash = null,
     ) {}
 }

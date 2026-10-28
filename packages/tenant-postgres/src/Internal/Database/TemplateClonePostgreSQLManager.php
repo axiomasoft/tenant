@@ -24,6 +24,7 @@ final readonly class TemplateClonePostgreSQLManager
         private TemplateIntegrityVerifier $integrity,
         private Closure $verifyBinding,
         private Closure $stampNewBinding,
+        private ?Closure $assertFence = null,
     ) {}
 
     public function createOrVerify(ResourceSnapshot $snapshot, string $templateDatabase): bool
@@ -33,6 +34,7 @@ final readonly class TemplateClonePostgreSQLManager
         if ($snapshot->databaseName === $templateDatabase) throw new RuntimeException('Template and target must differ.');
         if ($this->connection->transactionLevel() !== 0) throw new RuntimeException('Clone must run outside a transaction.');
 
+        $this->fence();
         $template = $this->integrity->assertCurrent($snapshot->templateVersion, $snapshot->clusterId);
         $lockKey = 'corex-template-integrity:'.$template->id;
         // Hold the same upstream lock on the DDL session until verification completes.
@@ -47,14 +49,32 @@ final readonly class TemplateClonePostgreSQLManager
             }
 
             // No automatic CREATE retry: a lost connection may conceal a committed DDL.
+            $this->fence();
             $this->connection->statement('CREATE DATABASE "'.$snapshot->databaseName.'" TEMPLATE "'.$templateDatabase.'" STRATEGY WAL_LOG');
+            $this->fence();
             ($this->stampNewBinding)($snapshot);
+            $this->fence();
             $this->integrity->verifyAccount($snapshot);
             ($this->verifyBinding)($snapshot);
             return true;
         } finally {
             $this->connection->select('SELECT pg_advisory_unlock(hashtextextended(?, 0))', [$lockKey]);
         }
+    }
+
+    public function usesFence(Closure $fence): bool
+    {
+        return $this->assertFence === $fence;
+    }
+
+    public function usesConnection(Connection $connection): bool
+    {
+        return $this->connection === $connection;
+    }
+
+    private function fence(): void
+    {
+        if ($this->assertFence !== null) ($this->assertFence)();
     }
 
     private function databaseExists(string $name): bool

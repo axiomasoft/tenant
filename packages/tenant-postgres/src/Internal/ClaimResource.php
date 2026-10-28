@@ -11,6 +11,7 @@ use Tenant\Postgres\Data\ClaimResult;
 use Tenant\Postgres\Data\QualifiedTemplate;
 use Tenant\Postgres\Exceptions\ClaimConflict;
 use Tenant\Postgres\Exceptions\ClaimUnavailable;
+use Tenant\Postgres\Exceptions\PoolExhausted;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\QueryException;
@@ -95,7 +96,7 @@ final readonly class ClaimResource implements ProvisioningClaim
             ->first();
 
         if ($candidate === null) {
-            throw new ClaimUnavailable('No qualified pending account is available.');
+            throw new PoolExhausted('No qualified pending resource is available.');
         }
 
         $updated = $connection->update(
@@ -170,7 +171,9 @@ final readonly class ClaimResource implements ProvisioningClaim
         if ($qualifiedTemplate->clusterId !== $request->clusterId
             || $qualifiedTemplate->templateId !== $request->templateId
             || $qualifiedTemplate->templateVersion < 1
-            || preg_match('/^[a-f0-9]{64}$/D', $qualifiedTemplate->artifactDigest) !== 1) {
+            || preg_match('/^[a-f0-9]{64}$/D', $qualifiedTemplate->artifactDigest) !== 1
+            || ($request->expectedTemplateVersion !== null && $qualifiedTemplate->templateVersion !== $request->expectedTemplateVersion)
+            || ($request->expectedManifestHash !== null && ! hash_equals($request->expectedManifestHash, $qualifiedTemplate->artifactDigest))) {
             throw new ClaimUnavailable('The template proof does not match the request.');
         }
     }
@@ -211,6 +214,11 @@ final readonly class ClaimResource implements ProvisioningClaim
         $code = $previous?->getCode();
 
         return is_string($code) && $code !== '' ? $code : null;
+    }
+
+    public function usesConnection(Connection $connection): bool
+    {
+        return $this->connection() === $connection;
     }
 
     private function connection(): Connection
