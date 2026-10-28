@@ -61,14 +61,10 @@ final readonly class RecoveryOperator
             $incarnation=(string)\Illuminate\Support\Str::uuid7();$revision=(string)\Illuminate\Support\Str::uuid7();
             // Durable claim before the marker changes; partial completion stays quarantined.
             if ($this->catalog->table('tenant_pg_resources')->where('resource_ref',$row->resource_ref)->where('incarnation',$row->incarnation)->update(['status'=>'recovering','incarnation'=>$incarnation,'route_revision'=>$revision,'recovery_generation'=>$generation])!==1) throw new ClaimUnavailable('Recovery target changed.');
-            $pdo->beginTransaction();
-            try {
-                $q=$pdo->prepare('UPDATE tenant_binding SET resource_ref=?,incarnation=?,recovery_generation=? WHERE resource_ref=? AND incarnation=? AND recovery_generation=?');
-                $q->execute([$row->resource_ref,$incarnation,$generation,$marker['resource_ref'],$marker['incarnation'],$marker['recovery_generation']]);
-                if ($q->rowCount()!==1) throw new ClaimUnavailable('Marker CAS failed.');
-                $pdo->exec('REVOKE ALL ON tenant_binding FROM PUBLIC');$pdo->exec('REVOKE ALL ON tenant_binding FROM "'.$this->runtimeRole.'"');$pdo->exec('GRANT SELECT ON tenant_binding TO "'.$this->runtimeRole.'"');
-                $fence();$pdo->commit();
-            } catch (\Throwable $e) { if ($pdo->inTransaction()) $pdo->rollBack();throw $e; }
+            // Reuse the P4.1 exact-marker CAS writer; restore is a different expected
+            // source marker, not a second stamping engine.
+            $writer=new \Tenant\Postgres\Internal\Database\MarkerWriter(new \Illuminate\Database\Connectors\ConnectionFactory(new \Illuminate\Container\Container),$route,$this->runtimeRole,$generation,$marker,$fence);
+            $writer->stamp(new \Tenant\Postgres\Data\ResourceSnapshot($row->resource_ref,$incarnation,(int)$row->template_version,$row->cluster_id,$row->database_name));
             $expected=['protocol'=>'tenant.binding/1','owner_id'=>'tenant-postgres','resource_ref'=>$row->resource_ref,'incarnation'=>$incarnation,'recovery_generation'=>$generation];
             if ($pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM tenant_binding')->fetchAll(\PDO::FETCH_ASSOC)!==[$expected]) throw new ClaimUnavailable('Replacement marker verification failed.');
             $fence();$this->journal->assertHistory();
