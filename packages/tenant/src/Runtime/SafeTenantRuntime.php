@@ -233,7 +233,12 @@ final class SafeTenantRuntime implements TenantRuntime
             finally { $this->transition = false; }
         } finally {
             if ($this->fatal !== null) {
-                if ($original !== null && $original !== $this->fatal) throw new TenantFailure($this->fatal->reason(), [$original, $this->fatal]);
+                if ($original !== null && $original !== $this->fatal) {
+                    $causes = [$original, ...$this->fatal->causes()];
+                    throw $this->fatal instanceof \Tenant\Exceptions\FrameLeak
+                        ? new \Tenant\Exceptions\FrameLeak($causes)
+                        : new \Tenant\Exceptions\ContextRestoreFailed($causes);
+                }
                 throw $this->fatal;
             }
             $top = $this->frames[count($this->frames) - 1] ?? null;

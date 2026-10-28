@@ -134,6 +134,14 @@ final class Scenarios
             Check::reason(fn () => $x->tenant->run(RuntimeRig::selection('B'), RuntimeRig::purpose(), fn () => true), 'restore_failed');
             return 'caught';
         }), 'restore_failed');
+        $x = new RuntimeRig($r->decorated); $afterCatch = new \LogicException('outer callback after caught fatal'); $cleanup = new \RuntimeException('inner cleanup');
+        $failure = Check::reason(fn () => $x->tenant->run(RuntimeRig::selection('A'), RuntimeRig::purpose(), function () use ($x, $afterCatch, $cleanup): never {
+            $x->failures['restore:db:B'] = $cleanup;
+            Check::reason(fn () => $x->tenant->run(RuntimeRig::selection('B'), RuntimeRig::purpose(), fn () => true), 'restore_failed');
+            throw $afterCatch;
+        }), 'restore_failed');
+        Check::truth($failure instanceof \Tenant\Exceptions\ContextRestoreFailed, 'typed fatal remains typed after a caught nested fatal');
+        Check::same($failure->causes(), [$afterCatch, $cleanup]);
     }
 
     public static function lifetime(RuntimeRig $r): void
