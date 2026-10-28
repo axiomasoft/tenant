@@ -1,0 +1,25 @@
+# The harness supplies exact digest images, names, credentials and unique volumes.
+services:
+  pg:
+    image: ${TENANT_PG_IMAGE:?}
+    environment:
+      POSTGRES_USER: ${TENANT_ADMIN:?}
+      POSTGRES_PASSWORD: ${TENANT_ADMIN_PASSWORD:?}
+      POSTGRES_DB: ${TENANT_CENTRAL_DB:?}
+    ports: ["127.0.0.1::5432"]
+    volumes: ["pg:/var/lib/postgresql/data"]
+    networks: [lab]
+  redis:
+    image: ${TENANT_REDIS_IMAGE:?}
+    ports: ["127.0.0.1::6379"]
+    volumes: ["redis:/data"]
+    networks: [lab]
+volumes:
+  pg: {}
+  redis: {}
+networks:
+  lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${TENANT_SUBNET:?}

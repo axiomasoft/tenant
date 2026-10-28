@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="../../tests/laravel/Support/bootstrap.php" colors="false" failOnRisky="true" failOnWarning="true">
+  <testsuites><testsuite name="facilities"><directory>tests</directory></testsuite></testsuites>
+  <php><env name="APP_ENV" value="testing" force="true"/><server name="APP_ENV" value="testing"/><env name="DB_DATABASE" value="tenant_guard_test" force="true"/><server name="DB_DATABASE" value="tenant_guard_test"/><env name="MEDIA_DISK" value="media-test" force="true"/></php>
+</phpunit>

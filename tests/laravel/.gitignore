@@ -1,0 +1,4 @@
+hosts/*/vendor/
+hosts/*/.phpunit.cache/
+hosts/*/.pest/
+hosts/*/tests/
