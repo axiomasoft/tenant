@@ -33,7 +33,7 @@ final class Compiler
             if (!preg_match('/^[a-z][a-z0-9._-]*:[a-z][a-z0-9._\/-]*$/D', $id) || isset($serviceIds[$id])) throw new TenantFailure('duplicate_implementation');
             if (isset($serviceSlots[$slot])) throw new TenantFailure('exclusive_slot_conflict');
             if ($service['spiVersion'] !== 1) throw new TenantFailure('incompatible_spi');
-            $type = $serviceTypes[$slot] ?? throw new TenantFailure('unsupported_capability');
+            $type = $serviceTypes[$slot] ?? (preg_match('~^tenant:extension/[a-z][a-z0-9._-]*:[a-z][a-z0-9._/-]*/[1-9][0-9]*$~D', $slot) ? \Tenant\Contracts\ExtensionDecoder::class : throw new TenantFailure('unsupported_capability'));
             if (!$service['service'] instanceof $type) throw new TenantFailure('replacement_incompatible');
             $serviceIds[$id] = true; $serviceSlots[$slot] = $service['service'];
             foreach ($service['capabilities'] as $capability) {

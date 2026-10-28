@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 $options = getopt('', ['item:', 'lane:', 'plan-root:']);
+if (($options['item'] ?? '') === 'P2.2') {
+    require __DIR__.'/qualify-runtime.php';
+    return;
+}
 $lane = $options['lane'] ?? '';
 if (($options['item'] ?? '') !== 'P2.1' || !in_array($lane, ['php84-cli', 'php85-cli'], true) || !isset($options['plan-root'])) throw new InvalidArgumentException('Expected --item P2.1 --lane php84-cli|php85-cli --plan-root PATH');
 if (PHP_MAJOR_VERSION !== 8 || PHP_MINOR_VERSION !== ($lane === 'php84-cli' ? 4 : 5)) throw new RuntimeException('Wrong PHP lane');
