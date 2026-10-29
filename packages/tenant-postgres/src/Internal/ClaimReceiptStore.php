@@ -50,6 +50,10 @@ final readonly class ClaimReceiptStore
             ($this->verifyCurrentBinding)($resource);
             if($provision!==null && (!hash_equals($provision->intent_digest,$digest)||$provision->status!=='succeeded'||$provision->resource_ref!==$resource->resource_ref||$provision->incarnation!==$resource->incarnation||(bool)$provision->cancel_requested)) throw new ClaimConflict('Original physical operation differs from claim.');
             $row=['id'=>$provision?->id ?? (string)Str::uuid7(),'key_hash'=>$storageKey,'key_namespace'=>$key->namespace,'operation_key'=>$key->key,'host_intent_ref'=>$intent->hostIntentRef,'intent_digest'=>$digest,'resource_id'=>$resource->id,'resource_ref'=>$resource->resource_ref,'incarnation'=>$resource->incarnation,'status'=>'succeeded','attempt_generation'=>$provision?->attempt_generation ?? 1,'receipt_version'=>$provision?->receipt_version ?? 1,'observed_effect'=>$provision?->observed_effect ?? 'verified_pool'];
+            // Technical availability is owned here, never by a host product grant.
+            // Publish it atomically with the verified original claim receipt.
+            $this->connection->table('tenant_pg_resources')->where('id',$resource->id)
+                ->where('status','provisioning')->update(['status'=>'ready']);
             if ($this->anchor!==null) AnchorHistory::remember($this->connection,$this->anchor,'tenant_pg_operations',$row);
             $this->connection->table('tenant_pg_operations')->insert($row);
             return $this->receipt((object)$row);

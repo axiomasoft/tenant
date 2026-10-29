@@ -14,7 +14,11 @@ require getenv('P41_AUTOLOAD');
 // Installed mode must execute installed package bodies, not the working tree.
 if (!getenv('P42_INSTALLED')) spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/tenant-postgres/src/','Tenant\\'=>__DIR__.'/../../packages/tenant/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
 $m=json_decode(file_get_contents(getenv('P41_MANIFEST')),true,flags:JSON_THROW_ON_ERROR);$base=$m['project'];
-if (!preg_match('/^tenant_p4[12]_[a-f0-9]{12}$/D',$base) || $m['central']!==$base.'_central_test' || $m['host']!=='127.0.0.1' || getenv('P41_DB')!==$m['central'] || getenv('P41_USER')!==$m['admin']) throw new RuntimeException('Unsafe lifecycle lab');
+if (getenv('P54_LIFECYCLE_REUSE') === '1') {
+    $original=json_decode(file_get_contents(getenv('TENANT_LAB_MANIFEST')),true,flags:JSON_THROW_ON_ERROR);
+    foreach ($original as $key=>$value) if (!array_key_exists($key,$m) || $m[$key]!==$value) throw new RuntimeException('Changed P5.4 lab alias.');
+    if ($base!=='tenant_lab_'.$m['runId'] || $m['central']!=='tenant_'.$m['runId'].'_catalog_test' || $m['admin']!=='tenant_'.$m['runId'].'_admin' || $m['host']!=='127.0.0.1' || getenv('P41_DB')!==$m['central'] || getenv('P41_USER')!==$m['admin']) throw new RuntimeException('Unsafe P5.4 lifecycle reuse.');
+} elseif (!preg_match('/^tenant_p4[12]_[a-f0-9]{12}$/D',$base) || $m['central']!==$base.'_central_test' || $m['host']!=='127.0.0.1' || getenv('P41_DB')!==$m['central'] || getenv('P41_USER')!==$m['admin']) throw new RuntimeException('Unsafe lifecycle lab');
 $app=new Container;$db=new Manager($app);$cfg=['driver'=>'pgsql','host'=>$m['host'],'port'=>$m['port'],'database'=>$m['central'],'username'=>$m['admin'],'password'=>getenv('P41_PASSWORD'),'charset'=>'utf8','prefix'=>'','schema'=>'public'];
 $db->addConnection($cfg,'lab');$db->getDatabaseManager()->setDefaultConnection('lab');$c=$db->getConnection('lab');$app->instance('db',$db->getDatabaseManager());$app->instance('db.schema',$c->getSchemaBuilder());Facade::setFacadeApplication($app);$factory=new ConnectionFactory($app);
 $anchorDir=$m['root'].'/anchor';$archiveDir=$m['root'].'/archives';

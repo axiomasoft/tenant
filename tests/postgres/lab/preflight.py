@@ -2,6 +2,15 @@
 """Fail closed unless this is the uniquely created P4.1 PG16 test server."""
 import json, os, pathlib, re, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[3]
+if os.environ.get('P54_LIFECYCLE_REUSE') == '1':
+ import runpy
+ original=json.loads(pathlib.Path(os.environ['TENANT_LAB_MANIFEST']).read_text())
+ adapted=json.loads(pathlib.Path(os.environ['P41_MANIFEST']).read_text())
+ for key in original: assert adapted[key] == original[key], ('P5.4 reuse manifest drift',key)
+ assert adapted['central']==original['databases']['catalog'] and adapted['container']==original['containers']['pg']
+ assert adapted['host']=='127.0.0.1' and adapted['port']==original['ports']['pg']
+ runpy.run_path(str(ROOT/'tests/consumers/postgres/preflight.py'),run_name='__main__')
+ raise SystemExit(0)
 m=json.loads(pathlib.Path(os.environ.get('P41_MANIFEST',str(ROOT/'plans/2026.10.24-№1-TENANT/artifacts/P4.1/lab-manifest.json'))).read_text())
 assert re.fullmatch(r'[0-9a-f]{12}',m['runId'])
 name=m['project']; assert name in [prefix+m['runId'] for prefix in (['tenant_p41_','tenant_p42_'] if os.environ.get('P4_ITEM')=='P4.2' else ['tenant_p41_'])]; assert m['project']==name and m['central']==name+'_central_test'

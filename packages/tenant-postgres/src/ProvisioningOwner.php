@@ -8,6 +8,11 @@ use Tenant\Postgres\Internal\{ClaimReceiptStore,ClaimWithPool,ProvisionJournal,L
 final readonly class ProvisioningOwner implements PostgresLifecycle
 {
     public function __construct(private ClaimWithPool $claims,private ClaimReceiptStore $receipts,private ProvisionJournal $journal,private ?LifecycleJournal $lifecycle=null,private ?RecoveryOperator $recovery=null) {}
+    /** Explicit privileged operator surface; every step requires fresh Admission. */
+    public function recoveryOperator(): RecoveryOperator
+    {
+        return $this->recovery ?? throw new \Tenant\Exceptions\RecoveryUnsupported();
+    }
     public function claim(ProvisionIntent $intent,OperationKey $key,Admission $admission):OperationReceipt
     {
         return ErrorBoundary::run(fn()=>$this->claims->claim($intent,$key,$admission),'effect');

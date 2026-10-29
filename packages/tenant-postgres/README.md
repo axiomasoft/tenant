@@ -25,8 +25,10 @@ are checked before readiness and again before DROP. A newer interrupted export
 invalidates older readiness. V1 always requires a verified original export for
 deletion; retention policies requiring archive-free deletion are unsupported.
 
-Migrations belong solely to this package. Apply all six on a fresh independent
-catalog, explicitly create the external `FileRecoveryAnchor` in a private durable
+Migrations belong solely to this package. `PostgresSchema::migrationPath()` selects
+all six on the explicit `tenant_pg_catalog` connection and its single `migrations`
+repository, shared by standalone setup and a host schema-provider adapter. Apply
+them on a fresh independent catalog, create the external `FileRecoveryAnchor` in a private durable
 directory, then initialize `tenant_pg_control` row 1 with its generation. Never
 initialize over an existing catalog or missing anchor to bypass recovery checks.
 The anchor is outside the catalog backup cohort. Retain anchor entries, operation
@@ -49,7 +51,8 @@ late DROP still produces the original tombstone with a cancelled receipt and
 outbox row accompanies the final original receipt; events and ACKs are not proof.
 
 `admitRecovery()` returns an operator-only `RecoveryPlan`; it never executes a
-restore. `RecoveryOperator` offers explicit quarantine, completion and reopening
+restore. `ProvisioningOwner::recoveryOperator()` exposes the already composed
+operator. `RecoveryOperator` offers explicit quarantine, completion and reopening
 steps. The operator stops workers and writes, excludes old backends, advances the
 independent generation, restores the exact verified archive into the frozen
 isolated target using native tools, and retains all original receipts. Completion
@@ -67,8 +70,22 @@ incarnations, incomplete history and unsupported profiles fail closed. Backup
 restoration that lost original receipts is unsupported until that exact history
 is restored; this implementation does not invent replacements.
 
-CoreX remains the active physical/schema owner in existing consumers until the
-separate P5.4 switch. This package does not migrate consumers or copy their
-trial/grace/domain/embedding policies, bulk pending-cleanup commands, or fixed
-fixture cleanup. E09 licence/support/security decisions remain release blockers.
-No release or deployment readiness is claimed by the isolated qualification.
+`PostgresFactory::bindings($catalog, $runtimeRoute, $anchor)` returns the public
+`ResourceBindings` facade. `resolve($resourceRef)` verifies the current catalog,
+external anchor and physical marker using the existing non-maintenance verifier;
+`verify()` checks a caller's original binding. Its `ResolvedBinding`, expected
+coordinates and `PhysicalAccess` route are process-local. Never serialize routes
+or replace host admission with a resource reference. Successful claim publication
+marks technical availability in the same transaction as the original receipt;
+it grants no trial, grace or commercial rights.
+
+The isolated CoreX P5.4 source cohort selects this owner and retains product
+accounts plus original account-to-resource/operation references in CoreX. It
+disables the old allocator/marker/export writers and mixed physical migrations.
+Bulk pending-create/clear is explicitly unsupported. CoreX product schema DDL uses
+an independently admitted management connection through its own schema migrator;
+the ordinary runtime role remains unable to create databases or mutate markers.
+This source switch is for a fresh disposable baseline, without deployed-data
+migration. Final matrix/rollback and independent review remain qualification gates.
+E09 licence/support/security decisions remain release blockers. No release or
+deployment readiness is claimed by development checks.
