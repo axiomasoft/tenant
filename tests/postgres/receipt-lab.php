@@ -38,7 +38,7 @@ $integrity=new TemplateIntegrityVerifier('lab',$serializer,new TemplateIntegrity
 $first=$store->claim($intent,$key,$allow);$again=$store->claim($intent,$key,$allow);$queried=$store->query($first->operationId,$allow);
 if($first!=$again || $first!=$queried || $first->resourceRef!=='resource:receipt')throw new RuntimeException('Receipt replay mismatch');
 try{$store->claim(new ProvisionIntent('host:intent',$cluster,$id,7,$digest,['a'=>2]),$key,$allow);throw new RuntimeException('Changed digest accepted');}catch(\Tenant\Postgres\Exceptions\ClaimConflict){}
-try{$store->query($first->operationId,new Admission(static fn()=>false));throw new RuntimeException('Missing admission accepted');}catch(RuntimeException $e){if($e->getMessage()!=='Admission denied.')throw $e;}
+try{$store->query($first->operationId,new Admission(static fn()=>false));throw new RuntimeException('Missing admission accepted');}catch(\Tenant\Exceptions\ContextDenied $e){if($e->reason()!=='denied')throw $e;}
 $physical=$factory->make($resourceConfig,'p41-tamper');$physical->table('tenant_binding')->where('singleton',true)->update(['incarnation'=>'changed']);$physical->disconnect();
 try{$store->claim($intent,$key,$allow);throw new RuntimeException('Stale marker accepted');}catch(\Tenant\Exceptions\BindingMismatch){}
 if($central->table('tenant_pg_operations')->count()!==1)throw new RuntimeException('Receipt duplicated');

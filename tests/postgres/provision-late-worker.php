@@ -22,4 +22,4 @@ try {
   $r=$journal->execute($r->operationId,$allow,$build);echo json_encode(['status'=>$r->status,'cancellationRequested'=>$r->cancellationRequested,'observedEffect'=>$r->observedEffect]),"\n";
  }elseif($input['mode']==='reconcile'){$r=$journal->reconcile($input['operation'],$allow);echo json_encode(['status'=>$r->status,'operation'=>$r->operationId]),"\n";}
  elseif($input['mode']==='cancel'){$r=$journal->cancel($input['operation'],$allow);echo json_encode(['status'=>$r->status,'cancellationRequested'=>$r->cancellationRequested,'observedEffect'=>$r->observedEffect]),"\n";}
-} catch(Throwable $e){echo json_encode(['error'=>get_class($e),'message'=>$e->getMessage()]),"\n";exit(2);}
+} catch(Throwable $e){echo json_encode(['error'=>get_class($e),'reason'=>method_exists($e,'reason')?$e->reason():null,'message'=>$e->getMessage()]),"\n";exit(2);}

@@ -10,7 +10,7 @@ def complete(v):
 first=spawn({'mode':'execute'})
 try:
  start=json.loads(first.stdout.readline());op=start['operation'];assert first.stdout.readline().strip()=='created'
- code,result,err=complete({'mode':'reconcile','operation':op});assert code==2 and result['error']=='Tenant\\Postgres\\Exceptions\\ClaimUnavailable',(result,err)
+ code,result,err=complete({'mode':'reconcile','operation':op});assert code==2 and result['error']=='Tenant\\Exceptions\\ResourceQuarantined' and result['reason']=='resource_quarantined',(result,err)
  code,result,err=complete({'mode':'cancel','operation':op});assert code==0 and result['status']=='running' and result['cancellationRequested'] is True,(result,err)
  first.kill();first.wait(timeout=10)
  deadline=time.monotonic()+10

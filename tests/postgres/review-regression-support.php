@@ -6,7 +6,7 @@ use Tenant\Postgres\Data\{ResourceSnapshot,TemplateTrust,PhysicalAccess,ClaimReq
 use Tenant\Postgres\Internal\{ClaimReceiptStore,ClaimResource,ClaimWithPool,PendingPool,ProvisionJournal,PostgresBindingVerifier};
 use Tenant\Postgres\Internal\Database\{TemplateIntegrityVerifier,TemplateIntegrityLock,SchemaCatalogueSerializer,TemplateClonePostgreSQLManager,MarkerWriter};
 $proof=json_decode(file_get_contents($m['root'].'/review-trust.json'),true,flags:JSON_THROW_ON_ERROR);
-$template='12121212-1212-4212-8212-121212121212';$cluster='13131313-1313-4313-8313-131313131313';
+$template='12121212-1212-4212-8212-121212121212';$cluster='41414141-4141-4141-8141-414141414141';
 $trust=new TemplateTrust([$template=>['payload'=>$proof['payload'],'signature'=>$proof['signature'],'trusted_key_id'=>'lab']],['lab'=>$proof['key']]);
 $templateMarker=['protocol'=>'tenant.binding/1','owner_id'=>'template','resource_ref'=>'template','incarnation'=>'template','recovery_generation'=>'template'];
 $integrity=new TemplateIntegrityVerifier('lab',new SchemaCatalogueSerializer,new TemplateIntegrityLock,$trust,$db->getDatabaseManager(),$factory);

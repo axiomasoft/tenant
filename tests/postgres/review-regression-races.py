@@ -24,13 +24,13 @@ if case=='F1':
  assert pid,'qualifier overlap not observed';print(json.dumps({'observedBlockedBackend':pid,'blockingBackend':h['pid']}),flush=True)
  ca,ra=finish(a,True);cb,rb=finish(b);observations={'a':ra,'b':rb,'aExit':ca,'bExit':cb};assert ca==cb==0 and ra['receipt']['status']=='succeeded' and rb['result']=='qualified',observations
 elif case=='F2':
- sql("UPDATE tenant_pg_clusters SET capacity=database_count+1 WHERE id='13131313-1313-4313-8313-131313131313'")
+ sql("UPDATE tenant_pg_clusters SET capacity=database_count+1 WHERE id='41414141-4141-4141-8141-414141414141'")
  a=spawn('f2-a','f2-original');h=hook(a);cb,rb=call('retry','f2-competing');ca,ra=finish(a,True);observations={'a':ra,'b':rb,'aExit':ca,'bExit':cb}
  assert ca==0 and cb!=0,observations
  c,replay=call('retry','f2-original');assert c==0 and replay['receipt']==ra['receipt']
  row=sql("SELECT signup_key,status FROM tenant_pg_resources WHERE resource_ref='"+ra['receipt']['resourceRef']+"'");assert row.endswith('|provisioning'),row
 elif case=='F3':
- sql("UPDATE tenant_pg_clusters SET capacity=database_count+10 WHERE id='13131313-1313-4313-8313-131313131313'")
+ sql("UPDATE tenant_pg_clusters SET capacity=database_count+10 WHERE id='41414141-4141-4141-8141-414141414141'")
  a=spawn('f3-marker','f3-original');h=hook(a);a.kill();finish(a)
  deadline=time.monotonic()+10
  while sql('SELECT count(*) FROM pg_stat_activity WHERE pid='+str(h['pid']))!='0':
@@ -41,10 +41,10 @@ elif case=='F3':
  assert sql("SELECT status FROM tenant_pg_resources WHERE resource_ref='"+spare['receipt']['resourceRef']+"'")=='pending'
  assert sql("SELECT count(*) FROM pg_database WHERE datname LIKE '"+m['project']+"%'")==before
 elif case in ['F3-before','F3-accepted']:
- sql("UPDATE tenant_pg_clusters SET capacity=database_count+10 WHERE id='13131313-1313-4313-8313-131313131313'")
- if int(sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending' AND signup_key IS NULL")):
+ sql("UPDATE tenant_pg_clusters SET capacity=database_count+10 WHERE id='41414141-4141-4141-8141-414141414141'")
+ if int(sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending' AND signup_key IS NULL AND cluster_id='41414141-4141-4141-8141-414141414141'")):
   drain,drained=call('retry','consume-spare-'+case.lower());assert drain==0
- assert sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending' AND signup_key IS NULL")=='0'
+ assert sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending' AND signup_key IS NULL AND cluster_id='41414141-4141-4141-8141-414141414141'")=='0'
  key=case.lower();mode='f3-before-create' if case=='F3-before' else 'f3-accepted';a=spawn(mode,key);h=hook(a);a.kill();finish(a)
  deadline=time.monotonic()+10
  while sql('SELECT count(*) FROM pg_stat_activity WHERE pid='+str(h['pid']))!='0':
