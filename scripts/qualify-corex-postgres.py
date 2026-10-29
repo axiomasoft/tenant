@@ -112,7 +112,7 @@ def prepare(args, checkout, source):
         template = json.loads((ROOT / 'tests/laravel/hosts' / lane / 'composer.json').read_text())
         template.pop('require-dev', None)
         template.pop('autoload-dev', None)
-        required = ['tenant', 'tenant-postgres'] if lane == 'php84-l12' else list(archives)
+        required = ['tenant', 'tenant-postgres', 'tenant-laravel'] if lane == 'php84-l12' else list(archives)
         for key in required:
             meta = json.loads((packages(checkout)[key] / 'composer.json').read_text())
             template['require'][meta['name']] = '1.0.0'
@@ -167,6 +167,9 @@ def environment(lab, lane, mode, checkout):
 
 CASES = [
     ('api', 'tests/consumers/postgres/api.php'),
+    ('workspace-frame', '@corex/packages/tenant/tests/WorkspaceFrameProbe.php'),
+    ('session-sharing', 'tests/consumers/postgres/session-sharing.php'),
+    ('workspace-http', 'tests/consumers/postgres/workspace-http.php'),
     ('binding', 'tests/consumers/postgres/binding.php'),
     ('ownership', 'tests/consumers/postgres/ownership.php'),
     ('schema', 'tests/consumers/postgres/schema-maintenance.php'),
@@ -231,7 +234,7 @@ def consumer(args, checkout, source, lab):
                     assert value.get('skipped', 0) == 0
                     for name, values in value.get('fixtures', {}).items():
                         fixtures.setdefault(name, []).extend([{'assertion': x, 'raw': str(log.relative_to(PLAN)), 'sha256': record['sha256'], 'case': label} for x in values])
-                if label in ['binding', 'ownership', 'mapping', 'product', 'cohort', 'strict', 'runtime', 'http', 'clone', 'recovery', 'uncertain']:
+                if label in ['binding', 'ownership', 'mapping', 'product', 'cohort', 'strict', 'runtime', 'http', 'clone', 'recovery', 'uncertain', 'workspace-frame', 'workspace-http', 'session-sharing']:
                     assert assertions > 0, ('zero discovery', lane, mode, label)
                 if label == 'physical':
                     assert '"cases": 9' in body and 'foreign ownership despite valid checksum' in body
@@ -285,7 +288,7 @@ def trace(checkout, source, result):
              'newGaps': ['Public binding facade and schema path', 'Technical ready publication with original claim receipt', 'Public access to already composed recovery operator', 'Host original request/mapping repair'],
              'reused': ['P4 exact verifier/pool/journal/fence/recovery/archive algorithms', 'P5.1 real runtime, strict refs, queue/Outbox and HTTP sessions'],
              'rule': 'Whitebox fixture setup is confined to owning Tenant tests/postgres; all CoreX production source uses public PG ports.'}
-    save(PLAN/'artifacts/reuse/P5.4.json', value)
+    save(PLAN/'artifacts/reuse/P5.4.json' if ART == PLAN/'artifacts/P5.4' else ART/'reuse.json', value)
     save(ART/'caller-dispositions.json', value)
     return value
 
@@ -310,7 +313,7 @@ def ledgers(source, result, lab):
         ledger = {'contract': 'tenant.fixture-results/1', 'corpusHash': sha(ROOT/'contracts/fixtures/index.json'), 'indexSchemaHash': sha(ROOT/'contracts/fixtures/index.schema.json'),
                   'resultSchemaHash': sha(ROOT/'contracts/fixtures/results.schema.json'), 'candidate': {'checkout': str(ROOT), 'dirtyContentHash': digest(source), 'artifactHashes': {k:v['sha256'] for k,v in archives.items()}}, 'results': rows}
         save(Path(lab['generation'])/'ledgers'/lane/'acceptance.json', ledger)
-        if lane == result['lanes'][0]: save(PLAN/'artifacts/acceptance/P5.4.json', ledger)
+        if lane == result['lanes'][0]: save(PLAN/'artifacts/acceptance/P5.4.json' if ART == PLAN/'artifacts/P5.4' else ART/'acceptance.json', ledger)
 
 
 def package_checks(args, checkout, source, lab):
@@ -326,34 +329,45 @@ def package_checks(args, checkout, source, lab):
         commands.append(command([LANES[lane], '/usr/local/bin/composer', 'validate', '--no-check-publish'], root, generation/'package'/(lane+'-composer.log')))
     for lane in ['php84-l13', 'php85-l13']:
         env = environment(lab, lane, 'source', checkout)
-        paths = [str(p) for directory in [ROOT/'packages/tenant-postgres/src', checkout/'packages/tenant/src'] for p in sorted(directory.rglob('*.php'))]
+        paths = [str(p) for directory in [ROOT/'packages/tenant-postgres/src', ROOT/'packages/tenant-laravel/src', checkout/'packages/tenant/src'] for p in sorted(directory.rglob('*.php'))]
         script = generation/'package'/(lane+'-lint.py')
         script.write_text('import subprocess\npaths='+repr(paths)+'\nfor p in paths:\n subprocess.run('+repr([LANES[lane], '-l'])+'+[p],check=True,stdout=subprocess.DEVNULL)\nprint("Linted",len(paths),"files")\n')
         commands.append(command(['python3', '-B', str(script)], ROOT, generation/'package'/(lane+'-lint.log')))
         # New public seams and the actual CoreX bridge. Preserve defensive legacy PG checks.
         new_paths = [ROOT/'packages/tenant-postgres/src/Contracts/ResourceBindings.php', ROOT/'packages/tenant-postgres/src/Data/ResolvedBinding.php',
                      ROOT/'packages/tenant-postgres/src/Internal/CatalogResourceBindings.php', ROOT/'packages/tenant-postgres/src/PostgresFactory.php',
-                     ROOT/'packages/tenant-postgres/src/PostgresSchema.php', checkout/'packages/tenant/src']
+                     ROOT/'packages/tenant-postgres/src/PostgresSchema.php', ROOT/'packages/tenant-laravel/src/Internal/Facilities/SessionFacility.php',
+                     ROOT/'packages/tenant-laravel/src/Internal/Facilities/SessionGeneration.php', checkout/'packages/tenant/src']
         commands.append(command([LANES[lane], str(ROOT/'vendor/bin/phpstan'), 'analyse', '--no-progress', '--level=5', '--autoload-file='+str(ROOT/'tests/consumers/postgres/bootstrap.php'), *map(str,new_paths)], ROOT, generation/'package'/(lane+'-phpstan.log'), env))
     for mode in ['source', 'installed']:
         env = environment(lab, 'php84-l13', mode, checkout)
         env['TENANT_LANE_AUTOLOAD'] = lab['hosts']['php84-l12']['root']+'/vendor/autoload.php'
         commands.append(command([LANES['php84-l12'], str(ROOT/'tests/consumers/postgres/binding.php')], ROOT, generation/'package'/('php84-l12-'+mode+'-facade.log'), env))
+        commands.append(command([LANES['php84-l12'], str(ROOT/'tests/consumers/postgres/session-facility.php')], ROOT, generation/'package'/('php84-l12-'+mode+'-session.log'), env))
     rollback = ART/'full-rollback/report.json'
+    if (ART/'full-rollback/final-report.json').exists():
+        rollback = ART/'full-rollback/final-report.json'
     assert rollback.exists() and json.loads(rollback.read_text())['status'] == 'passed', 'Complete cohort reverse/forward remains required.'
+    if ART != PLAN/'artifacts/P5.4':
+        assert json.loads(rollback.read_text())['candidateSourceDigest'] == digest(source), 'Rollback must cover the exact current correction cohort.'
     report = {'stage': 'package', 'status': 'passed', 'sourceDigest': digest(source), 'commands': commands, 'rollbackSha256': sha(rollback), 'hosts': lab['hosts']}
     save(args.output, report)
     return report
 
 
 def main():
+    global ART
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--stage', required=True, choices=['prepare', 'consumer', 'trace', 'boundary', 'package', 'ledger'])
     parser.add_argument('--lanes', required=True)
     parser.add_argument('--checkout-manifest', required=True, type=Path)
     parser.add_argument('--run-manifest', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--artifact-dir', type=Path, help='Separate correction artifacts; original reviewed evidence remains immutable.')
     args = parser.parse_args()
+    if args.artifact_dir:
+        assert args.artifact_dir.resolve() == (PLAN/'artifacts/P5.4/correction-round1').resolve(), 'Only the owning bounded correction namespace.'
+        ART = args.artifact_dir.absolute()
     assert args.lanes == 'php84-l13,php85-l13'
     manifest = json.loads(args.checkout_manifest.read_text())
     assert os.environ['CODEX_SESSION_ID'] == manifest['session'], 'Continue only the registered owner session.'
@@ -375,7 +389,7 @@ def main():
                 ledgers(source, result, lab)
                 report = {'stage': 'ledger', 'status': 'passed', 'portions': 45, 'lanes': result['lanes']}
             elif args.stage == 'boundary':
-                report = {'stage': 'boundary', 'status': 'passed', 'sourceDigest': digest(source), 'commands': [x for x in result['commands'] if Path(x['raw']).stem in ['binding','strict','runtime','http','clone','recovery','cohort','physical']]}
+                report = {'stage': 'boundary', 'status': 'passed', 'sourceDigest': digest(source), 'commands': [x for x in result['commands'] if Path(x['raw']).stem in ['binding','strict','runtime','http','clone','recovery','cohort','physical','workspace-frame','workspace-http','session-sharing']]}
             elif args.stage == 'package':
                 report = package_checks(args, checkout, source, lab)
             else:

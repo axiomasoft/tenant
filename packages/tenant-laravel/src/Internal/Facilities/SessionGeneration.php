@@ -12,9 +12,12 @@ use Tenant\Exceptions\StaleHandle;
 final class SessionGeneration
 {
     private int $revision = 0;
+    private ?string $scope = null;
     /** @param Closure(): SafeTenantRuntime $owner */
     public function __construct(private readonly Closure $owner) {}
     public function advance(): void { $this->revision++; }
+    public function scope(): ?string { return $this->scope; }
+    public function select(?string $scope): void { $this->scope = $scope; }
     public function checker(): Closure
     {
         $revision = $this->revision;

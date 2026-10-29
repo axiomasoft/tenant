@@ -31,11 +31,27 @@ final readonly class SessionFacility implements Facility
         $attributes = [];
         foreach (FrameworkConfig::stores($this->sessions) as $key => $store) $attributes[$key] = [$store->all(), $store->getId()];
         $state->put('attributes', $attributes);
+        $previous = $this->generation->scope();
+        $scope = null;
+        $candidate = $context->candidate()->context;
+        if ($context->candidate()->kind === 'active' && $candidate !== null) {
+            $facet = $context->require(new CapabilityId('tenant:database'));
+            if (!$facet instanceof ResourceDescriptor) throw new \InvalidArgumentException('unsupported_capability');
+            // A workspace changes authorization, not the physical session namespace.
+            // Identity/profile/binding and trusted routing roots must all remain exact.
+            $scope = hash('sha256', serialize([$candidate->mode, $candidate->identity, $candidate->profile,
+                $candidate->binding, $facet->route, $facet->prefix, $facet->sessionRoot,
+                $this->config->get('session.driver'), $this->config->get('session.store')]));
+        }
+        $state->put('previousScope', $previous);
+        $state->put('scope', $scope);
+        $state->put('shared', $scope !== null && $scope === $previous);
         $state->put('captured', true);
     }
     public function activate(PhaseContext $context, FrameState $state): void
     {
         $this->generation->advance();
+        $this->generation->select($state->get('scope'));
         if ($context->candidate()->kind === 'active') {
             $facet = $context->require(new CapabilityId('tenant:database'));
             if (!$facet instanceof ResourceDescriptor) throw new \InvalidArgumentException('unsupported_capability');
@@ -53,7 +69,9 @@ final readonly class SessionFacility implements Facility
                 $this->cache->forgetDriver($name);
             }
         }
-        foreach (FrameworkConfig::stores($this->sessions) as $store) { $store->flush(); $store->setId(null); $store->setExists(false); }
+        if (!$state->get('shared')) {
+            foreach (FrameworkConfig::stores($this->sessions) as $store) { $store->flush(); $store->setId(null); $store->setExists(false); }
+        }
         $this->swap();
     }
     /** @param array<string, \SessionHandlerInterface> $handlers */
@@ -69,6 +87,7 @@ final readonly class SessionFacility implements Facility
     {
         if (!$state->get('captured')) return;
         $this->generation->advance();
+        $this->generation->select($state->get('previousScope'));
         $this->config->set('session', $state->get('config'));
         $name = $this->config->get('session.store');
         if (is_string($name) && $state->get('cache') !== null) {
@@ -79,6 +98,9 @@ final readonly class SessionFacility implements Facility
         if (!is_array($handlers)) throw new \LogicException('Invalid handler snapshot');
         foreach ($handlers as $key => $handler) if (!is_string($key) || !$handler instanceof \SessionHandlerInterface) throw new \LogicException('Invalid handler snapshot');
         $this->swap($handlers);
+        // Same-resource descendants hand their live attributes/ID back to the
+        // parent so StartSession can persist route writes. Guards still rotate.
+        if ($state->get('shared')) return;
         foreach (FrameworkConfig::stores($this->sessions) as $name => $store) {
             $snapshot = FrameworkConfig::asMap($state->get('attributes') ?? [])[$name] ?? [[], null];
             if (!is_array($snapshot) || count($snapshot) !== 2 || !array_is_list($snapshot) || !is_array($snapshot[0]) || (!is_string($snapshot[1]) && $snapshot[1] !== null)) throw new \LogicException('Invalid session snapshot');
