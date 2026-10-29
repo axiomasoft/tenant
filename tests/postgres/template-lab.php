@@ -12,6 +12,7 @@ use Tenant\Postgres\Internal\Database\SchemaCatalogueSerializer;
 use Tenant\Postgres\Internal\Database\TemplateIntegrityLock;
 use Tenant\Postgres\Internal\Database\TemplateIntegrityVerifier;
 
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
 spl_autoload_register(static function(string $class): void { $prefix='Tenant\\Postgres\\'; if(str_starts_with($class,$prefix))require __DIR__.'/../../packages/tenant-postgres/src/'.str_replace('\\','/',substr($class,strlen($prefix))).'.php'; });
 $run=getenv('P41_RUN_ID');$name='tenant_p41_'.$run.'_template_test';

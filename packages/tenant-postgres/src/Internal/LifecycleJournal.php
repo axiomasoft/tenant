@@ -37,7 +37,7 @@ final readonly class LifecycleJournal
     public function queryExport(ExportRef $ref, Admission $admission): ExportReceipt
     {
         $r=$this->referenced($ref->operation,$admission,'query');$this->history();
-        if ($r->kind!=='export' || $r->export_id!==$ref->exportId) throw new ClaimConflict('Original export reference mismatch.');
+        if ($r->kind!=='export' || $r->export_id!==$ref->exportId) throw new \Tenant\Exceptions\OriginalOperationMissing('Original export reference mismatch.');
         $manifest=$r->status==='succeeded'?$this->verifiedArchive($r):null;
         return new ExportReceipt($ref,$r->status==='succeeded'?'ready':$r->status,$manifest);
     }
@@ -60,7 +60,7 @@ final readonly class LifecycleJournal
             if (in_array($r->status,['succeeded','cancelled'],true)) return $this->query($ref,$admission);
             if (!in_array($r->status,['running','unknown'],true)) throw new ClaimUnavailable('Only an original submitted attempt can be reconciled.');
             // A backend may release its advisory lock while a delayed command is still running.
-            if ($this->connection->selectOne('SELECT pid FROM pg_stat_activity WHERE pid=? AND backend_start::text=?',[$r->backend_pid,$r->backend_start])!==null) throw new ClaimUnavailable('Original physical backend still exists; quarantine until excluded.');
+            if ($this->connection->selectOne('SELECT pid FROM pg_stat_activity WHERE pid=? AND backend_start::text=?',[$r->backend_pid,$r->backend_start])!==null) throw new \Tenant\Exceptions\ResourceQuarantined('Original physical backend still exists; quarantine until excluded.');
             if ($r->kind==='export') {
                 $manifest=$this->archives->recover($r->export_id);
                 if ($manifest===null) return $this->unknown($r);
@@ -74,10 +74,10 @@ final readonly class LifecycleJournal
     public function verifiedArchiveFor(ExportRef $ref, Admission $admission): ArchiveManifest
     {
         $receipt=$this->queryExport($ref,$admission);
-        return $receipt->manifest ?? throw new ClaimUnavailable('archive_unverified: original export is not ready');
+        return $receipt->manifest ?? throw new \Tenant\Exceptions\ArchiveUnverified('archive_unverified: original export is not ready');
     }
     public function assertHistory(): string { return $this->history(); }
-    public function recoveryAnchor(): RecoveryAnchor { return $this->anchor ?? throw new ClaimUnavailable('recovery_unsupported: external anchor required'); }
+    public function recoveryAnchor(): RecoveryAnchor { return $this->anchor ?? throw new \Tenant\Exceptions\RecoveryUnsupported('recovery_unsupported: external anchor required'); }
 
     private function register(ExportIntent|DeleteIntent $intent, OperationKey $key, Admission $admission, string $kind): OperationReceipt
     {
@@ -89,10 +89,12 @@ final readonly class LifecycleJournal
                 $admission->assertAllowed($kind,$old->resource_ref);return $this->receipt($old);
             }
             $resource=$this->connection->table('tenant_pg_resources')->where('resource_ref',$intent->resourceRef)->lockForUpdate()->first();
-            if ($resource===null || $resource->incarnation!==$intent->incarnation || $resource->deleted_at!==null || !in_array($resource->status,['ready','active','exported','exporting'],true) || $resource->recovery_generation!==$generation) throw new ClaimUnavailable('Stale or unavailable original resource.');
+            if ($resource===null || $resource->deleted_at!==null) throw new \Tenant\Exceptions\ContextUnavailable();
+            if ($resource->incarnation!==$intent->incarnation) throw new \Tenant\Exceptions\StaleIncarnation();
+            if (!in_array($resource->status,['ready','active','exported','exporting'],true) || $resource->recovery_generation!==$generation) throw new \Tenant\Exceptions\ResourceQuarantined();
             ($this->verifyBinding)($resource);
-            if ($this->table()->where('resource_ref',$resource->resource_ref)->whereIn('status',['accepted','running','unknown'])->exists()) throw new ClaimUnavailable('Original target has an unresolved operation.');
-            if (($this->policy)($kind,$intent,$resource)!==true) throw new ClaimUnavailable('retention_history_missing: host policy refuses operation');
+            if ($this->table()->where('resource_ref',$resource->resource_ref)->whereIn('status',['accepted','running','unknown'])->exists()) throw new \Tenant\Exceptions\ResourceQuarantined('Original target has an unresolved operation.');
+            if (($this->policy)($kind,$intent,$resource)!==true) throw new \Tenant\Exceptions\RetentionHistoryMissing('retention_history_missing: host policy refuses operation');
             $r=['id'=>(string)Str::uuid7(),'key_hash'=>$key->storageKey(),'key_namespace'=>$key->namespace,'operation_key'=>$key->key,'input_digest'=>$intent->digest(),'kind'=>$kind,'purpose_ref'=>$kind==='delete'?$intent->policyIntentRef:$intent->retentionProfileRef,
                 'resource_ref'=>$resource->resource_ref,'incarnation'=>$resource->incarnation,'cluster_id'=>$resource->cluster_id,'database_name'=>$resource->database_name,'route_revision'=>$resource->route_revision,'recovery_generation'=>$generation,
                 'status'=>'accepted','attempt_generation'=>0,'receipt_version'=>1,'observed_effect'=>'none','cancel_requested'=>false,'export_id'=>$kind==='export'?(string)Str::uuid7():null,'export_ref'=>$kind==='delete' && $intent->exportRef!==null?json_encode(['exportId'=>$intent->exportRef->exportId,'operation'=>get_object_vars($intent->exportRef->operation)],JSON_THROW_ON_ERROR):null,
@@ -171,36 +173,39 @@ final readonly class LifecycleJournal
     }
     private function verifiedDeleteArchive(object $r): ArchiveManifest
     {
-        if ($r->export_ref===null) throw new ClaimUnavailable('archive_unverified: retention requires original export');
+        if ($r->export_ref===null) throw new \Tenant\Exceptions\ArchiveUnverified('archive_unverified: retention requires original export');
         $ref=json_decode($r->export_ref,true,flags:JSON_THROW_ON_ERROR);$export=$this->find($ref['operation']['operationId']);
-        if ($export->kind!=='export' || $export->status!=='succeeded' || $export->export_id!==$ref['exportId'] || $export->key_namespace!==$ref['operation']['namespace'] || $export->resource_ref!==$r->resource_ref || $export->incarnation!==$r->incarnation || $ref['operation']['resourceRef']!==$r->resource_ref || $ref['operation']['incarnation']!==$r->incarnation || $export->route_revision!==$r->route_revision || $export->recovery_generation!==$r->recovery_generation) throw new ClaimUnavailable('archive_unverified: original export binding differs');
+        if ($export->kind!=='export' || $export->status!=='succeeded' || $export->export_id!==$ref['exportId'] || $export->key_namespace!==$ref['operation']['namespace'] || $export->resource_ref!==$r->resource_ref || $export->incarnation!==$r->incarnation || $ref['operation']['resourceRef']!==$r->resource_ref || $ref['operation']['incarnation']!==$r->incarnation || $export->route_revision!==$r->route_revision || $export->recovery_generation!==$r->recovery_generation) throw new \Tenant\Exceptions\ArchiveUnverified('archive_unverified: original export binding differs');
         // Preserve the source guarantee: a newer interrupted export invalidates older readiness.
-        if ($this->table()->where('resource_ref',$r->resource_ref)->where('incarnation',$r->incarnation)->where('kind','export')->where('id','>',$export->id)->exists()) throw new ClaimUnavailable('archive_unverified: newer export supersedes original readiness');
+        if ($this->table()->where('resource_ref',$r->resource_ref)->where('incarnation',$r->incarnation)->where('kind','export')->where('id','>',$export->id)->exists()) throw new \Tenant\Exceptions\ArchiveUnverified('archive_unverified: newer export supersedes original readiness');
         return $this->verifiedArchive($export);
     }
     private function verifiedArchive(object $r): ArchiveManifest
     {
-        if ($r->manifest===null) throw new ClaimUnavailable('archive_unverified: manifest unavailable');
+        if ($r->manifest===null) throw new \Tenant\Exceptions\ArchiveUnverified('archive_unverified: manifest unavailable');
         $m=new ArchiveManifest(...json_decode($r->manifest,true,flags:JSON_THROW_ON_ERROR));$this->assertArchive($r,$m);return $m;
     }
     private function assertArchive(object $r, ArchiveManifest $m): void
     {
-        if ($m->operationId!==$r->id || $m->exportId!==$r->export_id || $m->resourceRef!==$r->resource_ref || $m->incarnation!==$r->incarnation || $m->routeRevision!==$r->route_revision || $m->recoveryGeneration!==$r->recovery_generation || $m->destinationRef!==$r->destination_ref || $this->archives===null || !$this->archives->verify($m)) throw new ClaimUnavailable('archive_unverified: bytes or original ownership differ');
+        if ($m->operationId!==$r->id || $m->exportId!==$r->export_id || $m->resourceRef!==$r->resource_ref || $m->incarnation!==$r->incarnation || $m->routeRevision!==$r->route_revision || $m->recoveryGeneration!==$r->recovery_generation || $m->destinationRef!==$r->destination_ref || $this->archives===null || !$this->archives->verify($m)) throw new \Tenant\Exceptions\ArchiveUnverified('archive_unverified: bytes or original ownership differ');
     }
     private function resource(object $r, bool $allowDeleted=false): object
     {
         $resource=$this->connection->table('tenant_pg_resources')->where('resource_ref',$r->resource_ref)->first();
-        if ($resource===null || $resource->incarnation!==$r->incarnation || $resource->cluster_id!==$r->cluster_id || $resource->database_name!==$r->database_name || $resource->route_revision!==$r->route_revision || $resource->recovery_generation!==$r->recovery_generation || (!$allowDeleted && $resource->deleted_at!==null)) throw new ClaimUnavailable('Stale original binding; cannot retarget operation.');
+        if ($resource===null || (!$allowDeleted && $resource->deleted_at!==null)) throw new \Tenant\Exceptions\ContextUnavailable();
+        if ($resource->incarnation!==$r->incarnation) throw new \Tenant\Exceptions\StaleIncarnation();
+        if ($resource->route_revision!==$r->route_revision) throw new \Tenant\Exceptions\StaleRoute();
+        if ($resource->cluster_id!==$r->cluster_id || $resource->database_name!==$r->database_name || $resource->recovery_generation!==$r->recovery_generation) throw new \Tenant\Exceptions\ResourceQuarantined();
         return $resource;
     }
     private function guard(object $r, Closure $fence, bool $allowDeleted=false): void
     {
-        $fence();$generation=$this->history();if ($generation!==$r->recovery_generation) throw new ClaimUnavailable('Stale recovery generation.');$this->resource($r,$allowDeleted);$fence();
+        $fence();$generation=$this->history();if ($generation!==$r->recovery_generation) throw new \Tenant\Exceptions\ResourceQuarantined('Stale recovery generation.');$this->resource($r,$allowDeleted);$fence();
     }
     private function referenced(OperationRef $ref, Admission $admission, string $purpose): object
     {
         $admission->assertAllowed($purpose,$ref->resourceRef);$r=$this->find($ref->operationId);
-        if ($r->key_namespace!==$ref->namespace || $r->resource_ref!==$ref->resourceRef || $r->incarnation!==$ref->incarnation) throw new ClaimConflict('Original operation reference differs.');return $r;
+        if ($r->key_namespace!==$ref->namespace || $r->resource_ref!==$ref->resourceRef || $r->incarnation!==$ref->incarnation) throw new \Tenant\Exceptions\OriginalOperationMissing('Original operation reference differs.');return $r;
     }
     private function assertPolicy(object $r): void
     {
@@ -210,12 +215,12 @@ final readonly class LifecycleJournal
             $ref=$e===null?null:new ExportRef($e['exportId'],new OperationRef(...$e['operation']));
             $intent=new DeleteIntent($r->resource_ref,$r->incarnation,$ref,$r->purpose_ref);
         }
-        if ($this->policy===null || ($this->policy)($r->kind,$intent,$this->resource($r,allowDeleted:true))!==true) throw new ClaimUnavailable('retention_history_missing: fresh policy refused');
+        if ($this->policy===null || ($this->policy)($r->kind,$intent,$this->resource($r,allowDeleted:true))!==true) throw new \Tenant\Exceptions\RetentionHistoryMissing('retention_history_missing: fresh policy refused');
     }
-    private function configured(): void { if ($this->archives===null || $this->policy===null) throw new ClaimUnavailable('Qualified archive writer/verifier and explicit retention policy required.');$this->history(); }
+    private function configured(): void { if ($this->archives===null || $this->policy===null) throw new \Tenant\Exceptions\ArchiveUnverified('Qualified archive writer/verifier and explicit retention policy required.');$this->history(); }
     private function history(): string { return AnchorHistory::assertCurrent($this->connection,$this->recoveryAnchor()); }
     private function table(): \Illuminate\Database\Query\Builder { return $this->connection->table('tenant_pg_lifecycle_operations'); }
-    private function find(string $id): object { return $this->table()->where('id',$id)->first() ?? throw new ClaimUnavailable('retention_history_missing: original operation not found'); }
+    private function find(string $id): object { return $this->table()->where('id',$id)->first() ?? throw new \Tenant\Exceptions\OriginalOperationMissing('Original operation not found'); }
     private function database(string $database): ?object
     {
         if (!preg_match('/^[A-Za-z0-9_]{1,63}$/D',$database)) throw new ClaimUnavailable('Invalid physical identifier.');return $this->connection->selectOne('SELECT oid FROM pg_database WHERE datname=?',[$database]);

@@ -11,7 +11,9 @@ final readonly class Admission
 
     public function assertAllowed(string $purpose, string $target): void
     {
-        if (($this->authorize)($purpose, $target) !== true) throw new \RuntimeException('Admission denied.');
+        try { $allowed=($this->authorize)($purpose,$target); }
+        catch (\Throwable $cause) { throw new \Tenant\Exceptions\ContextDenied([$cause]); }
+        if ($allowed!==true) throw new \Tenant\Exceptions\ContextDenied();
     }
 
     public function __serialize(): array { throw new \LogicException('Admission is process local.'); }

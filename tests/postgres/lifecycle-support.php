@@ -9,6 +9,7 @@ use Tenant\Data\{BindingExpectation,BindingVerificationInput};
 use Tenant\Postgres\{Admission,FileRecoveryAnchor,PgDumpArchiveStore,OperationKey,OperationRef,OperationReceipt};
 use Tenant\Postgres\Data\PhysicalAccess;
 use Tenant\Postgres\Internal\{LifecycleJournal,PostgresBindingVerifier};
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
 // Installed mode must execute installed package bodies, not the working tree.
 if (!getenv('P42_INSTALLED')) spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/tenant-postgres/src/','Tenant\\'=>__DIR__.'/../../packages/tenant/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
@@ -29,7 +30,7 @@ $journal=new LifecycleJournal($c,$verify,$archives,$anchor,$policy);
 function check(bool $ok,string $message):void { if (!$ok) throw new RuntimeException($message); }
 function refuse(Closure $work,?string $contains=null):string
 {
-    try { $work(); } catch (Throwable $e) { if ($contains!==null && !str_contains($e->getMessage(),$contains)) throw $e;return get_class($e).': '.$e->getMessage(); }
+    try { $work(); } catch (Throwable $e) { if ($contains!==null && ($e instanceof \Tenant\Exceptions\TenantFailure ? $e->reason()!==$contains : !str_contains($e->getMessage(),$contains))) throw $e;return get_class($e).': '.$e->getMessage(); }
     throw new RuntimeException('Expected refusal did not occur.');
 }
 function operationRef(OperationReceipt $r):OperationRef { return new OperationRef($r->key->namespace,$r->operationId,$r->resourceRef,$r->incarnation); }

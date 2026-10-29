@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 use Illuminate\Container\Container;use Illuminate\Database\Capsule\Manager;use Illuminate\Database\Connectors\ConnectionFactory;use Tenant\Postgres\Internal\Database\SchemaCatalogueSerializer;
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/tenant-postgres/src/','Tenant\\'=>__DIR__.'/../../packages/tenant/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
 $run=getenv('P41_RUN_ID');$base='tenant_p41_'.$run;$runtime=$base.'_runtime';
 if(!preg_match('/^[a-f0-9]{12}$/D',$run)||getenv('P41_DB')!==$base.'_central_test'||getenv('P41_HOST')!=='127.0.0.1'||getenv('P41_USER')!==$base.'_admin')throw new RuntimeException('Unsafe target');

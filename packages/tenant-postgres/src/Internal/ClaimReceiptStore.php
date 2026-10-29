@@ -30,11 +30,24 @@ final readonly class ClaimReceiptStore
                 $admission->assertAllowed('provision', $existing->host_intent_ref);
                 return $this->verified($existing);
             }
-            $claim=$this->claims->claim(new ClaimRequest($storageKey,$intent->clusterId,$intent->templateId,$digest,$intent->templateVersion,$intent->manifestHash));
+            // Inspect the original physical operation before touching any general pool row.
+            // A retry must reveal its receipt even if another pending resource is available.
+            $provision=$this->connection->table('tenant_pg_provision_attempts')->where('key_hash',$storageKey)->lockForUpdate()->first();
+            $originalResourceId=null;
+            if ($provision!==null) {
+                if ($provision->key_namespace!==$key->namespace || $provision->operation_key!==$key->key || !hash_equals($provision->intent_digest,$digest)) throw new ClaimConflict('Original provision intent differs.');
+                $admission->assertAllowed('provision',$provision->host_intent_ref);
+                if ($provision->status!=='succeeded' || (bool)$provision->cancel_requested) return $this->provisionReceipt($provision);
+                $original=$this->connection->table('tenant_pg_resources')->where('resource_ref',$provision->resource_ref)->lockForUpdate()->first();
+                if ($original===null || $original->deleted_at!==null) throw new \Tenant\Exceptions\ContextUnavailable();
+                if ($original->incarnation!==$provision->incarnation) throw new \Tenant\Exceptions\StaleIncarnation();
+                if ($original->signup_key!==null && $original->signup_key!==$storageKey) throw new \Tenant\Exceptions\ResourceQuarantined('Original allocation belongs to another key.');
+                $originalResourceId=$original->id;
+            }
+            $claim=$this->claims->claim(new ClaimRequest($storageKey,$intent->clusterId,$intent->templateId,$digest,$intent->templateVersion,$intent->manifestHash),$originalResourceId);
             $resource=$this->connection->table('tenant_pg_resources')->where('id',$claim->resourceId)->lockForUpdate()->first();
             if ($resource === null || $resource->deleted_at !== null || ! is_string($resource->resource_ref) || ! is_string($resource->incarnation) || ! is_string($resource->database_name) || ! is_string($resource->route_revision) || ! is_string($resource->recovery_generation)) throw new ClaimUnavailable('Pool resource has no complete binding.');
             ($this->verifyCurrentBinding)($resource);
-            $provision=$this->connection->table('tenant_pg_provision_attempts')->where('key_hash',$storageKey)->lockForUpdate()->first();
             if($provision!==null && (!hash_equals($provision->intent_digest,$digest)||$provision->status!=='succeeded'||$provision->resource_ref!==$resource->resource_ref||$provision->incarnation!==$resource->incarnation||(bool)$provision->cancel_requested)) throw new ClaimConflict('Original physical operation differs from claim.');
             $row=['id'=>$provision?->id ?? (string)Str::uuid7(),'key_hash'=>$storageKey,'key_namespace'=>$key->namespace,'operation_key'=>$key->key,'host_intent_ref'=>$intent->hostIntentRef,'intent_digest'=>$digest,'resource_id'=>$resource->id,'resource_ref'=>$resource->resource_ref,'incarnation'=>$resource->incarnation,'status'=>'succeeded','attempt_generation'=>$provision?->attempt_generation ?? 1,'receipt_version'=>$provision?->receipt_version ?? 1,'observed_effect'=>$provision?->observed_effect ?? 'verified_pool'];
             if ($this->anchor!==null) AnchorHistory::remember($this->connection,$this->anchor,'tenant_pg_operations',$row);
@@ -51,7 +64,7 @@ final readonly class ClaimReceiptStore
     public function query(string $operationId, Admission $admission): OperationReceipt
     {
         $row=$this->connection->table('tenant_pg_operations')->where('id',$operationId)->first();
-        if ($row === null) throw new ClaimUnavailable('Operation not found.');
+        if ($row === null) throw new \Tenant\Exceptions\OriginalOperationMissing('Operation not found.');
         $admission->assertAllowed('query', $row->host_intent_ref);
         return $this->verified($row);
     }
@@ -60,11 +73,16 @@ final readonly class ClaimReceiptStore
     {
         if ($this->anchor!==null) AnchorHistory::assertCurrent($this->connection,$this->anchor);
         $resource=$this->connection->table('tenant_pg_resources')->where('id',$row->resource_id)->first();
-        if ($resource === null || $resource->deleted_at !== null || $resource->status === 'deleted' || $resource->resource_ref !== $row->resource_ref || $resource->incarnation !== $row->incarnation) throw new ClaimConflict('Original resource is unavailable or changed.');
+        if ($resource===null || $resource->deleted_at!==null || $resource->status==='deleted') throw new \Tenant\Exceptions\ContextUnavailable();
+        if ($resource->resource_ref!==$row->resource_ref || $resource->incarnation!==$row->incarnation) throw new \Tenant\Exceptions\StaleIncarnation();
         ($this->verifyCurrentBinding)($resource);
         return $this->receipt($row);
     }
 
+    private function provisionReceipt(object $r): OperationReceipt
+    {
+        return new OperationReceipt($r->id,$r->intent_digest,$r->resource_ref,$r->incarnation,(int)$r->attempt_generation,$r->status,(int)$r->receipt_version,$r->observed_effect,(bool)$r->cancel_requested,new OperationKey($r->key_namespace,$r->operation_key));
+    }
     private function receipt(object $row): OperationReceipt
     {
         return new OperationReceipt($row->id,$row->intent_digest,$row->resource_ref,$row->incarnation,(int)$row->attempt_generation,$row->status,(int)$row->receipt_version,$row->observed_effect,false,new OperationKey($row->key_namespace,$row->operation_key));

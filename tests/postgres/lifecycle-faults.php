@@ -20,13 +20,13 @@ check($c->selectOne('SELECT pg_backend_pid() AS pid')->pid!==(int)$new->backend_
 if($c->selectOne('SELECT pid FROM pg_stat_activity WHERE pid=?',[$new->backend_pid])!==null)$c->select('SELECT pg_terminate_backend(?)',[$new->backend_pid]);
 for($attempt=0;$attempt<100 && $c->selectOne('SELECT pid FROM pg_stat_activity WHERE pid=?',[$new->backend_pid])!==null;$attempt++)usleep(10000);
 $ref=new OperationRef($new->key_namespace,$new->id,$new->resource_ref,$new->incarnation);$done=$journal->reconcile($ref,$allow);check($done->status==='succeeded','Original durable export not reconciled');
-refuse(fn()=>$journal->request(deleteIntent($r,$first),new OperationKey('lab','faults-delete'),$allow),'newer export');
+refuse(fn()=>$journal->request(deleteIntent($r,$first),new OperationKey('lab','faults-delete'),$allow),'archive_unverified');
 $second=$journal->queryExport(new ExportRef($new->export_id,$ref),$allow);
 check($second->manifest!==null,'New original manifest missing');
 // Policy is checked again immediately before physical submission, after the registration.
 $checks=0;$freshPolicy=static function(string $k,object $i,object $r)use(&$checks):bool { return ++$checks===1; };
 $revoked=new LifecycleJournal($c,$verify,$archives,$anchor,$freshPolicy);
-refuse(fn()=>$revoked->request(new DeleteIntent($r->resource_ref,$r->incarnation,new ExportRef($new->export_id,$ref),'policy:lab'),new OperationKey('lab','policy-revoked'),$allow),'fresh policy');
+refuse(fn()=>$revoked->request(new DeleteIntent($r->resource_ref,$r->incarnation,new ExportRef($new->export_id,$ref),'policy:lab'),new OperationKey('lab','policy-revoked'),$allow),'retention_history_missing');
 check($c->selectOne('SELECT oid FROM pg_database WHERE datname=?',[$r->database_name])!==null,'Revoked policy still dropped target');
 // A catalog with forgotten original history refuses even with otherwise valid resource/marker.
 $history=$c->table('tenant_pg_lifecycle_operations')->where('id',$first->operationId)->first();

@@ -66,7 +66,7 @@ final readonly class ProvisionJournal
     public function assertReference(string $namespace,string $id,string $resourceRef,string $incarnation,Admission $admission,string $purpose): void
     {
         $row=$this->find($id);$admission->assertAllowed($purpose,$row->host_intent_ref);
-        if($row->key_namespace!==$namespace||$row->resource_ref!==$resourceRef||$row->incarnation!==$incarnation)throw new ClaimConflict('Operation reference does not match the original.');
+        if($row->key_namespace!==$namespace||$row->resource_ref!==$resourceRef||$row->incarnation!==$incarnation)throw new \Tenant\Exceptions\OriginalOperationMissing('Operation reference does not match the original.');
     }
 
     public function query(string $id, Admission $admission): OperationReceipt
@@ -84,7 +84,7 @@ final readonly class ProvisionJournal
         $row=$this->find($id);$admission->assertAllowed('cancel',$row->host_intent_ref);
         return $this->connection->transaction(function()use($id):OperationReceipt{
             $row=$this->connection->table('tenant_pg_provision_attempts')->where('id',$id)->lockForUpdate()->first();
-            if($row===null)throw new ClaimUnavailable('Operation not found.');
+            if($row===null)throw new \Tenant\Exceptions\OriginalOperationMissing('Operation not found.');
             if($row->status==='cancelled'||(bool)$row->cancel_requested)return $this->receipt($row);
             if($row->status==='succeeded')throw new ClaimUnavailable('Completed operation cannot be cancelled.');
             if(!in_array($row->status,['accepted','running','unknown'],true))throw new ClaimUnavailable('Operation cannot be cancelled.');
@@ -128,7 +128,7 @@ final readonly class ProvisionJournal
         $q=$this->integrity->qualify(new ClaimRequest('reconcile',$r->cluster_id,$r->template_id,$r->intent_digest));
         if($q->templateVersion!==(int)$r->template_version || !hash_equals($r->manifest_hash,$q->artifactDigest))throw new ClaimUnavailable('Frozen template proof changed.');
     }
-    private function find(string $id):object{return $this->connection->table('tenant_pg_provision_attempts')->where('id',$id)->first() ?? throw new ClaimUnavailable('Operation not found.');}
+    private function find(string $id):object{return $this->connection->table('tenant_pg_provision_attempts')->where('id',$id)->first() ?? throw new \Tenant\Exceptions\OriginalOperationMissing('Operation not found.');}
     private function snapshot(object $r):ResourceSnapshot{return new ResourceSnapshot($r->resource_ref,$r->incarnation,(int)$r->template_version,$r->cluster_id,$r->database_name);}
     private function receipt(object $r):OperationReceipt{return new OperationReceipt($r->id,$r->intent_digest,$r->resource_ref,$r->incarnation,(int)$r->attempt_generation,$r->status,(int)$r->receipt_version,$r->observed_effect,(bool)$r->cancel_requested,new OperationKey($r->key_namespace,$r->operation_key));}
 }

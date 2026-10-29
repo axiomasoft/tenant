@@ -8,6 +8,7 @@ use Illuminate\Database\Connectors\ConnectionFactory;
 use Tenant\Postgres\Data\ResourceSnapshot;
 use Tenant\Postgres\Data\TemplateTrust;
 use Tenant\Postgres\Internal\Database\{SchemaCatalogueSerializer,TemplateClonePostgreSQLManager,TemplateIntegrityLock,TemplateIntegrityVerifier};
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
 spl_autoload_register(static function(string $class):void{$prefix='Tenant\\Postgres\\';if(str_starts_with($class,$prefix))require __DIR__.'/../../packages/tenant-postgres/src/'.str_replace('\\','/',substr($class,strlen($prefix))).'.php';});
 $run=getenv('P41_RUN_ID');$base='tenant_p41_'.$run;$gold=$base.'_gold5_test';$clone=$base.'_clone5_test';$runtime=$base.'_runtime';

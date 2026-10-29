@@ -9,6 +9,7 @@ use Tenant\Data\{BindingExpectation,BindingVerificationInput};
 use Tenant\Postgres\{Admission,OperationKey,ProvisionIntent};use Tenant\Postgres\Data\{PhysicalAccess,TemplateTrust};
 use Tenant\Postgres\Internal\{ClaimReceiptStore,ClaimResource,PostgresBindingVerifier};
 use Tenant\Postgres\Internal\Database\{SchemaCatalogueSerializer,TemplateIntegrityLock,TemplateIntegrityVerifier};
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
 spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/tenant-postgres/src/','Tenant\\'=>__DIR__.'/../../packages/tenant/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
 $run=getenv('P41_RUN_ID');$base='tenant_p41_'.$run;$name=$base.'_receipt_test';$gold=$base.'_gold5_test';$runtime=$base.'_runtime';

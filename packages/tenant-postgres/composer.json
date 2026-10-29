@@ -13,7 +13,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Tenant\\Postgres\\": "src/"
+            "Tenant\\Postgres\\": "src/",
+            "Tenant\\Exceptions\\": "src/Exceptions/Public/"
         }
     }
 }

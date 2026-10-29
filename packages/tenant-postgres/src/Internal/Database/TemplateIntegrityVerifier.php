@@ -84,22 +84,21 @@ final readonly class TemplateIntegrityVerifier implements TemplateIntegrityVerif
         $connection = $this->db();
 
         return $connection->transaction(function () use ($connection, $templateId, $version, $clusterId): stdClass {
-            $query = $connection->table('tenant_pg_templates')->where('status', 'ready')->lockForUpdate();
-
-            if ($templateId !== null) {
-                $query->where('id', $templateId);
-            }
-
-            if ($version !== null) {
-                $query->where('version', $version);
-            }
-            $template = $query->first();
-
+            // Resolve the lock identity without a row lock, then always take advisory
+            // before row. Cloners hold the same advisory lock for the whole DDL session.
+            $lookup = $connection->table('tenant_pg_templates')->where('status', 'ready');
+            if ($templateId !== null) $lookup->where('id', $templateId);
+            if ($version !== null) $lookup->where('version', $version);
+            $identity = $lookup->first(['id']);
+            if ($identity === null) throw new TemplateIntegrityException('The requested template is unavailable.');
+            $this->lock->acquire(connection: $connection, templateId: DatabaseValue::text($identity->id));
+            $query = $connection->table('tenant_pg_templates')->where('id', $identity->id)->where('status', 'ready');
+            if ($templateId !== null) $query->where('id', $templateId);
+            if ($version !== null) $query->where('version', $version);
+            $template = $query->lockForUpdate()->first();
             if ($template === null || ! is_string($template->schema_hash)) {
                 throw new TemplateIntegrityException('The requested template has no trusted schema hash.');
             }
-
-            $this->lock->acquire(connection: $connection, templateId: DatabaseValue::text($template->id));
 
             if ($clusterId !== null && ! $connection->table('tenant_pg_clusters')
                 ->where('id', $clusterId)->where('status', 'active')->where('template_version', $template->version)->exists()) {

@@ -19,7 +19,7 @@ $operator=new RecoveryOperator($c,$journal,$route,$m['runtime'],$runtimeRoute);
 $intent=new RecoveryIntent('restore',$export->exportRef,$manifest->sha256,$r->resource_ref,$r->incarnation,$r->cluster_id,$r->database_name,'recovery:restore');
 $noAnchor=new LifecycleJournal($c,$verify,$archives,null,$policy);$unsupported=new RecoveryOperator($c,$noAnchor,$route,$m['runtime'],$runtimeRoute);
 refuse(fn()=>$unsupported->admit($intent,$allow),'recovery_unsupported');
-refuse(fn()=>$operator->admit($intent,new Admission(static fn()=>false)),'Admission denied');
+refuse(fn()=>$operator->admit($intent,new Admission(static fn()=>false)),'denied');
 $plan=$operator->admit($intent,$allow);check($c->selectOne('SELECT oid FROM pg_database WHERE datname=?',[$r->database_name])===null,'admitRecovery performed IO');
 // Clone has a distinct retained logical identity and frozen destination.
 $cloneRef='lab:clone_recovery';$cloneDb=$base.'_clone_recovery_test';$cloneId=(string)Illuminate\Support\Str::uuid7();
@@ -34,9 +34,9 @@ foreach ([$r->database_name,$cloneDb] as $target) {
 $restored=$operator->complete($plan,$generation,$allow);$clone=$operator->complete($clonePlan,$generation,$allow);
 check($restored->resourceRef===$r->resource_ref && $restored->incarnation!==$r->incarnation,'Restore identity did not change');
 check($clone->resourceRef!==$r->resource_ref && $clone->incarnation!==$restored->incarnation,'Clone identity reused');
-refuse(fn()=>$journal->request(deleteIntent($r,$export),new OperationKey('lab','restore-delete'),$allow),'Stale');
-refuse(fn()=>$journal->request(exportIntent($r),new OperationKey('lab','restore-export'),$allow),'Stale');
-refuse(fn()=>$operator->complete($plan,$generation,$allow),'changed');
+refuse(fn()=>$journal->request(deleteIntent($r,$export),new OperationKey('lab','restore-delete'),$allow),'stale_incarnation');
+refuse(fn()=>$journal->request(exportIntent($r),new OperationKey('lab','restore-export'),$allow),'stale_incarnation');
+refuse(fn()=>$operator->complete($plan,$generation,$allow),'resource_quarantined');
 $runtimeVerifier=new PostgresBindingVerifier($c,$runtimeRoute,$anchor);
 $newRow=$c->table('tenant_pg_resources')->where('resource_ref',$restored->resourceRef)->first();
 $input=new BindingVerificationInput(new BindingExpectation($restored->resourceRef,$restored->incarnation,$restored->routeRevision),new PhysicalAccess($runtimeRoute($newRow)));
@@ -48,7 +48,7 @@ foreach ([$r->database_name,$cloneDb] as $target) {
 // Restore an actually older control-plane backup into a separate disposable database.
 $historyDb=$base.'_catalog_replay_test';$c->getPdo()->exec('CREATE DATABASE "'.$historyDb.'"');nativeTool(['/usr/lib/postgresql/16/bin/pg_restore','--exit-on-error','--no-owner','--no-privileges','-d',$historyDb,$catalogDump]);
 $oldCatalog=$factory->make([...$cfg,'database'=>$historyDb],'catalog-replay');
-refuse(fn()=>AnchorHistory::assertCurrent($oldCatalog,$anchor),'generation_mismatch');
+refuse(fn()=>AnchorHistory::assertCurrent($oldCatalog,$anchor),'resource_quarantined');
 // A restored DB-local epoch equal to the external value is still not proof of retained history.
 $oldCatalog->table('tenant_pg_control')->where('id',1)->update(['recovery_generation'=>$generation]);
 refuse(fn()=>AnchorHistory::assertCurrent($oldCatalog,$anchor),'retention_history_missing');

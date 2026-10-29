@@ -19,5 +19,5 @@ $history=$c->table('tenant_pg_provision_attempts')->where('id',$first->operation
 $c->table('tenant_pg_provision_attempts')->where('id',$first->operationId)->delete();
 refuse(fn()=>$owner->claim($intent,$key,$allow),'retention_history_missing');
 $c->table('tenant_pg_provision_attempts')->insert((array)$history);
-refuse(fn()=>$owner->requestExport(exportIntent($row),$key,new Tenant\Postgres\Admission(static fn()=>true)),'another kind');
+refuse(fn()=>$owner->requestExport(exportIntent($row),$key,new Tenant\Postgres\Admission(static fn()=>true)),'idempotency_conflict');
 echo json_encode(['status'=>'passed','scope'=>'public factory reuses real signed P4.1 empty-pool clone, marker and original receipt; provision history retained externally; lifecycle uses same target; cross-kind replay refused','operationId'=>$first->operationId]),"\n";

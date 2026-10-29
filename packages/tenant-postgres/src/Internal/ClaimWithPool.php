@@ -11,8 +11,8 @@ final readonly class ClaimWithPool
     public function claim(ProvisionIntent $intent,OperationKey $key,Admission $admission):OperationReceipt
     {
         try{return $this->claims->claim($intent,$key,$admission);}catch(PoolExhausted){
-            $receipt=$this->pool->fill($intent,$key,$admission);
-            if($receipt->status!=='succeeded')throw new ClaimUnavailable('Provision outcome requires reconciliation.');
+            $receipt=$this->pool->allocate($intent,$key,$admission);
+            if($receipt->status!=='succeeded')return $receipt;
             return $this->claims->claim($intent,$key,$admission);
         }
     }

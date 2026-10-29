@@ -11,5 +11,5 @@ $delete=$owner->requestDelete(deleteIntent($r,$export),new OperationKey('lab','p
 check($owner->queryOperation(operationRef($delete),$allow)==$delete,'Public tombstone unavailable');
 // Absent optional capability is explicit; technical IO requires host admission, not a paid grant.
 $absent=PostgresFactory::owner($c,$db->getDatabaseManager(),new TemplateTrust([],[]),$runtimeRoute,static fn(string $id):string=>'unused_test',$m['runtime'],[]);
-refuse(fn()=>$absent->requestExport(exportIntent($r),new OperationKey('lab','absent'),$allow),'writer/verifier');
+refuse(fn()=>$absent->requestExport(exportIntent($r),new OperationKey('lab','absent'),$allow),'archive_unverified');
 echo json_encode(['status'=>'passed','scope'=>'public PostgresLifecycle factory, original query/export/delete, explicit capability/policy refusal; no commercial grant implied','owner'=>'tenant-postgres','tables'=>['tenant_pg_resources','tenant_pg_lifecycle_operations'],'migrationOwner'=>'axiomasoft/tenant-postgres']),"\n";

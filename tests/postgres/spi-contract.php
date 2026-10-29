@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');spl_autoload_register(static function(string $class):void{$p='Tenant\\Postgres\\';if(str_starts_with($class,$p))require __DIR__.'/../../packages/tenant-postgres/src/'.str_replace('\\','/',substr($class,strlen($p))).'.php';});
 if(!is_subclass_of(\Tenant\Postgres\ProvisioningOwner::class,\Tenant\Postgres\PostgresLifecycle::class))throw new RuntimeException('Missing lifecycle SPI');
 foreach(['Admission','OperationKey','OperationReceipt','OperationRef','ProvisionIntent'] as $name){$root='Tenant\\Postgres\\'.$name;$old='Tenant\\Postgres\\Data\\'.$name;if(!class_exists($root)||!class_exists($old)||!is_a($old,$root,true))throw new RuntimeException('Public/compatibility type mismatch: '.$name);}

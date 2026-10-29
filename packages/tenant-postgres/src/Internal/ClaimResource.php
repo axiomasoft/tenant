@@ -30,14 +30,14 @@ final readonly class ClaimResource implements ProvisioningClaim
         private ConnectionResolverInterface $connections,
     ) {}
 
-    public function claim(ClaimRequest $request): ClaimResult
+    public function claim(ClaimRequest $request, ?string $originalResourceId = null): ClaimResult
     {
         $this->validateRequest($request);
 
         for ($attempt = 1; $attempt <= self::MaxTransactionAttempts; $attempt++) {
             try {
                 return $this->connection()->transaction(
-                    callback: fn (): ClaimResult => $this->claimInTransaction($request),
+                    callback: fn (): ClaimResult => $this->claimInTransaction($request, $originalResourceId),
                     attempts: 1,
                 );
             } catch (QueryException $exception) {
@@ -54,7 +54,7 @@ final readonly class ClaimResource implements ProvisioningClaim
         throw new ClaimUnavailable('The signup claim could not be reconciled.');
     }
 
-    private function claimInTransaction(ClaimRequest $request): ClaimResult
+    private function claimInTransaction(ClaimRequest $request, ?string $originalResourceId): ClaimResult
     {
         $connection = $this->connection();
 
@@ -77,6 +77,7 @@ final readonly class ClaimResource implements ProvisioningClaim
         $binding = $bindings->first();
 
         if ($binding !== null) {
+            if ($originalResourceId !== null && $binding->id !== $originalResourceId) throw new ClaimConflict('Original allocation differs from signup binding.');
             return $this->replayResult(binding: $binding, request: $request);
         }
 
@@ -84,14 +85,15 @@ final readonly class ClaimResource implements ProvisioningClaim
         $this->validateQualifiedTemplate(qualifiedTemplate: $qualifiedTemplate, request: $request);
         $this->lockAndVerifyTemplate(connection: $connection, qualifiedTemplate: $qualifiedTemplate);
 
-        $candidate = $connection->table('tenant_pg_resources')
+        $candidateQuery = $connection->table('tenant_pg_resources')
             ->select(['id', 'cluster_id', 'template_version'])
             ->where('cluster_id', $request->clusterId)
             ->where('template_version', $qualifiedTemplate->templateVersion)
             ->where('status', 'pending')
             ->whereNull('deleted_at')
-            ->whereNull('signup_key')
-            ->orderBy('id')
+            ->whereNull('signup_key');
+        if ($originalResourceId !== null) $candidateQuery->where('id', $originalResourceId);
+        $candidate = $candidateQuery->orderBy('id')
             ->lock('FOR UPDATE SKIP LOCKED')
             ->first();
 
@@ -132,6 +134,7 @@ final readonly class ClaimResource implements ProvisioningClaim
 
     private function lockAndVerifyTemplate(Connection $connection, QualifiedTemplate $qualifiedTemplate): void
     {
+        (new \Tenant\Postgres\Internal\Database\TemplateIntegrityLock)->acquire($connection, $qualifiedTemplate->templateId);
         $cluster = $connection->table('tenant_pg_clusters')
             ->where('id', $qualifiedTemplate->clusterId)
             ->where('status', 'active')

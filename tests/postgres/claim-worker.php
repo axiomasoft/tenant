@@ -8,6 +8,7 @@ use Tenant\Postgres\Data\ClaimRequest;
 use Tenant\Postgres\Data\QualifiedTemplate;
 use Tenant\Postgres\Internal\ClaimResource;
 
+require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
 spl_autoload_register(static function (string $class): void {
     $prefix = 'Tenant\\Postgres\\';
