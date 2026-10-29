@@ -15,12 +15,14 @@ final readonly class ProvisioningOwner implements PostgresLifecycle
     public function queryOperation(OperationRef $ref,Admission $admission):OperationReceipt
     {
         return ErrorBoundary::run(function()use($ref,$admission):OperationReceipt {
+            $admission->assertAllowed('query',$ref->resourceRef);
             $r=$this->lifecycle?->hasOperation($ref->operationId)?$this->lifecycle->query($ref,$admission):($this->receipts->hasOperation($ref->operationId)?$this->receipts->query($ref->operationId,$admission):$this->journal->query($ref->operationId,$admission));return $this->same($ref,$r);
         },'query');
     }
     public function reconcile(OperationRef $ref,Admission $admission):OperationReceipt
     {
         return ErrorBoundary::run(function()use($ref,$admission):OperationReceipt {
+            $admission->assertAllowed('reconcile',$ref->resourceRef);
             if($this->lifecycle?->hasOperation($ref->operationId))return $this->lifecycle->reconcile($ref,$admission);
             $this->journal->assertReference($ref->namespace,$ref->operationId,$ref->resourceRef,$ref->incarnation,$admission,'reconcile');return $this->same($ref,$this->journal->reconcile($ref->operationId,$admission));
         },'effect');
@@ -28,6 +30,7 @@ final readonly class ProvisioningOwner implements PostgresLifecycle
     public function cancelIntent(OperationRef $ref,Admission $admission):OperationReceipt
     {
         return ErrorBoundary::run(function()use($ref,$admission):OperationReceipt {
+            $admission->assertAllowed('cancel',$ref->resourceRef);
             if($this->lifecycle?->hasOperation($ref->operationId))return $this->lifecycle->cancel($ref,$admission);
             $this->journal->assertReference($ref->namespace,$ref->operationId,$ref->resourceRef,$ref->incarnation,$admission,'cancel');return $this->same($ref,$this->journal->cancel($ref->operationId,$admission));
         },'effect');
