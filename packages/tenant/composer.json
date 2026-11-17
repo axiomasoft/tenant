@@ -17,7 +17,22 @@
     },
     "extra": {
         "packman": {
-            "error-prefix": "tenant"
+            "schema-version": 1,
+            "package-type": "domain",
+            "stability": "stable",
+            "error-prefix": "tenant",
+            "owns": [
+                "Attributes",
+                "Composition",
+                "Contracts",
+                "Data",
+                "Enums",
+                "Errors",
+                "Exceptions",
+                "Extensions",
+                "Internal",
+                "Runtime"
+            ]
         }
     }
 }

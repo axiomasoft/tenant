@@ -31,7 +31,18 @@
             ]
         },
         "packman": {
-            "error-prefix": "tenant"
+            "schema-version": 1,
+            "package-type": "addon",
+            "stability": "stable",
+            "error-prefix": "tenant",
+            "owns": [
+                "Contracts",
+                "Data",
+                "Database",
+                "Exceptions",
+                "Internal",
+                "Registrars"
+            ]
         }
     }
 }

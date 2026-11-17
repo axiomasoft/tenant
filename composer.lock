@@ -144,7 +144,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant",
-                "reference": "164834c1f3e19922871226e82efa58f52984246f"
+                "reference": "dd82ef3802a1b944c1f250f8f248d8d786abfa27"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -154,7 +154,22 @@
             "type": "library",
             "extra": {
                 "packman": {
-                    "error-prefix": "tenant"
+                    "schema-version": 1,
+                    "package-type": "domain",
+                    "stability": "stable",
+                    "error-prefix": "tenant",
+                    "owns": [
+                        "Attributes",
+                        "Composition",
+                        "Contracts",
+                        "Data",
+                        "Enums",
+                        "Errors",
+                        "Exceptions",
+                        "Extensions",
+                        "Internal",
+                        "Runtime"
+                    ]
                 }
             },
             "autoload": {
@@ -177,7 +192,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant-laravel",
-                "reference": "bba2c5f554b0b33583b74b40c51f789daa9032c5"
+                "reference": "8d219fee88a0283f9e923e29eb6832cc0c79851f"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -204,7 +219,22 @@
                     ]
                 },
                 "packman": {
-                    "error-prefix": "tenant"
+                    "schema-version": 1,
+                    "package-type": "addon",
+                    "stability": "stable",
+                    "error-prefix": "tenant",
+                    "owns": [
+                        "Codec",
+                        "Configuration",
+                        "Contracts",
+                        "Data",
+                        "Diagnostics",
+                        "Http",
+                        "Internal",
+                        "Laravel",
+                        "Queue",
+                        "Registrars"
+                    ]
                 }
             },
             "autoload": {
@@ -227,7 +257,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant-postgres",
-                "reference": "a66ee3e88b572750aa536f0586951e2c6095463d"
+                "reference": "3f4462a7ded10bdb449e4a207147ccc95d94826a"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -250,7 +280,18 @@
                     ]
                 },
                 "packman": {
-                    "error-prefix": "tenant"
+                    "schema-version": 1,
+                    "package-type": "addon",
+                    "stability": "stable",
+                    "error-prefix": "tenant",
+                    "owns": [
+                        "Contracts",
+                        "Data",
+                        "Database",
+                        "Exceptions",
+                        "Internal",
+                        "Registrars"
+                    ]
                 }
             },
             "autoload": {
@@ -6360,7 +6401,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant-panels",
-                "reference": "5a09776f0e8a6a2c880fa944dc1b57b5a63b8ff0"
+                "reference": "f0b15482344084a49307da23b6d7ce58c3a41009"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -6375,6 +6416,15 @@
                 "laravel": {
                     "providers": [
                         "Tenant\\Panels\\TenantPanelsServiceProvider"
+                    ]
+                },
+                "packman": {
+                    "schema-version": 1,
+                    "package-type": "integration",
+                    "stability": "stable",
+                    "owns": [
+                        "Contracts",
+                        "Registrars"
                     ]
                 }
             },
