@@ -8,7 +8,6 @@ use Illuminate\Cache\CacheManager;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Session\SessionManager;
 use Illuminate\Session\Store;
-use InvalidArgumentException;
 use LogicException;
 use Packman\Attributes\Internal;
 use RuntimeException;
@@ -17,7 +16,6 @@ use Tenant\Contracts\Runtime\Facility;
 use Tenant\Contracts\Runtime\FrameState;
 use Tenant\Contracts\Runtime\PhaseContext;
 use Tenant\Contracts\Runtime\RestoreContext;
-use Tenant\Data\Composition\CapabilityId;
 use Tenant\Laravel\Data\ResourceDescriptor;
 use Tenant\Laravel\Internal\Configuration\FrameworkConfig;
 use Tenant\Laravel\Internal\Storage\GuardedFilesystem;
@@ -48,14 +46,11 @@ final readonly class SessionFacility implements Facility
         $scope = null;
         $candidate = $context->candidate()->context;
         if ($context->candidate()->kind === 'active' && $candidate !== null) {
-            $facet = $context->require(new CapabilityId('tenant:database'));
-            if (! $facet instanceof ResourceDescriptor) {
-                throw new InvalidArgumentException('unsupported_capability');
-            }
+            $facet = ResourceScopeAccess::fromPhase($context);
             // A workspace changes authorization, not the physical session namespace.
             // Identity/profile/binding and trusted routing roots must all remain exact.
             $scope = hash('sha256', serialize([$candidate->mode, $candidate->identity, $candidate->profile,
-                $candidate->binding, $facet->route, $facet->prefix, $facet->sessionRoot,
+                $candidate->binding, $facet instanceof ResourceDescriptor ? $facet->route : null, $facet->prefix, $facet->sessionRoot,
                 $this->config->get('session.driver'), $this->config->get('session.store')]));
         }
         $state->put('previousScope', $previous);
@@ -70,10 +65,7 @@ final readonly class SessionFacility implements Facility
         $scope = $state->get('scope');
         $this->generation->select(is_string($scope) ? $scope : null);
         if ($context->candidate()->kind === 'active') {
-            $facet = $context->require(new CapabilityId('tenant:database'));
-            if (! $facet instanceof ResourceDescriptor) {
-                throw new InvalidArgumentException('unsupported_capability');
-            }
+            $facet = ResourceScopeAccess::fromPhase($context);
             if ($this->config->get('session.driver') === 'file') {
                 // Reuse storage path/symlink refusal before creating any directory.
                 GuardedFilesystem::assertRoot($facet->sessionRoot);

@@ -24,9 +24,14 @@ final readonly class FacilitiesValidator
     {
         $options = $this->options ?? $this->compileOptions();
         $view = new FrameworkConfig(fn (): Repository => $this->config);
-        $stores = $options->cacheStores;
+        $stores = $options->facilities->cache ? $options->cacheStores : [];
         $central = $options->centralConnection;
-        if ($central === '' || $central === 'tenant' || ! is_array($this->config->get('database.connections.'.$central))) {
+        if (! in_array($options->runtimeProfile, ['laravel-pg-database', 'laravel-scoped'], true)
+            || ($options->runtimeProfile === 'laravel-scoped' && $options->facilities->database)) {
+            $this->deny();
+        }
+        if ($options->runtimeProfile === 'laravel-pg-database'
+            && ($central === '' || $central === 'tenant' || ! is_array($this->config->get('database.connections.'.$central)))) {
             $this->deny();
         }
         foreach (['database', 'cache', 'session', 'storage'] as $facility) {
@@ -57,6 +62,9 @@ final readonly class FacilitiesValidator
         if ($options->facilities->storage && $options->storageDriver !== 'local') {
             $this->deny();
         }
+        if (! $options->facilities->session) {
+            return;
+        }
         $driver = $this->config->get('session.driver');
         if ($driver !== null && ! in_array($driver, ['file', 'redis'], true)) {
             $this->deny();
@@ -66,7 +74,11 @@ final readonly class FacilitiesValidator
         }
         if ($driver === 'redis') {
             $name = $this->config->get('session.store');
-            if (! is_string($name) || in_array($name, [...$stores, ...$options->centralCacheStores], true) || $this->config->get('cache.stores.'.$name.'.driver') !== 'redis' || ! is_string($this->config->get('session.connection'))) {
+            if (! is_string($name)
+                || in_array($name, [...$options->cacheStores, ...$options->centralCacheStores], true)
+                || $name === $this->config->get('cache.default')
+                || $this->config->get('cache.stores.'.$name.'.driver') !== 'redis'
+                || ! is_string($this->config->get('session.connection'))) {
                 $this->deny();
             }
         }

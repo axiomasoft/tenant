@@ -1,0 +1,25 @@
+{
+    "name": "axiomasoft/tenant-panels",
+    "description": "Optional Packman panel admission inside the shared Tenant isolation runtime.",
+    "type": "library",
+    "require": {
+        "php": ">=8.4 <8.6",
+        "axiomasoft/packman": "^0.1",
+        "axiomasoft/packman-panels": "^0.1",
+        "axiomasoft/tenant": "^1.0",
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tenant\\Panels\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tenant\\Panels\\TenantPanelsServiceProvider"
+            ]
+        }
+    }
+}

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tenant\Laravel\Internal\Facilities;
 
 use Illuminate\Cache\CacheManager;
-use InvalidArgumentException;
 use LogicException;
 use Packman\Attributes\Internal;
 use RuntimeException;
@@ -13,8 +12,6 @@ use Tenant\Contracts\Runtime\Facility;
 use Tenant\Contracts\Runtime\FrameState;
 use Tenant\Contracts\Runtime\PhaseContext;
 use Tenant\Contracts\Runtime\RestoreContext;
-use Tenant\Data\Composition\CapabilityId;
-use Tenant\Laravel\Data\ResourceDescriptor;
 use Tenant\Laravel\Internal\Configuration\FrameworkConfig;
 
 /** @internal Whole-store snapshots/forget-driver, separated for every frame. */
@@ -35,11 +32,8 @@ final readonly class CacheFacility implements Facility
 
     public function activate(PhaseContext $context, FrameState $state): void
     {
-        $facet = $context->candidate()->kind === 'active' ? $context->require(new CapabilityId('tenant:database')) : null;
+        $facet = $context->candidate()->kind === 'active' ? ResourceScopeAccess::fromPhase($context) : null;
         foreach ($this->stores($state) as $name => $store) {
-            if ($facet !== null && ! $facet instanceof ResourceDescriptor) {
-                throw new InvalidArgumentException('unsupported_capability');
-            }
             $prefix = $store['tenant_base_prefix'] ?? '';
             if (! is_string($prefix)) {
                 throw new LogicException('Invalid cache prefix');

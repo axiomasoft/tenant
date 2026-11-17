@@ -8,6 +8,8 @@ use Closure;
 use Illuminate\Contracts\Queue\Job;
 use InvalidArgumentException;
 use Packman\Attributes\Api;
+use Packman\Config\Data\SecretRef;
+use SensitiveParameter;
 use Tenant\Data\Context\ContextReference;
 use Tenant\Data\Context\ExtensionRef;
 use Tenant\Data\Context\IsolationIdentity;
@@ -18,27 +20,87 @@ use Tenant\Data\Verification\BindingExpectation;
 use Tenant\Exceptions\TenantFailure;
 use Throwable;
 
-/** Immutable host-owned allowlists and callbacks. Signing material never enters payloads. */
+/**
+ * Immutable host-owned allowlists and callbacks. Signing material never enters payloads.
+ *
+ * @phpstan-type HandlerRegistration array{producer: string, purposes: list<string>, extensions: list<string>, admit: Closure(array<string, scalar|null>, Purpose): void, handle: Closure(array<string, scalar|null>, Job): void, failed?: Closure(array<string, scalar|null>, Throwable): void}
+ */
 #[Api(since: '1.0')]
 final readonly class QueueRegistry
 {
+    private SecretRef $key;
+
+    /** @var list<string> */
+    public array $namespaces;
+
+    /** @var array<string, array{version: int, modes: list<string>}> */
+    public array $profiles;
+
+    /** @var array<string, array{version: int, refs: list<string>}> */
+    public array $extensions;
+
+    /** @var array<string, HandlerRegistration> */
+    public array $handlers;
+
+    /** @var list<string> */
+    public array $centralJobs;
+
     /**
      * @param  list<string>  $namespaces
      * @param  array<string, array{version: int, modes: list<string>}>  $profiles
      * @param  array<string, array{version: int, refs: list<string>}>  $extensions
-     * @param  array<string, array{producer: string, purposes: list<string>, extensions: list<string>, admit: Closure(array<string, scalar|null>, Purpose): void, handle: Closure(array<string, scalar|null>, Job): void, failed?: Closure(array<string, scalar|null>, Throwable): void}>  $handlers
+     * @param  array<string, HandlerRegistration>  $handlers
      * @param  list<string>  $centralJobs  Exact framework class@method entries, trusted broker only.
      */
-    public function __construct(public array $namespaces, public array $profiles, public array $extensions, public array $handlers, private string $key, public ProfileRef $centralProfile, public array $centralJobs = [])
+    public function __construct(array $namespaces, array $profiles, array $extensions, array $handlers, #[SensitiveParameter] string $key, public ProfileRef $centralProfile, array $centralJobs = [])
     {
         if (strlen($key) < 32) {
-            throw new InvalidArgumentException('Queue signing key must be at least32 bytes');
+            throw new InvalidArgumentException('Queue signing key must be at least 32 bytes');
         }
+        $this->key = new SecretRef($key);
+        // Rebuild every declared field by value: readonly arrays can otherwise
+        // retain references to mutable host configuration after registration.
+        $this->namespaces = self::strings($namespaces);
+        $this->centralJobs = self::strings($centralJobs);
+        $profileSnapshots = [];
+        foreach ($profiles as $id => $profile) {
+            $profileSnapshots[$id] = ['version' => $profile['version'], 'modes' => self::strings($profile['modes'])];
+        }
+        $this->profiles = $profileSnapshots;
+        $extensionSnapshots = [];
+        foreach ($extensions as $type => $extension) {
+            $extensionSnapshots[$type] = ['version' => $extension['version'], 'refs' => self::strings($extension['refs'])];
+        }
+        $this->extensions = $extensionSnapshots;
+        $handlerSnapshots = [];
+        foreach ($handlers as $id => $handler) {
+            $snapshot = [
+                'producer' => $handler['producer'],
+                'purposes' => self::strings($handler['purposes']),
+                'extensions' => self::strings($handler['extensions']),
+                'admit' => $handler['admit'],
+                'handle' => $handler['handle'],
+            ];
+            if (isset($handler['failed'])) {
+                $snapshot['failed'] = $handler['failed'];
+            }
+            $handlerSnapshots[$id] = $snapshot;
+        }
+        $this->handlers = $handlerSnapshots;
+    }
+
+    /**
+     * @param  list<string>  $values
+     * @return list<string>
+     */
+    private static function strings(array $values): array
+    {
+        return array_map(static fn (string $value): string => $value, $values);
     }
 
     public function sign(string $bytes): string
     {
-        return hash_hmac('sha256', $bytes, $this->key);
+        return hash_hmac('sha256', $bytes, $this->key->reveal());
     }
 
     public function selection(ContextReference $reference, ?string $handler = null): Selection

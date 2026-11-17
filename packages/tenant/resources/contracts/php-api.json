@@ -113,7 +113,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "profiles",
@@ -122,7 +122,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "participants",
@@ -131,7 +131,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "services",
@@ -140,14 +140,55 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         }
                     ],
                     "return": null,
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "orderedIds": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "participants": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "profiles": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "services": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
@@ -178,7 +219,7 @@
                             "variadic": false,
                             "optional": true,
                             "default": "[]",
-                            "flags": 68
+                            "flags": 0
                         },
                         {
                             "name": "services",
@@ -187,7 +228,7 @@
                             "variadic": false,
                             "optional": true,
                             "default": "[]",
-                            "flags": 68
+                            "flags": 0
                         }
                     ],
                     "return": null,
@@ -1134,7 +1175,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "requires",
@@ -1143,7 +1184,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "exclusiveSlots",
@@ -1152,7 +1193,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "before",
@@ -1161,7 +1202,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "after",
@@ -1170,7 +1211,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "replaces",
@@ -1225,7 +1266,58 @@
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "after": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "before": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "exclusiveSlots": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "provides": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "requires": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": [],
@@ -1257,14 +1349,25 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         }
                     ],
                     "return": null,
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "envelope": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
@@ -1380,14 +1483,25 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         }
                     ],
                     "return": null,
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "refs": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
@@ -1418,7 +1532,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 4
+                            "flags": 0
                         }
                     ],
                     "return": null,
@@ -1589,14 +1703,25 @@
                             "variadic": false,
                             "optional": true,
                             "default": "[]",
-                            "flags": 1
+                            "flags": 0
                         }
                     ],
                     "return": null,
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "extensions": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
@@ -1929,7 +2054,18 @@
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "extensions": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
@@ -2129,14 +2265,25 @@
                             "variadic": false,
                             "optional": true,
                             "default": "[]",
-                            "flags": 1
+                            "flags": 0
                         }
                     ],
                     "return": null,
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "causes": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []

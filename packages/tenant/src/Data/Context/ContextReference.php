@@ -7,13 +7,17 @@ namespace Tenant\Data\Context;
 use InvalidArgumentException;
 use Packman\Attributes\Api;
 use Tenant\Data\Verification\BindingExpectation;
+use Tenant\Internal\Validation\ArraySnapshot;
 use Tenant\Internal\Validation\Validate;
 
 #[Api(since: '1.0')]
 final readonly class ContextReference
 {
+    /** @var array<string, mixed> */
+    public array $envelope;
+
     /** @param array<string, mixed> $envelope */
-    public function __construct(public array $envelope)
+    public function __construct(array $envelope)
     {
         $allowed = ['schema', 'mode', 'namespace', 'isolationId', 'profileId', 'profileVersion', 'resourceRef', 'incarnation', 'routeRevision', 'extensions'];
         if (array_diff(array_keys($envelope), $allowed) !== [] || ($envelope['schema'] ?? null) !== 'tenant.context/1' || ! in_array($envelope['mode'] ?? null, ['tenant', 'central', 'single'], true) || ! is_string($envelope['profileId'] ?? null) || ! is_int($envelope['profileVersion'] ?? null) || ! is_array($envelope['extensions'] ?? null)) {
@@ -55,5 +59,6 @@ final readonly class ContextReference
             }
             $seen[$ref->type] = true;
         }
+        $this->envelope = ArraySnapshot::copy($envelope);
     }
 }

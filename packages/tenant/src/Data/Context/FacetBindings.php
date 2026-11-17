@@ -9,12 +9,19 @@ use OutOfBoundsException;
 use Packman\Attributes\Api;
 use Tenant\Contracts\Context\FacetAccess;
 use Tenant\Data\Composition\CapabilityId;
+use Tenant\Internal\Validation\ArraySnapshot;
 
 #[Api(since: '1.0')]
 final readonly class FacetBindings
 {
+    /** @var array<string, FacetAccess> */
+    private array $facets;
+
     /** @param array<string, FacetAccess> $facets */
-    public function __construct(private array $facets) {}
+    public function __construct(array $facets)
+    {
+        $this->facets = ArraySnapshot::copy($facets);
+    }
 
     public function require(CapabilityId $id): FacetAccess
     {

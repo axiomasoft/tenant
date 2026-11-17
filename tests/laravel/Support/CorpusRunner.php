@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace TenantLab;
 
 use Closure;
-use Tenant\Contracts\{Facility, FrameState, PhaseContext, RestoreContext, ParticipantFactory, TenantRuntime};
+use Tenant\Contracts\{Facility, FrameState, PhaseContext, RestoreContext, ParticipantFactory};
+use Tenant\Contracts\Runtime\TenantRuntime;
 use Tenant\Data\{ParticipantDeclaration, CapabilityId};
 use Tenant\Exceptions\TenantFailure;
 
@@ -274,8 +275,8 @@ final class CorpusRunner
     {
         $control=(object)['activate'=>null,'restore'=>null,'trace'=>[]];
         $h=$this->host(function($builder,$app)use($control){
-            $delegate=$app->make(\Tenant\Contracts\ContextResolver::class);
-            $app->instance(\Tenant\Contracts\ContextResolver::class,new class($delegate) implements \Tenant\Contracts\ContextResolver {
+            $delegate=$app->make(\Tenant\Contracts\Context\ContextResolver::class);
+            $app->instance(\Tenant\Contracts\Context\ContextResolver::class,new class($delegate) implements \Tenant\Contracts\ContextResolver {
                 public function __construct(public \Tenant\Contracts\ContextResolver $delegate) {}
                 public function resolve(\Tenant\Data\Selection $s,\Tenant\Data\Purpose $p): \Tenant\Data\ResolvedIsolation { return $this->delegate->resolve($s,$p); }
             });

@@ -15,6 +15,7 @@ use Tenant\Contracts\Runtime\FrameState;
 use Tenant\Contracts\Runtime\PhaseContext;
 use Tenant\Contracts\Runtime\RestoreContext;
 use Tenant\Data\Composition\CapabilityId;
+use Tenant\Exceptions\Context\UnsupportedProfile;
 use Tenant\Laravel\Data\ResourceDescriptor;
 use Tenant\Laravel\Internal\Configuration\FrameworkConfig;
 
@@ -36,6 +37,9 @@ final readonly class DatabaseFacility implements Facility
         if ($context->candidate()->kind !== 'active') {
             $this->config->set('database.connections.tenant', ['driver' => 'tenant-guarded-pgsql']);
         } else {
+            if ($context->candidate()->context?->profile->id !== 'laravel-pg-database') {
+                throw new UnsupportedProfile;
+            }
             $facet = $context->require(new CapabilityId('tenant:database'));
             if (! $facet instanceof ResourceDescriptor) {
                 throw new InvalidArgumentException('unsupported_capability');

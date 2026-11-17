@@ -61,6 +61,15 @@
                 "Internal",
                 "Registrars"
             ]
+        },
+        {
+            "name": "axiomasoft/tenant-panels",
+            "path": "packages/tenant-panels",
+            "namespace": "Tenant\\Panels\\",
+            "profile": "laravel-package",
+            "layer": "L2",
+            "type": "integration",
+            "owns": ["Contracts", "Registrars"]
         }
     ],
     "gates": {

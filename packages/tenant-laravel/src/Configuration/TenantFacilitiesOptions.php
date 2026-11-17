@@ -28,11 +28,12 @@ final readonly class TenantFacilitiesOptions implements OptionsFactory
     {
         $validator = new ConfigurationValidator;
         $validator->rejectUnknownKeys($config, ['database', 'cache', 'session', 'storage'], $path);
+        $config = array_replace(['database' => true, 'cache' => true, 'session' => true, 'storage' => true], $config);
 
-        $database = self::boolOption($validator, $path.'.database', $config['database'] ?? true);
-        $cache = self::boolOption($validator, $path.'.cache', $config['cache'] ?? true);
-        $session = self::boolOption($validator, $path.'.session', $config['session'] ?? true);
-        $storage = self::boolOption($validator, $path.'.storage', $config['storage'] ?? true);
+        $database = self::boolOption($validator, $path.'.database', $config['database']);
+        $cache = self::boolOption($validator, $path.'.cache', $config['cache']);
+        $session = self::boolOption($validator, $path.'.session', $config['session']);
+        $storage = self::boolOption($validator, $path.'.storage', $config['storage']);
 
         $validator->failIfAny();
 

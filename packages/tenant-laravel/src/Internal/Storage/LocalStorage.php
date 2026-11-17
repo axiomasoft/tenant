@@ -12,15 +12,15 @@ use RecursiveIteratorIterator;
 use RuntimeException;
 use SplFileInfo;
 use Tenant\Exceptions\TenantFailure;
+use Tenant\Laravel\Contracts\Facilities\ResourceScope;
 use Tenant\Laravel\Contracts\Storage\ResourceStorage;
-use Tenant\Laravel\Data\ResourceDescriptor;
 use Tenant\Runtime\GenerationGuard;
 
 /** @internal Durable/ephemeral local roots; no native path or cloud claim. */
 #[Internal]
 final readonly class LocalStorage implements ResourceStorage
 {
-    public function __construct(private FilesystemManager $filesystems, private GenerationGuard $guard, private ResourceDescriptor $descriptor) {}
+    public function __construct(private FilesystemManager $filesystems, private GenerationGuard $guard, private ResourceScope $descriptor) {}
 
     public function disk(): GuardedFilesystem
     {

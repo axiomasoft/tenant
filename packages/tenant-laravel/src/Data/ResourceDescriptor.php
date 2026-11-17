@@ -6,11 +6,12 @@ namespace Tenant\Laravel\Data;
 
 use InvalidArgumentException;
 use Packman\Attributes\Api;
-use Tenant\Contracts\Context\FacetAccess;
+use Tenant\Laravel\Contracts\Facilities\ResourceScope;
+use Tenant\Laravel\Internal\Facilities\ResourceScopeValidation;
 
 /** Trusted host facet. Never decode this descriptor from a payload. */
 #[Api(since: '1.0')]
-final readonly class ResourceDescriptor implements FacetAccess
+final readonly class ResourceDescriptor implements ResourceScope
 {
     /**
      * @param  array<string, mixed>  $route
@@ -26,10 +27,6 @@ final readonly class ResourceDescriptor implements FacetAccess
                 throw new InvalidArgumentException('routing keys in options');
             }
         }
-        foreach ([$durableRoot, $ephemeralRoot, $sessionRoot] as $root) {
-            if (! str_starts_with($root, '/') || str_contains($root, "\0") || in_array('..', explode('/', $root), true)) {
-                throw new InvalidArgumentException('facility_configuration');
-            }
-        }
+        ResourceScopeValidation::assertValid($prefix, $durableRoot, $ephemeralRoot, $sessionRoot);
     }
 }

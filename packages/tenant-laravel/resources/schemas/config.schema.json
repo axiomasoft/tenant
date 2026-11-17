@@ -38,6 +38,10 @@
                     },
                     "additionalProperties": false
                 },
+                "runtime_profile": {
+                    "type": "string",
+                    "default": "laravel-pg-database"
+                },
                 "shared": {
                     "type": [
                         "array",

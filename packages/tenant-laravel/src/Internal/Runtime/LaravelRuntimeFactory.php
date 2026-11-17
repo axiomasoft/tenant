@@ -23,16 +23,18 @@ use Tenant\Contracts\Runtime\ParticipantFactory;
 use Tenant\Contracts\Verification\BindingVerifier;
 use Tenant\Data\Composition\CapabilityId;
 use Tenant\Data\Composition\ParticipantDeclaration;
+use Tenant\Data\Context\ContextState;
 use Tenant\Data\Context\Purpose;
 use Tenant\Data\Context\Selection;
 use Tenant\Exceptions\Context\ScopeRequired;
-use Tenant\Exceptions\TenantFailure;
+use Tenant\Exceptions\Verification\BindingMismatch;
 use Tenant\Laravel\Configuration\TenantOptions;
-use Tenant\Laravel\Data\ResourceDescriptor;
+use Tenant\Laravel\Contracts\Facilities\ResourceScope;
 use Tenant\Laravel\Internal\Configuration\FrameworkConfig;
 use Tenant\Laravel\Internal\Facilities\CacheFacility;
 use Tenant\Laravel\Internal\Facilities\DatabaseFacility;
 use Tenant\Laravel\Internal\Facilities\FacilitiesValidator;
+use Tenant\Laravel\Internal\Facilities\ResourceScopeAccess;
 use Tenant\Laravel\Internal\Facilities\ScopeGenerationFacility;
 use Tenant\Laravel\Internal\Facilities\SessionFacility;
 use Tenant\Laravel\Internal\Facilities\SessionGeneration;
@@ -49,9 +51,19 @@ final class LaravelRuntimeFactory
         new FacilitiesValidator($configRepo, $options)->assertValid();
 
         $config = new FrameworkConfig(static fn (): Repository => FrameworkConfig::service($app, 'config', Repository::class));
-        $verifier = FrameworkConfig::service($app, BindingVerifier::class, BindingVerifier::class);
-        $profiles = ['laravel-pg-database' => ['version' => 1, 'modes' => ['tenant', 'central'], 'requiredCapabilities' => ['tenant:database', 'tenant:binding-verification', 'tenant:scope-generation'], 'bindingCapability' => 'tenant:binding-verification']];
-        $builder = new CompositionBuilder($profiles, [['id' => 'host:verifier', 'slot' => 'tenant:binding/default', 'spiVersion' => 1, 'service' => $verifier, 'capabilities' => ['tenant:binding-verification']], ...self::services($app)]);
+        $physical = $options->runtimeProfile === 'laravel-pg-database';
+        $services = self::services($app);
+        if ($physical) {
+            $verifier = FrameworkConfig::service($app, BindingVerifier::class, BindingVerifier::class);
+            $profiles = ['laravel-pg-database' => ['version' => 1, 'modes' => ['tenant', 'central'], 'requiredCapabilities' => ['tenant:database', 'tenant:binding-verification', 'tenant:scope-generation'], 'bindingCapability' => 'tenant:binding-verification']];
+            array_unshift($services, ['id' => 'host:verifier', 'slot' => 'tenant:binding/default', 'spiVersion' => 1, 'service' => $verifier, 'capabilities' => ['tenant:binding-verification']]);
+        } else {
+            $profiles = [
+                'laravel-scoped' => ['version' => 1, 'modes' => ['tenant', 'central'], 'requiredCapabilities' => ['tenant:scope-generation']],
+                'single' => ['version' => 1, 'modes' => ['single'], 'requiredCapabilities' => ['tenant:scope-generation']],
+            ];
+        }
+        $builder = new CompositionBuilder($profiles, $services);
         $facilities = [
             'database' => [fn (): DatabaseFacility => new DatabaseFacility(FrameworkConfig::service($app, 'db', DatabaseManager::class), $config, $options->centralConnection), ['tenant:database']],
             'cache' => [fn (): CacheFacility => new CacheFacility(FrameworkConfig::service($app, 'cache', CacheManager::class), $config, $options->cacheStores), ['tenant:cache']],
@@ -77,7 +89,7 @@ final class LaravelRuntimeFactory
                     return $facility;
                 }
             };
-            $builder->register(new ParticipantDeclaration('tenant:'.$name, 1, 'resource', array_map(fn (string $id): CapabilityId => new CapabilityId($id), $capabilities), [], ['tenant:'.$name.'/default'], [], $name === 'database' ? [] : ['tenant:database'], null, $factory));
+            $builder->register(new ParticipantDeclaration('tenant:'.$name, 1, 'resource', array_map(fn (string $id): CapabilityId => new CapabilityId($id), $capabilities), [], ['tenant:'.$name.'/default'], [], ! $physical || $name === 'database' ? [] : ['tenant:database'], null, $factory));
         }
         if ($app->bound('tenant.compose')) {
             $compose = $app->make('tenant.compose');
@@ -102,16 +114,33 @@ final class LaravelRuntimeFactory
         return new SafeTenantRuntime(FrameworkConfig::service($app, ContextResolver::class, ContextResolver::class), $composition, $observers, $diagnostics);
     }
 
-    public static function descriptor(ContainerContract $app): ResourceDescriptor
+    public static function descriptor(ContainerContract $app): ResourceScope
     {
-        $context = FrameworkConfig::service($app, SafeTenantRuntime::class, SafeTenantRuntime::class)->current()->context ?? throw new ScopeRequired;
-        $selection = Selection::tenant($context->identity, $context->profile, $context->extensions, $context->binding);
-        $facet = FrameworkConfig::service($app, ContextResolver::class, ContextResolver::class)->resolve($selection, new Purpose('tenant:facilities'))->facets->require(new CapabilityId('tenant:database'));
-        if (! $facet instanceof ResourceDescriptor) {
-            throw new TenantFailure('unsupported_capability');
+        $state = FrameworkConfig::service($app, SafeTenantRuntime::class, SafeTenantRuntime::class)->current();
+        $context = $state->context ?? throw new ScopeRequired;
+        $selection = $context->mode === 'single'
+            ? Selection::single($context->identity, $context->extensions, $context->binding)
+            : Selection::tenant($context->identity, $context->profile, $context->extensions, $context->binding);
+
+        $resolved = FrameworkConfig::service($app, ContextResolver::class, ContextResolver::class)->resolve($selection, new Purpose('tenant:facilities'));
+        if (self::contextKey($resolved->context) !== self::contextKey($state)) {
+            throw new BindingMismatch;
         }
 
-        return $facet;
+        return ResourceScopeAccess::fromResolved($resolved);
+    }
+
+    private static function contextKey(ContextState $state): string
+    {
+        $context = $state->context;
+        $extensions = [];
+        foreach ($context->extensions ?? [] as $extension) {
+            $refs = $extension->refs;
+            ksort($refs, SORT_STRING);
+            $extensions[] = [$extension->type, $extension->version, $extension->required, $refs];
+        }
+
+        return serialize([$state->kind, $context?->mode, $context?->identity, $context?->profile, $context?->binding, $extensions]);
     }
 
     /** @return list<array{id: string, slot: string, spiVersion: int, service: object, capabilities: list<string>}> */

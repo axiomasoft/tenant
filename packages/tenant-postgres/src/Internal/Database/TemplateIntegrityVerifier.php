@@ -136,10 +136,10 @@ final readonly class TemplateIntegrityVerifier implements TemplateIntegrityVerif
     private function actualHashForDatabase(string $database): string
     {
         $central = $this->db();
-        $configuration = $central->getConfig();
+        $configuration = DbRow::configMap($central);
 
-        if (! is_array($configuration)) {
-            throw new TemplateIntegrityException('The template connection configuration is unavailable.');
+        if (! PostgresRoute::isDirect($configuration)) {
+            throw new TemplateIntegrityException('The template connection requires a direct PostgreSQL route.');
         }
         $configuration['database'] = $database;
         $connection = $this->connectionFactory->make($configuration, 'tenant-pg-template-catalogue');

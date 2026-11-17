@@ -8,10 +8,26 @@ use LogicException;
 use Packman\Attributes\Spi;
 use Packman\Attributes\SpiKind;
 use Tenant\Contracts\Runtime\ParticipantFactory;
+use Tenant\Internal\Validation\ArraySnapshot;
 
 #[Spi(kind: SpiKind::Call, since: '1.0')]
 final readonly class ParticipantDeclaration
 {
+    /** @var list<CapabilityId> */
+    public array $provides;
+
+    /** @var list<CapabilityId> */
+    public array $requires;
+
+    /** @var list<string> */
+    public array $exclusiveSlots;
+
+    /** @var list<string> */
+    public array $before;
+
+    /** @var list<string> */
+    public array $after;
+
     /**
      * @param  list<CapabilityId>  $provides
      * @param  list<CapabilityId>  $requires
@@ -19,7 +35,14 @@ final readonly class ParticipantDeclaration
      * @param  list<string>  $before
      * @param  list<string>  $after
      */
-    public function __construct(public string $id, public int $spiVersion, public string $stage, public array $provides, public array $requires, public array $exclusiveSlots, public array $before, public array $after, public ?string $replaces, public ParticipantFactory $factory) {}
+    public function __construct(public string $id, public int $spiVersion, public string $stage, array $provides, array $requires, array $exclusiveSlots, array $before, array $after, public ?string $replaces, public ParticipantFactory $factory)
+    {
+        $this->provides = ArraySnapshot::copy($provides);
+        $this->requires = ArraySnapshot::copy($requires);
+        $this->exclusiveSlots = ArraySnapshot::copy($exclusiveSlots);
+        $this->before = ArraySnapshot::copy($before);
+        $this->after = ArraySnapshot::copy($after);
+    }
 
     public function __serialize(): array
     {

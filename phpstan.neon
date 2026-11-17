@@ -9,6 +9,7 @@ parameters:
         - packages/tenant/src
         - packages/tenant-laravel/src
         - packages/tenant-postgres/src
+        - packages/tenant-panels/src
     ignoreErrors:
         -
             identifier: method.childParameterType

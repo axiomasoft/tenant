@@ -15,6 +15,7 @@ it('compiles immutable TenantOptions and TenantFacilitiesOptions from config arr
     $defaults = TenantOptions::fromArray([], 'tenant');
 
     expect($defaults->centralConnection)->toBe('central')
+        ->and($defaults->runtimeProfile)->toBe('laravel-pg-database')
         ->and($defaults->cacheStores)->toBe(['tenant'])
         ->and($defaults->centralCacheStores)->toBe(['central'])
         ->and($defaults->storageDriver)->toBe('local')
@@ -50,6 +51,41 @@ it('rejects invalid TenantOptions and TenantFacilitiesOptions values', function 
         ->toThrow(InvalidConfiguration::class)
         ->and(static fn (): TenantOptions => TenantOptions::fromArray(['shared' => ['cache' => ['owner' => '']]], 'tenant'))
         ->toThrow(InvalidConfiguration::class);
+});
+
+it('rejects explicit null options instead of silently substituting defaults', function (string $option): void {
+    expect(fn (): TenantOptions => TenantOptions::fromArray([$option => null]))
+        ->toThrow(InvalidConfiguration::class);
+})->with(['central_connection', 'cache_stores', 'central_cache_stores', 'facilities', 'storage_driver', 'shared', 'runtime_profile']);
+
+it('requires an explicit host database owner before enabling the scoped runtime profile', function (): void {
+    expect(fn (): TenantOptions => TenantOptions::fromArray(['runtime_profile' => 'unknown']))->toThrow(InvalidConfiguration::class, 'runtime_profile')
+        ->and(fn (): TenantOptions => TenantOptions::fromArray(['runtime_profile' => 'laravel-scoped']))->toThrow(InvalidConfiguration::class, 'facilities.database')
+        ->and(fn (): TenantOptions => TenantOptions::fromArray(['runtime_profile' => 'laravel-scoped', 'facilities' => ['database' => false]]))->toThrow(InvalidConfiguration::class, 'shared.database');
+
+    $scoped = TenantOptions::fromArray([
+        'runtime_profile' => 'laravel-scoped',
+        'facilities' => ['database' => false],
+        'shared' => ['database' => ['owner' => 'host:eloquent', 'purpose' => 'host:row-isolation']],
+    ]);
+    expect($scoped->runtimeProfile)->toBe('laravel-scoped')
+        ->and($scoped->facilities->database)->toBeFalse();
+});
+
+it('rejects explicit null facility flags', function (string $facility): void {
+    expect(fn (): TenantFacilitiesOptions => TenantFacilitiesOptions::fromArray([$facility => null]))
+        ->toThrow(InvalidConfiguration::class);
+})->with(['database', 'cache', 'session', 'storage']);
+
+it('rejects duplicate cache store declarations before guarded driver registration', function (string $option): void {
+    expect(fn (): TenantOptions => TenantOptions::fromArray([$option => ['cache', 'cache']]))
+        ->toThrow(InvalidConfiguration::class, 'duplicate');
+})->with(['cache_stores', 'central_cache_stores']);
+
+it('rejects misspelled shared facility ownership declarations', function (): void {
+    expect(fn (): TenantOptions => TenantOptions::fromArray([
+        'shared' => ['cahce' => ['owner' => 'host:cache', 'purpose' => 'host:metadata']],
+    ]))->toThrow(InvalidConfiguration::class, 'did you mean "cache"?');
 });
 
 it('rejects unknown and typo keys in closed-schema TenantOptions and TenantFacilitiesOptions', function (): void {

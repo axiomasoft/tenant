@@ -1,6 +1,10 @@
 # Контракты, расширения и recovery
 
-Semantic/wire/SPI v1 зафиксированы P1.1 в manifests ниже; PHP runtime ещё не реализован. Контракт не предоставляет полномочия произвольному коду хоста: trust boundary — composition root и входы извне процесса. Поля, алгоритмы и error outcomes ниже обязательны для первой спецификации.
+Semantic/wire/SPI v1 зафиксированы P1.1 в manifests ниже. Runtime и адаптеры реализованы в `packages/`; актуальные способы подключения описаны в [integration guide](../integration.md), а PHP API каждого пакета — в его `resources/contracts/php-api.json`. Исторические этапы квалификации ниже не являются отчётом о текущем запуске тестов. Контракт не предоставляет полномочия произвольному коду хоста: trust boundary — composition root и входы извне процесса.
+
+Необязательный `tenant-panels` добавляет допуск в панели через существующий runtime и host-owned проекцию scope. Он не меняет wire v1, не добавляет UI framework в ядро и не становится вторым владельцем tenant-контекста.
+
+Дополнительный профиль [laravel-scoped](laravel-profiles.md) оставляет Eloquent connections и SQL-изоляцию приложению, предоставляя runtime и выбранные cache/session/storage facilities без database route. Он не переименовывает старый PG profile и не изменяет его гарантии или frozen corpus.
 
 ## Минимальный API
 
@@ -145,9 +149,9 @@ Runtime-only CoreX остаётся единственным physical owner: в 
 | [errors.v1.json](../../contracts/errors.v1.json) | Stable reason codes, exception types, phase/state effect; observer diagnostics отдельно от veto |
 | [ownership.v1.json](../../contracts/ownership.v1.json) | Каждая portable identity, physical operation и поле existing CoreX migration; один writer на P5.1 и P5.4 |
 
-Сигнатуры в manifests — specification для последующей реализации, не существующие
-PHP classes. `Tenant` — instance facade; запись `Tenant::…` в таблицах обозначает
-responsibility. Kernel namespace `Tenant\`, зависимости только PHP; optional
+Сигнатуры в manifests — исходная specification; текущие канонические PHP namespaces
+и сигнатуры отражены в снимках API пакетов. `Tenant` — instance facade; запись `Tenant::…` в таблицах обозначает
+responsibility. Kernel namespace `Tenant\`, зависимости PHP и pure-PHP Packman; optional
 commands/receipts/FSM находятся в `Tenant\Postgres\`, neutral producer SPI — у
 Vaulter. Имя capability открыто; квалифицированный набор ограничен profiles.
 Формат refs/границы и конкретные имена берутся из этих versioned manifests, остальной

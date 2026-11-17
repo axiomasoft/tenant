@@ -9,6 +9,7 @@ use Packman\Attributes\Api;
 use RuntimeException;
 use Tenant\Postgres\Contracts\Lifecycle\ArchiveStore;
 use Tenant\Postgres\Internal\Database\DbRow;
+use Tenant\Postgres\Internal\Database\PostgresRoute;
 use Throwable;
 
 /** Native pg_dump writer+qualified verifier mechanism with durable original manifest and native PG tools. */
@@ -30,7 +31,7 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
         }
         $databaseName = DbRow::str($resource, 'database_name');
         $route = ($this->managementRoute)($resource);
-        if (($route['database'] ?? null) !== $databaseName || ($route['driver'] ?? null) !== 'pgsql' || (isset($route['url']) || isset($route['read']) || isset($route['write']))) {
+        if (($route['database'] ?? null) !== $databaseName || ! PostgresRoute::isDirect($route)) {
             throw new RuntimeException('Archive route mismatch.');
         }
         $host = $route['host'] ?? null;
@@ -39,6 +40,15 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
         $port = $route['port'] ?? 5432;
         if (! is_string($host) || ! is_string($username) || ! is_string($password) || (! is_int($port) && ! is_string($port))) {
             throw new RuntimeException('Archive route credentials are invalid.');
+        }
+        $environment = ['PGHOST' => $host, 'PGPORT' => (string) $port, 'PGUSER' => $username, 'PGPASSWORD' => $password, 'PGCONNECT_TIMEOUT' => '10'];
+        foreach (['sslmode' => 'PGSSLMODE', 'sslcert' => 'PGSSLCERT', 'sslkey' => 'PGSSLKEY', 'sslrootcert' => 'PGSSLROOTCERT'] as $option => $variable) {
+            if (isset($route[$option])) {
+                if (! is_string($route[$option]) || $route[$option] === '' || str_contains($route[$option], "\0")) {
+                    throw new RuntimeException('Archive TLS configuration is invalid.');
+                }
+                $environment[$variable] = $route[$option];
+            }
         }
         $tmp = $path.'.partial';
         $output = fopen($tmp, 'x');
@@ -51,7 +61,6 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
             fclose($output);
             throw new RuntimeException('Archive error stream unavailable.');
         }
-        $environment = ['PGHOST' => $host, 'PGPORT' => (string) $port, 'PGUSER' => $username, 'PGPASSWORD' => $password, 'PGCONNECT_TIMEOUT' => '10'];
         try {
             $process = proc_open([$this->pgDump, '--format=custom', '--no-owner', '--no-privileges', '--dbname', $databaseName], [0 => ['file', '/dev/null', 'r'], 1 => $output, 2 => $errors], $pipes, env_vars: $environment);
             if (! is_resource($process) || proc_close($process) !== 0) {
@@ -140,12 +149,13 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
     public function recover(string $exportId): ?ArchiveManifest
     {
         $this->directory();
-        if (! is_file($this->path($exportId).'.manifest')) {
+        $path = $this->path($exportId).'.manifest';
+        if (is_link($path) || ! is_file($path)) {
             return null;
         }
         $manifest = $this->recoverManifest($exportId);
 
-        return $this->verify($manifest) ? $manifest : null;
+        return $manifest->exportId === $exportId && $this->verify($manifest) ? $manifest : null;
     }
 
     private function recoverManifest(string $exportId): ArchiveManifest

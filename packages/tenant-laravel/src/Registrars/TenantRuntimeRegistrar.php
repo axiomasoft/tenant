@@ -29,6 +29,7 @@ use Tenant\Laravel\Internal\Facilities\SessionGeneration;
 use Tenant\Laravel\Internal\Runtime\LaravelRuntimeFactory;
 use Tenant\Laravel\Laravel\ConsoleCommandProbe;
 use Tenant\Laravel\Laravel\TenantLaravelExtension;
+use Tenant\Laravel\Queue\QueueRegistry;
 use Tenant\Runtime\SafeTenantRuntime;
 use Tenant\Tenant;
 
@@ -106,6 +107,7 @@ final class TenantRuntimeRegistrar implements PackageRegistrar
                 ? FrameworkConfig::service($app, TenantOptions::class, TenantOptions::class)
                 : null,
             static fn (): TenantOptions => FrameworkConfig::service($app, TenantOptions::class, TenantOptions::class),
+            queueManaged: $app->bound(QueueRegistry::class),
         ));
 
         $app->singletonIf(TenantLaravelExtension::class);

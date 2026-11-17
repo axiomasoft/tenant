@@ -28,6 +28,7 @@ use Tenant\Postgres\Internal\Claim\ClaimWithPool;
 use Tenant\Postgres\Internal\Claim\ProvisionJournal;
 use Tenant\Postgres\Internal\Database\DbRow;
 use Tenant\Postgres\Internal\Database\MarkerWriter;
+use Tenant\Postgres\Internal\Database\PostgresRoute;
 use Tenant\Postgres\Internal\Database\SchemaCatalogueSerializer;
 use Tenant\Postgres\Internal\Database\TemplateClonePostgreSQLManager;
 use Tenant\Postgres\Internal\Database\TemplateIntegrityLock;
@@ -119,18 +120,20 @@ final class PostgresFactory
     private static function frozenRoute(Connection $catalog, Closure $hostRoute): Closure
     {
         $management = DbRow::configMap($catalog);
+        if (! PostgresRoute::isDirect($management)) {
+            throw new InvalidArgumentException('Owner catalog requires a direct PostgreSQL route.');
+        }
 
         return static function (object $resource) use ($management, $hostRoute): array {
             $route = $hostRoute($resource);
             $routePort = $route['port'] ?? 5432;
             $mgmtPort = $management['port'] ?? 5432;
-            if (($route['driver'] ?? null) !== 'pgsql'
+            if (! PostgresRoute::isDirect($route)
                 || ($route['database'] ?? null) !== DbRow::str($resource, 'database_name')
                 || ($route['host'] ?? null) !== ($management['host'] ?? null)
                 || (! is_int($routePort) && ! is_string($routePort))
                 || (! is_int($mgmtPort) && ! is_string($mgmtPort))
-                || (int) $routePort !== (int) $mgmtPort
-                || isset($route['url']) || isset($route['read']) || isset($route['write'])) {
+                || (int) $routePort !== (int) $mgmtPort) {
                 throw new RuntimeException('Unsupported owner route: management and runtime must share the frozen server.');
             }
 

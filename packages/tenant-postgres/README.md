@@ -79,6 +79,14 @@ or replace host admission with a resource reference. Successful claim publicatio
 marks technical availability in the same transaction as the original receipt;
 it grants no trial, grace or commercial rights.
 
+Ordinary binding resolution admits only `ready` or `active` resources. The
+owner's internal maintenance verifier handles provisioning/recovery explicitly.
+Runtime credentials must stay restricted across both the login role and every
+reachable role: changing `current_user` or using `NOINHERIT` does not hide marker
+write grants or ownership. Database/port connector overrides are refused because
+they can redirect a frozen route. Native archives retain the configured TLS
+options; recovery refuses substituted export IDs and symlink manifests.
+
 The host source cohort selects this owner and retains product
 accounts plus original account-to-resource/operation references in the host. It
 disables legacy allocator/marker/export writers and mixed physical migrations.

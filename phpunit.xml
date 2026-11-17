@@ -24,6 +24,9 @@
         <testsuite name="Install">
             <directory>tests/install</directory>
         </testsuite>
+        <testsuite name="TenantPanels">
+            <directory>packages/tenant-panels/tests</directory>
+        </testsuite>
     </testsuites>
 
     <source>
@@ -31,6 +34,7 @@
             <directory>packages/tenant/src</directory>
             <directory>packages/tenant-laravel/src</directory>
             <directory>packages/tenant-postgres/src</directory>
+            <directory>packages/tenant-panels/src</directory>
         </include>
     </source>
 

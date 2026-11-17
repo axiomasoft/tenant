@@ -21,6 +21,7 @@ use Tenant\Postgres\Data\Provisioning\ResourceSnapshot;
 use Tenant\Postgres\Internal\Binding\PostgresBindingVerifier;
 use Tenant\Postgres\Internal\Database\DbRow;
 use Tenant\Postgres\Internal\Database\MarkerWriter;
+use Tenant\Postgres\Internal\Database\PostgresRoute;
 use Tenant\Postgres\Internal\Lifecycle\LifecycleJournal;
 use Tenant\Postgres\Internal\Recovery\AnchorHistory;
 use Tenant\Postgres\Internal\Recovery\PhysicalFence;
@@ -104,13 +105,12 @@ final readonly class RecoveryOperator
             $rowDatabase = DbRow::str($row, 'database_name');
             $routePort = $route['port'] ?? 5432;
             $centralPort = $central['port'] ?? 5432;
-            if (($route['driver'] ?? null) !== 'pgsql'
+            if (! PostgresRoute::isDirect($route)
                 || ($route['database'] ?? null) !== $rowDatabase
                 || ($route['host'] ?? null) !== ($central['host'] ?? null)
                 || (! is_int($routePort) && ! is_string($routePort))
                 || (! is_int($centralPort) && ! is_string($centralPort))
                 || (int) $routePort !== (int) $centralPort
-                || isset($route['url']) || isset($route['read']) || isset($route['write'])
                 || preg_match('/^[A-Za-z0-9_]{1,63}$/D', $this->runtimeRole) !== 1) {
                 throw new ResourceQuarantined('Recovery route mismatch.');
             }

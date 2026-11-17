@@ -27,6 +27,7 @@ final readonly class TenantOptions implements OptionsFactory
         public TenantFacilitiesOptions $facilities = new TenantFacilitiesOptions,
         public string $storageDriver = 'local',
         public array $shared = [],
+        public string $runtimeProfile = 'laravel-pg-database',
     ) {}
 
     /** @param array<array-key, mixed> $config */
@@ -36,39 +37,64 @@ final readonly class TenantOptions implements OptionsFactory
         $validator = new ConfigurationValidator;
         $validator->rejectUnknownKeys(
             $config,
-            ['central_connection', 'cache_stores', 'central_cache_stores', 'facilities', 'storage_driver', 'shared'],
+            ['central_connection', 'cache_stores', 'central_cache_stores', 'facilities', 'storage_driver', 'shared', 'runtime_profile'],
             $path,
         );
+        $config = array_replace([
+            'central_connection' => 'central',
+            'cache_stores' => ['tenant'],
+            'central_cache_stores' => ['central'],
+            'facilities' => [],
+            'storage_driver' => 'local',
+            'shared' => [],
+            'runtime_profile' => 'laravel-pg-database',
+        ], $config);
 
-        $centralConnection = $config['central_connection'] ?? 'central';
+        $centralConnection = $config['central_connection'];
 
         if (! is_string($centralConnection) || $centralConnection === '' || $centralConnection === 'tenant') {
             $validator->add(path: $path.'.central_connection', message: 'must be a non-empty string distinct from "tenant"');
             $centralConnection = 'central';
         }
 
-        $cacheStores = self::stringList($validator, $path.'.cache_stores', $config['cache_stores'] ?? ['tenant'], ['tenant']);
-        $centralCacheStores = self::stringList($validator, $path.'.central_cache_stores', $config['central_cache_stores'] ?? ['central'], ['central']);
+        $cacheStores = self::stringList($validator, $path.'.cache_stores', $config['cache_stores'], ['tenant']);
+        $centralCacheStores = self::stringList($validator, $path.'.central_cache_stores', $config['central_cache_stores'], ['central']);
 
-        $rawFacilities = $config['facilities'] ?? [];
+        $rawFacilities = $config['facilities'];
 
         if (! is_array($rawFacilities)) {
             $validator->add(path: $path.'.facilities', message: 'must be an array');
             $rawFacilities = [];
         }
 
-        $storageDriver = $config['storage_driver'] ?? 'local';
+        $storageDriver = $config['storage_driver'];
 
         if (! is_string($storageDriver) || $storageDriver === '') {
             $validator->add(path: $path.'.storage_driver', message: 'must be a non-empty string');
             $storageDriver = 'local';
         }
 
-        $shared = self::sharedMap($validator, $path.'.shared', $config['shared'] ?? []);
+        $shared = self::sharedMap($validator, $path.'.shared', $config['shared']);
+        $runtimeProfile = $config['runtime_profile'];
+
+        if (! is_string($runtimeProfile) || ! in_array($runtimeProfile, ['laravel-pg-database', 'laravel-scoped'], true)) {
+            $validator->add(path: $path.'.runtime_profile', message: 'must be "laravel-pg-database" or "laravel-scoped"');
+            $runtimeProfile = 'laravel-pg-database';
+        }
 
         $validator->failIfAny();
 
         $facilities = TenantFacilitiesOptions::fromArray($rawFacilities, $path.'.facilities');
+
+        if ($runtimeProfile === 'laravel-scoped') {
+            if ($facilities->database) {
+                $validator->add(path: $path.'.facilities.database', message: 'must be false for the laravel-scoped runtime profile');
+            }
+            if (! isset($shared['database'])) {
+                $validator->add(path: $path.'.shared.database', message: 'must declare the host database owner and purpose for the laravel-scoped runtime profile');
+            }
+            $validator->failIfAny();
+        }
 
         return new self(
             centralConnection: $centralConnection,
@@ -77,6 +103,7 @@ final readonly class TenantOptions implements OptionsFactory
             facilities: $facilities,
             storageDriver: $storageDriver,
             shared: $shared,
+            runtimeProfile: $runtimeProfile,
         );
     }
 
@@ -100,6 +127,11 @@ final readonly class TenantOptions implements OptionsFactory
 
                 return $fallback;
             }
+            if (in_array($item, $result, true)) {
+                $validator->add(path: $path, message: 'must not contain duplicate store names');
+
+                return $fallback;
+            }
 
             $result[] = $item;
         }
@@ -118,6 +150,7 @@ final readonly class TenantOptions implements OptionsFactory
             return [];
         }
 
+        $validator->rejectUnknownKeys($value, ['database', 'cache', 'session', 'storage'], $path);
         $result = [];
 
         foreach ($value as $facility => $entry) {

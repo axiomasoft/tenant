@@ -8,7 +8,7 @@ class TenantFpmTerminateProbe
     public function handle($request, $next) { return $next($request); }
     public function terminate($request,$response): void {
         $app=Illuminate\Container\Container::getInstance();
-        file_put_contents(getenv('TENANT_FPM_ROOT').'/terminated-'.getmypid().'.json',json_encode(['id'=>$app->make(Tenant\Contracts\TenantRuntime::class)->current()->context?->identity->id]));
+        file_put_contents(getenv('TENANT_FPM_ROOT').'/terminated-'.getmypid().'.json',json_encode(['id'=>$app->make(Tenant\Contracts\Runtime\TenantRuntime::class)->current()->context?->identity->id]));
     }
 }
 $kernel=TenantLab\HttpScenarios::kernel($h);

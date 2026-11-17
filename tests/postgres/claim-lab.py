@@ -30,5 +30,5 @@ x,y=result(a),result(b)
 assert x['resource']==y['resource'] and sorted([x['replayed'],y['replayed']])==[False,True]
 assert sql("SELECT count(*) FROM tenant_pg_resources WHERE signup_key='same-key'")=='1'
 changed=launch({**payload,'digest':'b'*64});out=changed.stdout.read();err=changed.stderr.read();code=changed.wait(timeout=20)
-assert code==2 and json.loads(out)['error']=='Tenant\\Postgres\\Exceptions\\ClaimConflict', (out,err)
+assert code==2 and json.loads(out)['error']=='Tenant\\Postgres\\Exceptions\\Claim\\ClaimConflict', (out,err)
 print(json.dumps({'status':'passed','scope':'partial same-key claim and changed digest','results':[x,y],'conflict':json.loads(out),'runtime':m['runtime']}))

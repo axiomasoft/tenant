@@ -9,10 +9,10 @@ row=sql("SELECT id||'|'||resource_id FROM tenant_pg_operations WHERE operation_k
 assert sql("SELECT count(*) FROM tenant_pg_resources WHERE id='"+resource+"' AND deleted_at IS NULL")=='1'
 sql("UPDATE tenant_pg_resources SET deleted_at=now(),status='deleted' WHERE id='"+resource+"'")
 p=subprocess.run([os.environ['P41_PHP'],str(root/'tests/postgres/receipt-worker.php')],input=json.dumps({'key':'lost-response','mode':'normal','name':'p41-tombstone'})+'\n',text=True,capture_output=True,env=env,timeout=20);result=json.loads(p.stdout)
-assert p.returncode==2 and result['error']=='Tenant\\Exceptions\\ContextUnavailable',(p.stdout,p.stderr)
+assert p.returncode==2 and result['error']=='Tenant\\Exceptions\\Context\\ContextUnavailable',(p.stdout,p.stderr)
 assert sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending'")==before
 assert sql("SELECT count(*) FROM tenant_pg_operations WHERE operation_key='lost-response'")=='1'
 p=subprocess.run([os.environ['P41_PHP'],str(root/'tests/postgres/receipt-worker.php')],input=json.dumps({'key':'lost-response','mode':'normal','name':'p41-tombstone-changed','digest':'a'*64})+'\n',text=True,capture_output=True,env=env,timeout=20);changed=json.loads(p.stdout)
-assert p.returncode==2 and changed['error']=='Tenant\\Postgres\\Exceptions\\ClaimConflict',(p.stdout,p.stderr)
+assert p.returncode==2 and changed['error']=='Tenant\\Postgres\\Exceptions\\Claim\\ClaimConflict',(p.stdout,p.stderr)
 assert sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending'")==before
 print(json.dumps({'status':'passed','scope':'LIFE-DELETED-01 same key refuses after deletion without new allocation','operation':op}))

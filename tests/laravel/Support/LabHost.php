@@ -6,7 +6,9 @@ namespace TenantLab;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Config\Repository;
-use Tenant\Contracts\{ContextResolver, BindingVerifier, TenantRuntime};
+use Tenant\Contracts\Context\ContextResolver;
+use Tenant\Contracts\Runtime\TenantRuntime;
+use Tenant\Contracts\Verification\BindingVerifier;
 use Tenant\Data\{Selection, IsolationIdentity, ProfileRef, Purpose};
 use Tenant\Laravel\TenantServiceProvider;
 

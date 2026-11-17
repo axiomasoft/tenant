@@ -6,6 +6,6 @@ def sql(q):return subprocess.check_output(['docker','exec','-i',m['container'],'
 assert sql("SELECT count(*) FROM tenant_pg_operations o JOIN tenant_pg_resources r ON r.id=o.resource_id WHERE o.operation_key='lost-response' AND r.deleted_at IS NOT NULL")=='1'
 before=sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending'")
 p=subprocess.run([os.environ['P41_PHP'],str(root/'tests/postgres/receipt-worker.php')],input=json.dumps({'key':'lost-response','mode':'normal','name':'p41-tombstone-changed','digest':'a'*64})+'\n',text=True,capture_output=True,env=env,timeout=20);result=json.loads(p.stdout)
-assert p.returncode==2 and result['error']=='Tenant\\Postgres\\Exceptions\\ClaimConflict',(p.stdout,p.stderr)
+assert p.returncode==2 and result['error']=='Tenant\\Postgres\\Exceptions\\Claim\\ClaimConflict',(p.stdout,p.stderr)
 assert sql("SELECT count(*) FROM tenant_pg_resources WHERE status='pending'")==before
 print(json.dumps({'status':'passed','scope':'LIFE-DELETED-01 changed digest conflicts without allocation'}))

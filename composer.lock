@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aa30c43e56292007e0cba814b846ce0e",
+    "content-hash": "417ba6c0ebdd18472d93ba7850584d16",
     "packages": [
         {
             "name": "axiomasoft/packman",
@@ -144,7 +144,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant",
-                "reference": "d998c932568adc1844c041ff40f13453b5a28097"
+                "reference": "164834c1f3e19922871226e82efa58f52984246f"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -177,7 +177,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant-laravel",
-                "reference": "62503123e68a190b9c3c615d62a6dc50b5f35d25"
+                "reference": "bba2c5f554b0b33583b74b40c51f789daa9032c5"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -227,7 +227,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/tenant-postgres",
-                "reference": "273731120c5e5aa3a554306cd491f6d02f8a482e"
+                "reference": "a66ee3e88b572750aa536f0586951e2c6095463d"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -6244,6 +6244,60 @@
             }
         },
         {
+            "name": "axiomasoft/packman-panels",
+            "version": "0.1.x-dev",
+            "dist": {
+                "type": "path",
+                "url": "../packman/packages/panels",
+                "reference": "eba117caa649e2c7a52bb6062bd6569612752605"
+            },
+            "require": {
+                "axiomasoft/packman": "^0.1|^1.0@dev",
+                "axiomasoft/packman-schema": "^0.1|^1.0@dev",
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/database": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "php": "^8.4",
+                "psr/clock": "^1.0"
+            },
+            "suggest": {
+                "axiomasoft/packman-modules": "Optional module and entity registry integration for ModulePanelCatalogue and EntityViewSchemaProvider.",
+                "axiomasoft/packman-plugins": "Optional extension plugin integration for WithPanels providers."
+            },
+            "type": "library",
+            "extra": {
+                "packman": {
+                    "error-prefix": "panels"
+                },
+                "laravel": {
+                    "providers": [
+                        "Packman\\Panels\\Laravel\\PanelsServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "0.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Packman\\Panels\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Packman\\Panels\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Universal Packman headless panel descriptors, two-phase PanelRegistry/PanelRecipe builder, slot/form data projection, admission evaluation, and SQL saved views.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "axiomasoft/packman-testkit",
             "version": "0.1.x-dev",
             "dist": {
@@ -6295,6 +6349,41 @@
                 "MIT"
             ],
             "description": "Shared testing harnesses, PostgreSQL database isolation, concurrency barriers, contract assertions, and fake recorders for Packman packages.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "axiomasoft/tenant-panels",
+            "version": "1.0.x-dev",
+            "dist": {
+                "type": "path",
+                "url": "packages/tenant-panels",
+                "reference": "5a09776f0e8a6a2c880fa944dc1b57b5a63b8ff0"
+            },
+            "require": {
+                "axiomasoft/packman": "^0.1",
+                "axiomasoft/packman-panels": "^0.1",
+                "axiomasoft/tenant": "^1.0",
+                "illuminate/contracts": "^12.0 || ^13.0",
+                "illuminate/support": "^12.0 || ^13.0",
+                "php": ">=8.4 <8.6"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Tenant\\Panels\\TenantPanelsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Tenant\\Panels\\": "src/"
+                }
+            },
+            "description": "Optional Packman panel admission inside the shared Tenant isolation runtime.",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -9550,6 +9639,69 @@
                 }
             ],
             "time": "2026-11-13T11:10:10+00:00"
+        },
+        {
+            "name": "predis/predis",
+            "version": "v3.7.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/predis/predis.git",
+                "reference": "2496e6d91ba4e137b47a6b802dc7e088ebf31df4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/predis/predis/zipball/2496e6d91ba4e137b47a6b802dc7e088ebf31df4",
+                "reference": "2496e6d91ba4e137b47a6b802dc7e088ebf31df4",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2 || ^8.0",
+                "psr/http-message": "^1.0|^2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.3",
+                "phpstan/phpstan": "^1.9",
+                "phpunit/phpcov": "^6.0 || ^8.0",
+                "phpunit/phpunit": "^8.0 || ~9.4.4"
+            },
+            "suggest": {
+                "ext-relay": "Faster connection with in-memory caching (>=0.6.2)"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Predis\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Till Krüss",
+                    "homepage": "https://till.im",
+                    "role": "Maintainer"
+                }
+            ],
+            "description": "A flexible and feature-complete Redis/Valkey client for PHP.",
+            "homepage": "http://github.com/predis/predis",
+            "keywords": [
+                "nosql",
+                "predis",
+                "redis"
+            ],
+            "support": {
+                "issues": "https://github.com/predis/predis/issues",
+                "source": "https://github.com/predis/predis/tree/v3.7.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/sponsors/tillkruss",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-11-03T17:55:20+00:00"
         },
         {
             "name": "psy/psysh",

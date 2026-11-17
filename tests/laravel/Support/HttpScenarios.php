@@ -25,7 +25,7 @@ final class TerminateProbe
     public function terminate(Request $request, $response): void
     {
         $app=\Illuminate\Container\Container::getInstance();
-        $context=$app->make(\Tenant\Contracts\TenantRuntime::class)->current()->context;
+        $context=$app->make(\Tenant\Contracts\Runtime\TenantRuntime::class)->current()->context;
         if($context===null)throw new \RuntimeException('terminate outside frame');
         $request->session()->put('terminated',$context->identity->id);
         $request->session()->save();

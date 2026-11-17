@@ -252,6 +252,15 @@
                             "optional": true,
                             "default": "[]",
                             "flags": 1
+                        },
+                        {
+                            "name": "runtimeProfile",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "default": "'laravel-pg-database'",
+                            "flags": 1
                         }
                     ],
                     "return": null,
@@ -291,6 +300,67 @@
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
+        },
+        "Tenant\\Laravel\\Contracts\\Facilities\\ResourceScope": {
+            "kind": "interface",
+            "layer": "spi",
+            "since": "1.0",
+            "final": false,
+            "readonly": false,
+            "abstract": false,
+            "extends": [
+                "Tenant\\Contracts\\Context\\FacetAccess"
+            ],
+            "implements": [],
+            "uses": [],
+            "doc": [],
+            "methods": {},
+            "properties": {
+                "durableRoot": {
+                    "flags": 1,
+                    "type": "string",
+                    "readonly": false,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "ephemeralRoot": {
+                    "flags": 1,
+                    "type": "string",
+                    "readonly": false,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "prefix": {
+                    "flags": 1,
+                    "type": "string",
+                    "readonly": false,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "sessionRoot": {
+                    "flags": 1,
+                    "type": "string",
+                    "readonly": false,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
+            "constants": [],
+            "enum_backing": null,
+            "enum_cases": [],
+            "spi_kind": "implement"
         },
         "Tenant\\Laravel\\Contracts\\Storage\\ResourceFilesystem": {
             "kind": "interface",
@@ -1003,7 +1073,7 @@
             "abstract": false,
             "extends": [],
             "implements": [
-                "Tenant\\Contracts\\Context\\FacetAccess"
+                "Tenant\\Laravel\\Contracts\\Facilities\\ResourceScope"
             ],
             "uses": [],
             "doc": [],
@@ -1079,6 +1149,73 @@
             "enum_backing": null,
             "enum_cases": []
         },
+        "Tenant\\Laravel\\Data\\ScopeDescriptor": {
+            "kind": "class",
+            "layer": "api",
+            "since": "1.0",
+            "final": true,
+            "readonly": true,
+            "abstract": false,
+            "extends": [],
+            "implements": [
+                "Tenant\\Laravel\\Contracts\\Facilities\\ResourceScope"
+            ],
+            "uses": [],
+            "doc": [],
+            "methods": {
+                "__construct": {
+                    "visibility": "public",
+                    "static": false,
+                    "final": false,
+                    "abstract": false,
+                    "by_reference": false,
+                    "parameters": [
+                        {
+                            "name": "prefix",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "default": null,
+                            "flags": 1
+                        },
+                        {
+                            "name": "durableRoot",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "default": null,
+                            "flags": 1
+                        },
+                        {
+                            "name": "ephemeralRoot",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "default": null,
+                            "flags": 1
+                        },
+                        {
+                            "name": "sessionRoot",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "default": null,
+                            "flags": 1
+                        }
+                    ],
+                    "return": null,
+                    "doc": []
+                }
+            },
+            "properties": {},
+            "constants": [],
+            "enum_backing": null,
+            "enum_cases": []
+        },
         "Tenant\\Laravel\\Diagnostics\\TenantDoctorCheck": {
             "kind": "class",
             "layer": "api",
@@ -1125,6 +1262,15 @@
                             "variadic": false,
                             "optional": true,
                             "default": "null",
+                            "flags": 4
+                        },
+                        {
+                            "name": "queueManaged",
+                            "type": "bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "default": "true",
                             "flags": 4
                         }
                     ],
@@ -1254,6 +1400,35 @@
                         }
                     ],
                     "return": "Symfony\\Component\\HttpFoundation\\Response",
+                    "doc": []
+                },
+                "send": {
+                    "visibility": "public",
+                    "static": false,
+                    "final": false,
+                    "abstract": false,
+                    "by_reference": false,
+                    "parameters": [
+                        {
+                            "name": "request",
+                            "type": "Illuminate\\Http\\Request",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "default": null,
+                            "flags": 0
+                        },
+                        {
+                            "name": "kernel",
+                            "type": "Illuminate\\Contracts\\Http\\Kernel",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "default": null,
+                            "flags": 0
+                        }
+                    ],
+                    "return": "void",
                     "doc": []
                 }
             },
@@ -1523,7 +1698,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "profiles",
@@ -1532,7 +1707,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "extensions",
@@ -1541,7 +1716,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "handlers",
@@ -1550,7 +1725,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 1
+                            "flags": 0
                         },
                         {
                             "name": "key",
@@ -1559,7 +1734,7 @@
                             "variadic": false,
                             "optional": false,
                             "default": null,
-                            "flags": 4
+                            "flags": 0
                         },
                         {
                             "name": "centralProfile",
@@ -1577,7 +1752,7 @@
                             "variadic": false,
                             "optional": true,
                             "default": "[]",
-                            "flags": 1
+                            "flags": 0
                         }
                     ],
                     "return": null,
@@ -1794,7 +1969,58 @@
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "centralJobs": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "extensions": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "handlers": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "namespaces": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "profiles": {
+                    "flags": 1,
+                    "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []

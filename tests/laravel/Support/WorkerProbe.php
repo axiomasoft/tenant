@@ -312,7 +312,7 @@ final class TrustedCentralProbe
     public function fire(Job $job,array $data): void
     {
         $app=\Illuminate\Container\Container::getInstance();
-        if($app->make(\Tenant\Contracts\TenantRuntime::class)->current()->kind!=='central')throw new \RuntimeException('Allowlisted job inherited tenant');
+        if($app->make(\Tenant\Contracts\Runtime\TenantRuntime::class)->current()->kind!=='central')throw new \RuntimeException('Allowlisted job inherited tenant');
         $app['db']->connection('central')->select('select current_database()');
     }
 }

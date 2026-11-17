@@ -190,12 +190,15 @@ final class SafeTenantRuntime implements TenantRuntime
                     $decoder->validate($extension, $phase, $purpose);
                 }
             }
+            $phase->close();
             $this->frames[] = $frame;
             $this->publish($resolved->context);
             $this->observe('entered', 'success', $frame, $resolved->context);
 
             return $frame->token;
         } catch (Throwable $failure) {
+            // Candidate capabilities must not survive into compensation or observations.
+            $phase?->close();
             $this->observe('activation_failed', 'failure', $frame, null, $failure);
             if ($frame !== null && $frame->started !== []) {
                 $this->cleanup($frame, $failure, false);

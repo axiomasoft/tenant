@@ -27,7 +27,7 @@ final readonly class MarkerWriter
         ($this->assertFence)();
         $config = $this->managementConfig;
         $config['database'] = $snapshot->databaseName;
-        if (($config['driver'] ?? null) !== 'pgsql' || isset($config['url']) || isset($config['read']) || isset($config['write'])) {
+        if (! PostgresRoute::isDirect($config)) {
             throw new RuntimeException('Invalid management route.');
         }
         $connection = $this->factory->make($config, 'tenant-pg-marker-writer');

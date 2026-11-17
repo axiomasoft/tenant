@@ -26,6 +26,7 @@ final readonly class TenantDoctorCheck implements DoctorCheck
         private Repository $config,
         private ?TenantOptions $options = null,
         private ?Closure $optionsResolver = null,
+        private bool $queueManaged = true,
     ) {}
 
     #[Override]
@@ -70,7 +71,8 @@ final readonly class TenantDoctorCheck implements DoctorCheck
 
         assert($options instanceof TenantOptions);
 
-        if (! is_array($this->config->get('database.connections.'.$options->centralConnection))) {
+        if ($options->runtimeProfile === 'laravel-pg-database'
+            && ! is_array($this->config->get('database.connections.'.$options->centralConnection))) {
             $findings[] = DoctorFinding::error(
                 code: 'tenant.doctor.invalid_central_connection',
                 message: sprintf('Configured central_connection "%s" is not defined in database.connections.', $options->centralConnection),
@@ -79,7 +81,8 @@ final readonly class TenantDoctorCheck implements DoctorCheck
             );
         }
 
-        if ($this->config->get('queue.connections.database.after_commit') !== false) {
+        if (($options->runtimeProfile === 'laravel-pg-database' || $this->queueManaged)
+            && $this->config->get('queue.connections.database.after_commit') !== false) {
             $findings[] = DoctorFinding::error(
                 code: 'tenant.doctor.queue_after_commit',
                 message: 'Queue connection "database" must set after_commit = false for transactional dispatch guarantees.',
@@ -94,7 +97,7 @@ final readonly class TenantDoctorCheck implements DoctorCheck
                 DoctorFinding::ok(
                     code: 'tenant.doctor.healthy',
                     message: 'Tenant PHP extensions, central connection, queue commit policy, and cache stores are valid.',
-                    evidence: ['central_connection' => $options->centralConnection, 'cache_stores' => count($options->cacheStores)],
+                    evidence: ['runtime_profile' => $options->runtimeProfile, 'central_connection' => $options->centralConnection, 'cache_stores' => count($options->cacheStores)],
                 ),
             ];
         }
@@ -165,7 +168,11 @@ final readonly class TenantDoctorCheck implements DoctorCheck
     /** @return list<DoctorFinding> */
     private function checkCacheStores(TenantOptions $options): array
     {
-        if ($options->facilities->cache && $options->cacheStores === []) {
+        if (! $options->facilities->cache) {
+            return [];
+        }
+
+        if ($options->cacheStores === []) {
             return [
                 DoctorFinding::error(
                     code: 'tenant.doctor.empty_cache_stores',

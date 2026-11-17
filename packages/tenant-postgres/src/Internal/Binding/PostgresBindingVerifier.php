@@ -17,6 +17,7 @@ use Tenant\Exceptions\Verification\BindingMismatch;
 use Tenant\Postgres\Contracts\Lifecycle\RecoveryAnchor;
 use Tenant\Postgres\Data\Binding\PhysicalAccess;
 use Tenant\Postgres\Internal\Database\DbRow;
+use Tenant\Postgres\Internal\Database\PostgresRoute;
 use Tenant\Postgres\Internal\Recovery\AnchorHistory;
 use Throwable;
 
@@ -42,23 +43,48 @@ final readonly class PostgresBindingVerifier implements BindingVerifier
                 throw new RuntimeException('Stale catalog binding.');
             }
             $recoveryGeneration = DbRow::str($row, 'recovery_generation');
-            if (! $this->maintenance && in_array(DbRow::str($row, 'status'), ['exporting', 'exported', 'deleting', 'quarantined', 'recovering', 'deleted'], true)) {
+            if (! $this->maintenance && ! in_array(DbRow::str($row, 'status'), ['ready', 'active'], true)) {
                 throw new RuntimeException('Resource admission is closed.');
             }
             if ($this->anchor !== null && AnchorHistory::assertCurrent($this->catalog, $this->anchor) !== $recoveryGeneration) {
                 throw new RuntimeException('Recovery anchor mismatch.');
             }
             $route = ($this->routeFor)($row);
-            if ($route !== $input->access->route || ($route['driver'] ?? null) !== 'pgsql' || ($route['database'] ?? null) !== DbRow::str($row, 'database_name') || isset($route['url']) || isset($route['read']) || isset($route['write'])) {
+            if ($route !== $input->access->route || ! PostgresRoute::isDirect($route) || ($route['database'] ?? null) !== DbRow::str($row, 'database_name')) {
                 throw new RuntimeException('Route mismatch.');
             }
             $pdo = (new PostgresConnector)->connect($route);
-            $roleStmt = $pdo->query("SELECT EXISTS (SELECT 1 FROM pg_roles WHERE (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls) AND pg_has_role(current_user,oid,'MEMBER')) AS privileged");
+            $roleStmt = $pdo->query("SELECT EXISTS (SELECT 1 FROM pg_roles WHERE (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls) AND (pg_has_role(current_user,oid,'MEMBER') OR pg_has_role(session_user,oid,'MEMBER'))) AS privileged");
             $role = $roleStmt !== false ? $roleStmt->fetch(PDO::FETCH_ASSOC) : false;
             if (! is_array($role) || ! in_array($role['privileged'] ?? null, [false, 'f'], true)) {
                 throw new RuntimeException('Privileged runtime role.');
             }
-            $privStmt = $pdo->query("SELECT has_table_privilege(current_user,'tenant_binding','INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER') OR has_schema_privilege(current_user,'public','CREATE') OR has_database_privilege(current_user,current_database(),'CREATE') AS writable");
+            // A lowered startup role and NOINHERIT membership can hide privileges
+            // available through SET ROLE. Inspect every reachable role, including
+            // column grants and ownership that can restore revoked privileges.
+            $privStmt = $pdo->query(<<<'SQL'
+                SELECT EXISTS (
+                    SELECT 1 FROM pg_roles AS runtime_role
+                    WHERE (pg_has_role(current_user, runtime_role.oid, 'MEMBER')
+                        OR pg_has_role(session_user, runtime_role.oid, 'MEMBER'))
+                    AND (
+                        has_table_privilege(runtime_role.oid, 'tenant_binding', 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                        OR has_any_column_privilege(runtime_role.oid, 'tenant_binding', 'INSERT,UPDATE,REFERENCES')
+                        OR has_schema_privilege(runtime_role.oid, 'public', 'CREATE')
+                        OR has_database_privilege(runtime_role.oid, current_database(), 'CREATE')
+                        OR EXISTS (
+                            SELECT 1 FROM pg_class AS relation
+                            JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+                            WHERE relation.oid = 'tenant_binding'::regclass
+                                AND runtime_role.oid IN (relation.relowner, namespace.nspowner)
+                        )
+                        OR EXISTS (
+                            SELECT 1 FROM pg_database
+                            WHERE datname = current_database() AND datdba = runtime_role.oid
+                        )
+                    )
+                ) AS writable
+                SQL);
             $privileges = $privStmt !== false ? $privStmt->fetch(PDO::FETCH_ASSOC) : false;
             if (! is_array($privileges) || ! in_array($privileges['writable'] ?? null, [false, 'f'], true)) {
                 throw new RuntimeException('Runtime role can mutate binding or create schema objects.');

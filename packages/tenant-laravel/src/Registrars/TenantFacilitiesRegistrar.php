@@ -69,25 +69,27 @@ final class TenantFacilitiesRegistrar implements PackageRegistrar
         $owner = FrameworkConfig::service($app, SafeTenantRuntime::class, SafeTenantRuntime::class);
         $options = FrameworkConfig::service($app, TenantOptions::class, TenantOptions::class);
 
-        FrameworkConfig::service($app, 'db', DatabaseManager::class)->extend('tenant-guarded-pgsql', static function (array $config, string $name) use ($app, $owner): Connection {
-            $guard = $owner->guard();
-            $config = FrameworkConfig::asMap($config);
-            $config['driver'] = 'pgsql';
-            $config['name'] = $name;
+        if ($options->runtimeProfile === 'laravel-pg-database') {
+            FrameworkConfig::service($app, 'db', DatabaseManager::class)->extend('tenant-guarded-pgsql', static function (array $config, string $name) use ($app, $owner): Connection {
+                $guard = $owner->guard();
+                $config = FrameworkConfig::asMap($config);
+                $config['driver'] = 'pgsql';
+                $config['name'] = $name;
 
-            if (! is_string($config['database'] ?? null) || ! is_string($config['prefix'] ?? '')) {
-                throw new TenantFailure('facility_configuration');
-            }
+                if (! is_string($config['database'] ?? null) || ! is_string($config['prefix'] ?? '')) {
+                    throw new TenantFailure('facility_configuration');
+                }
 
-            return new GuardedConnection(static function () use ($app, $config, $owner): PDO {
-                $descriptor = LaravelRuntimeFactory::descriptor($app);
-                $expected = $owner->current()->context->binding ?? throw new TenantFailure('missing');
-                FrameworkConfig::service($app, BindingVerifier::class, BindingVerifier::class)
-                    ->verify(new BindingVerificationInput($expected, $descriptor));
+                return new GuardedConnection(static function () use ($app, $config, $owner): PDO {
+                    $descriptor = LaravelRuntimeFactory::descriptor($app);
+                    $expected = $owner->current()->context->binding ?? throw new TenantFailure('missing');
+                    FrameworkConfig::service($app, BindingVerifier::class, BindingVerifier::class)
+                        ->verify(new BindingVerificationInput($expected, $descriptor));
 
-                return (new PostgresConnector)->connect($config);
-            }, $config['database'], $config['prefix'] ?? '', $config, $guard);
-        });
+                    return (new PostgresConnector)->connect($config);
+                }, $config['database'], $config['prefix'] ?? '', $config, $guard);
+            });
+        }
 
         FrameworkConfig::service($app, 'cache', CacheManager::class)->extend('tenant-guarded', function (Container $container, array $config) use ($owner): CacheRepository {
             $guard = $owner->guard();
