@@ -1,4 +1,16 @@
+includes:
+    - vendor/axiomasoft/packman-devtools/config/phpstan-base.neon
+    - vendor/larastan/larastan/extension.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
 parameters:
-    level: max
+    tmpDir: build/phpstan
     paths:
         - packages/tenant/src
+        - packages/tenant-laravel/src
+        - packages/tenant-postgres/src
+    ignoreErrors:
+        -
+            identifier: method.childParameterType
+            message: '#Parameter \#3 \$callback \(Closure\(string, array<mixed>\): mixed\) of method Tenant\\Laravel\\Internal\\Database\\GuardedConnection::run\(\) should be contravariant with parameter \$callback \(Closure\) of method Illuminate\\Database\\Connection::run\(\)#'
+            path: packages/tenant-laravel/src/Internal/Database/GuardedConnection.php

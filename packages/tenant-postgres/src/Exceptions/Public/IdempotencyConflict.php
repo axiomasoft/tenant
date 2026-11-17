@@ -1,8 +1,12 @@
 <?php
 
 declare(strict_types=1);
+
 namespace Tenant\Exceptions;
+
+use Packman\Attributes\Api;
+use Tenant\Postgres\Exceptions\Claim\ClaimConflict;
+
 /** Frozen optional owner error, shipped only by axiomasoft/tenant-postgres. */
-final class IdempotencyConflict extends \Tenant\Postgres\Exceptions\ClaimConflict
-{
-}
+#[Api(since: '1.0')]
+final class IdempotencyConflict extends ClaimConflict {}

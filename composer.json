@@ -1,9 +1,91 @@
 {
-    "name": "axiomasoft/tenant-workspace",
-    "description": "Development workspace for Tenant",
+    "name": "axiomasoft/tenant-monorepo",
+    "description": "Development monorepo for Tenant — portable isolation runtime, guarded Laravel facilities, and PostgreSQL physical owner.",
     "type": "project",
-    "require": { "php": ">=8.4 <8.6", "ext-intl": "*" },
-    "require-dev": { "pestphp/pest": "^4.0", "phpstan/phpstan": "^2.1" },
-    "autoload": { "psr-4": { "Tenant\\": "packages/tenant/src/" } },
-    "config": { "allow-plugins": { "pestphp/pest-plugin": true }, "sort-packages": true }
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/*",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "axiomasoft/tenant": "1.0.x-dev",
+                    "axiomasoft/tenant-laravel": "1.0.x-dev",
+                    "axiomasoft/tenant-postgres": "1.0.x-dev"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../packman/packages/*",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "axiomasoft/packman": "0.1.x-dev",
+                    "axiomasoft/packman-schema": "0.1.x-dev",
+                    "axiomasoft/packman-plugins": "0.1.x-dev",
+                    "axiomasoft/packman-modules": "0.1.x-dev",
+                    "axiomasoft/packman-panels": "0.1.x-dev",
+                    "axiomasoft/packman-filament": "0.1.x-dev",
+                    "axiomasoft/packman-testkit": "0.1.x-dev",
+                    "axiomasoft/packman-devtools": "0.1.x-dev"
+                }
+            }
+        }
+    ],
+    "require": {
+        "php": ">=8.4 <8.6",
+        "ext-intl": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-posix": "*",
+        "ext-sodium": "*",
+        "axiomasoft/packman": "^0.1",
+        "axiomasoft/packman-schema": "^0.1",
+        "axiomasoft/tenant": "^1.0",
+        "axiomasoft/tenant-laravel": "^1.0",
+        "axiomasoft/tenant-postgres": "^1.0"
+    },
+    "require-dev": {
+        "axiomasoft/packman-devtools": "^0.1",
+        "axiomasoft/packman-testkit": "^0.1",
+        "driftingly/rector-laravel": "^2.7",
+        "larastan/larastan": "^3.12",
+        "laravel/pint": "^1.32",
+        "orchestra/testbench": "^11.3",
+        "pestphp/pest": "^5.2",
+        "phpstan/phpstan": "^2.2.16 <2.3.6",
+        "phpstan/phpstan-strict-rules": "^2.0.12",
+        "rector/rector": "^2.6"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tenant\\Core\\Tests\\": "packages/tenant/tests/",
+            "Tenant\\Laravel\\Tests\\": "packages/tenant-laravel/tests/",
+            "Tenant\\Postgres\\Tests\\": "packages/tenant-postgres/tests/",
+            "TenantTests\\": "packages/tenant/tests/Support/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "lint": "vendor/bin/pint",
+        "lint:check": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G --no-progress",
+        "refactor": "vendor/bin/rector process",
+        "refactor:check": "vendor/bin/rector process --dry-run",
+        "test": "vendor/bin/pest --exclude-group=pg",
+        "test:pg": "vendor/bin/pest --group=pg",
+        "gate": "@php vendor/bin/packman gate",
+        "php-api": "@php vendor/bin/packman php-api --check",
+        "error-codes": "@php vendor/bin/packman error-codes --check",
+        "config-schema": "@php vendor/bin/packman config-schema --check",
+        "ai:sync": "@php vendor/bin/packman ai:sync --dry-run"
+    }
 }

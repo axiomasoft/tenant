@@ -2,27 +2,30 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Packman\Schema\Laravel\PackmanMigration;
 
-return new class extends Migration {
+return new class extends PackmanMigration
+{
     public function up(): void
     {
         Schema::create('tenant_pg_clusters', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $this->uuidPrimary($table);
             $table->string('status');
             $table->unsignedInteger('template_version');
         });
+
         Schema::create('tenant_pg_templates', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $this->uuidPrimary($table);
             $table->unsignedInteger('version')->unique();
             $table->string('status');
             $table->string('db_name', 63)->unique();
             $table->string('schema_hash', 64)->nullable();
         });
+
         Schema::create('tenant_pg_resources', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $this->uuidPrimary($table);
             $table->uuid('cluster_id');
             $table->unsignedInteger('template_version');
             $table->string('status');

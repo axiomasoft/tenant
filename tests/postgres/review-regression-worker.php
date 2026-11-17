@@ -5,14 +5,14 @@ use Tenant\Postgres\Data\ClaimRequest;
 $mode=$argv[1];$scenario=$argv[2]??'review';$key=new OperationKey('lab',$scenario);$intent=reviewIntent($scenario);
 if ($mode==='f1-a') {
  $armed=false;$paused=false;$c->beforeExecuting(function(string $query,array $bindings)use(&$armed,&$paused,$c):void{
-  if(str_contains($query,'SELECT pg_advisory_lock(')&&str_starts_with($bindings[0]??'','corex-template-integrity:'))$armed=true;
+  if(str_contains($query,'SELECT pg_advisory_lock(')&&str_starts_with($bindings[0]??'','tenant-template-integrity:'))$armed=true;
   if($armed&&!$paused&&str_contains($query,'tenant_pg_templates')){$paused=true;barrier('session-template-held');}
  });
 } elseif ($mode==='f2-a') {
  $locks=0;$c->beforeExecuting(function(string $query,array $bindings)use(&$locks,$key):void{if(str_contains($query,'pg_advisory_xact_lock')&&($bindings[0]??null)==='tenant:operation:'.$key->storageKey()&&++$locks===4)barrier('physical-complete-before-final-claim');});
 } elseif ($mode==='f3-marker' || $mode==='f3-before-create' || $mode==='f3-accepted') {
  $paused=false;$c->beforeExecuting(function(string $query,array $bindings)use(&$paused,$mode):void {
-  $match=match($mode){'f3-marker'=>str_contains($query,'update "tenant_pg_provision_attempts"')&&in_array('succeeded',$bindings,true),'f3-accepted'=>str_contains($query,'update "tenant_pg_provision_attempts"')&&in_array('running',$bindings,true),default=>str_contains($query,'SELECT pg_advisory_lock(')&&str_starts_with($bindings[0]??'','corex-template-integrity:')};
+  $match=match($mode){'f3-marker'=>str_contains($query,'update "tenant_pg_provision_attempts"')&&in_array('succeeded',$bindings,true),'f3-accepted'=>str_contains($query,'update "tenant_pg_provision_attempts"')&&in_array('running',$bindings,true),default=>str_contains($query,'SELECT pg_advisory_lock(')&&str_starts_with($bindings[0]??'','tenant-template-integrity:')};
   if(!$paused&&$match){$paused=true;barrier($mode);}
  });
 }

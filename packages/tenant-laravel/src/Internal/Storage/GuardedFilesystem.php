@@ -5,15 +5,20 @@ declare(strict_types=1);
 namespace Tenant\Laravel\Internal\Storage;
 
 use Closure;
-use Tenant\Internal\Runtime\GenerationGuard;
-use RuntimeException as StorageOperationFailed;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
-use RuntimeException;
+use Packman\Attributes\Internal;
+use Psr\Http\Message\StreamInterface;
+use RuntimeException as StorageOperationFailed;
+use Tenant\Exceptions\TenantFailure;
+use Tenant\Laravel\Contracts\Storage\ResourceFilesystem;
+use Tenant\Runtime\GenerationGuard;
+use Throwable;
 
-/** @internal Adapted CoreX filesystem/path/symlink guards, with permanent generation and tracked streams. */
-final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\ResourceFilesystem
+/** @internal Filesystem/path/symlink guards, with permanent generation and tracked streams. */
+#[Internal]
+final readonly class GuardedFilesystem implements ResourceFilesystem
 {
     public function __construct(
         private Filesystem $filesystem,
@@ -25,7 +30,7 @@ final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\Reso
     public function path(string $path): never
     {
         $this->assertCurrentContext();
-        throw new \Tenant\Exceptions\TenantFailure('unsupported_capability');
+        throw new TenantFailure('unsupported_capability');
     }
 
     public function exists(string $path): bool
@@ -46,53 +51,58 @@ final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\Reso
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'readStream', arguments: $arguments, operation: function () use ($arguments) {
+        return $this->call(method: 'readStream', arguments: $arguments, operation: function () use ($arguments): TrackedLocalStream {
             $release = $this->guard->acquire();
             try {
                 $stream = $this->filesystem->readStream(...$arguments);
-                if (!is_resource($stream)) throw new StorageOperationFailed('Cannot open stream');
+                if (! is_resource($stream)) {
+                    throw new StorageOperationFailed('Cannot open stream');
+                }
+
                 return new TrackedLocalStream($stream, $this->guard, $release);
-            } catch (\Throwable $failure) { $release(); throw $failure; }
+            } catch (Throwable $failure) {
+                $release();
+                throw $failure;
+            }
         });
     }
 
     /** @param array<mixed>|string $options */
     public function put(string $path, mixed $contents, array|string $options = []): bool
     {
-        if (!is_string($contents) && !is_resource($contents) && !$contents instanceof File && !$contents instanceof UploadedFile && !$contents instanceof \Psr\Http\Message\StreamInterface) throw new StorageOperationFailed('Invalid contents');
+        if (! is_string($contents) && ! is_resource($contents) && ! $contents instanceof File && ! $contents instanceof UploadedFile && ! $contents instanceof StreamInterface) {
+            throw new StorageOperationFailed('Invalid contents');
+        }
         $arguments = [$this->safePath($path), $contents, $options];
 
         return $this->call(method: 'put', arguments: $arguments, operation: fn () => $this->filesystem->put(...$arguments));
     }
 
-    /**
-     * @param array<mixed>|string $options
-     * @param  File|UploadedFile|string|array<mixed>|null  $file
-     */
+    /** @param array<mixed>|string $options */
     public function putFile(mixed $path, mixed $file = null, array|string $options = []): string|false
     {
         if ($file === null || is_array($file)) {
             [$path, $file, $options] = ['', $path, $file ?? []];
         }
 
-        if (!is_string($file) && !$file instanceof File && !$file instanceof UploadedFile && $file !== null && !is_array($file)) throw new StorageOperationFailed('Invalid upload');
+        if (! is_string($file) && ! $file instanceof File && ! $file instanceof UploadedFile && $file !== null && ! is_array($file)) {
+            throw new StorageOperationFailed('Invalid upload');
+        }
         $arguments = [$this->safePath($path), $file, $options];
 
         return $this->call(method: 'putFile', arguments: $arguments, operation: fn () => $this->filesystem->putFile(...$arguments));
     }
 
-    /**
-     * @param array<mixed>|string $options
-     * @param  File|UploadedFile|string|array<mixed>|null  $file
-     * @param  string|array<mixed>|null  $name
-     */
+    /** @param array<mixed>|string $options */
     public function putFileAs(mixed $path, mixed $file, mixed $name = null, array|string $options = []): string|false
     {
         if ($name === null || is_array($name)) {
             [$path, $file, $name, $options] = ['', $path, $file, $name ?? []];
         }
 
-        if (!is_string($file) && !$file instanceof File && !$file instanceof UploadedFile && $file !== null && !is_array($file)) throw new StorageOperationFailed('Invalid upload');
+        if (! is_string($file) && ! $file instanceof File && ! $file instanceof UploadedFile && $file !== null && ! is_array($file)) {
+            throw new StorageOperationFailed('Invalid upload');
+        }
         $arguments = [$this->safePath($path), $file, $this->safePath($name), $options];
 
         return $this->call(method: 'putFileAs', arguments: $arguments, operation: fn () => $this->filesystem->putFileAs(...$arguments));
@@ -101,7 +111,9 @@ final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\Reso
     /** @param array<mixed> $options */
     public function writeStream(string $path, mixed $resource, array $options = []): bool
     {
-        if (!is_resource($resource)) throw new StorageOperationFailed('Invalid borrowed resource');
+        if (! is_resource($resource)) {
+            throw new StorageOperationFailed('Invalid borrowed resource');
+        }
         $arguments = [$this->safePath($path), $resource, $options];
 
         return $this->call(method: 'writeStream', arguments: $arguments, operation: fn () => $this->filesystem->writeStream(...$arguments));
@@ -253,7 +265,7 @@ final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\Reso
 
         try {
             return $operation();
-        } catch (RuntimeException $exception) {
+        } catch (StorageOperationFailed $exception) {
             throw new StorageOperationFailed('Scoped storage operation failed.', previous: $exception);
         }
     }
@@ -322,11 +334,13 @@ final readonly class GuardedFilesystem implements \Tenant\Laravel\Contracts\Reso
             }
         }
     }
+
     public static function assertRoot(string $root): void
     {
         for ($path = $root; $path !== '' && $path !== dirname($path); $path = dirname($path)) {
-            if (is_link($path)) throw new StorageOperationFailed('Storage roots must not contain symbolic links.');
+            if (is_link($path)) {
+                throw new StorageOperationFailed('Storage roots must not contain symbolic links.');
+            }
         }
     }
-
 }

@@ -1,9 +1,15 @@
 <?php
 
 declare(strict_types=1);
+
 namespace Tenant\Exceptions;
+
+use Packman\Attributes\Api;
+use Tenant\Postgres\Exceptions\Claim\ClaimUnavailable;
+
 /** Frozen optional owner error, shipped only by axiomasoft/tenant-postgres. */
-final class OperationUnknown extends \Tenant\Postgres\Exceptions\ClaimUnavailable
+#[Api(since: '1.0')]
+final class OperationUnknown extends ClaimUnavailable
 {
-    protected const string Reason='operation_unknown';
+    protected const string Reason = 'operation_unknown';
 }

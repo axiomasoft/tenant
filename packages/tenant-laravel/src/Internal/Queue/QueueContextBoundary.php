@@ -1,31 +1,52 @@
 <?php
 
 declare(strict_types=1);
+
 namespace Tenant\Laravel\Internal\Queue;
 
 use Illuminate\Contracts\Queue\Job;
-use Tenant\Contracts\{ContextCodec, TenantRuntime};
-use Tenant\Data\{FrameToken, Purpose, Selection};
+use Packman\Attributes\Internal;
+use Tenant\Contracts\Context\ContextCodec;
+use Tenant\Contracts\Runtime\TenantRuntime;
+use Tenant\Data\Context\Purpose;
+use Tenant\Data\Context\Selection;
+use Tenant\Data\Runtime\FrameToken;
 use Tenant\Exceptions\TenantFailure;
-use Tenant\Laravel\Queue\QueueRegistry;
 use Tenant\Laravel\Internal\Boundary\ProcessBoundary;
+use Tenant\Laravel\Queue\QueueRegistry;
+use Throwable;
+use WeakMap;
 
 /** @internal Per actual Job object/attempt LIFO; runtime remains the sole frame owner. */
+#[Internal]
 final class QueueContextBoundary
 {
-    /** @var \WeakMap<Job, array{token: FrameToken, attempt: int, data: ScalarPayload|null}> */
-    private \WeakMap $frames;
-    /** @var \WeakMap<Job, bool> Transport validated; framework failure callbacks are safe. */
-    private \WeakMap $trusted;
-    public function __construct(private readonly TenantRuntime $runtime, private readonly ContextCodec $codec, private readonly QueueRegistry $registry, private readonly ProcessBoundary $process) { $this->frames = new \WeakMap(); $this->trusted = new \WeakMap(); }
+    /** @var WeakMap<Job, array{token: FrameToken, attempt: int, data: ScalarPayload|null}> */
+    private WeakMap $frames;
+
+    /** @var WeakMap<Job, bool> Transport validated; framework failure callbacks are safe. */
+    private WeakMap $trusted;
+
+    public function __construct(private readonly TenantRuntime $runtime, private readonly ContextCodec $codec, private readonly QueueRegistry $registry, private readonly ProcessBoundary $process)
+    {
+        $this->frames = new WeakMap;
+        $this->trusted = new WeakMap;
+    }
+
     public function processing(Job $job): void
     {
         $this->process->check();
-        if (isset($this->frames[$job])) throw new TenantFailure('invalid_token');
+        if (isset($this->frames[$job])) {
+            throw new TenantFailure('invalid_frame_token');
+        }
         $p = $job->payload();
         if (($p['job'] ?? null) !== ScalarHandler::class.'@fire') {
-            if (!in_array($p['job'] ?? null, $this->registry->centralJobs, true)) throw new TenantFailure('denied');
-            $data = null; $selection = Selection::central($this->registry->centralProfile); $purpose = new Purpose('tenant:central-framework');
+            if (! in_array($p['job'] ?? null, $this->registry->centralJobs, true)) {
+                throw new TenantFailure('denied');
+            }
+            $data = null;
+            $selection = Selection::central($this->registry->centralProfile);
+            $purpose = new Purpose('tenant:central-framework');
         } else {
             $data = ScalarPayload::parse($p['data'] ?? null, $this->registry);
             $this->registry->authorize($data->producer, $data->handler, $data->purpose);
@@ -35,24 +56,33 @@ final class QueueContextBoundary
         $this->trusted[$job] = true;
         if ($job->getConnectionName() !== 'sync') {
             $state = $this->runtime->current();
-            if ($state->kind === 'missing') $this->runtime->enter(Selection::central($this->registry->centralProfile), new Purpose('tenant:worker'));
-            elseif ($state->kind !== 'central') $this->process->stop();
+            if ($state->kind === 'missing') {
+                $this->runtime->enter(Selection::central($this->registry->centralProfile), new Purpose('tenant:worker'));
+            } elseif ($state->kind !== 'central') {
+                $this->process->stop();
+            }
         }
         $token = $this->runtime->enter($selection, $purpose);
-        $this->frames[$job] = ['token'=>$token,'attempt'=>$job->attempts(),'data'=>$data];
+        $this->frames[$job] = ['token' => $token, 'attempt' => $job->attempts(), 'data' => $data];
         // Fresh owning handler admission AFTER verified activation, BEFORE hydration/effect.
-        if ($data !== null) $this->admit($data);
+        if ($data !== null) {
+            $this->admit($data);
+        }
     }
+
     public function allowsFailureCallback(Job $job): bool
     {
         // Poison must stop before any destructive failure completion or ACK.
         $this->process->check();
+
         return $this->trusted[$job] ?? false;
     }
+
     private function admit(ScalarPayload $data): void
     {
         $this->registry->admit($data->producer, $data->handler, $data->purpose, $data->data);
     }
+
     public function handle(Job $job): void
     {
         $data = $this->frames[$job]['data'] ?? throw new TenantFailure('denied');
@@ -63,25 +93,40 @@ final class QueueContextBoundary
             $this->registry->handle($data->handler, $data->data, $job);
         });
     }
-    public function failed(Job $job, \Throwable $error): void
+
+    public function failed(Job $job, Throwable $error): void
     {
         // Refused messages never hydrate or invoke a product failure callback.
         $data = $this->frames[$job]['data'] ?? null;
-        if ($data === null) return;
-        try { $this->admit($data); } catch (\Throwable) { return; }
+        if ($data === null) {
+            return;
+        }
+        try {
+            $this->admit($data);
+        } catch (Throwable) {
+            return;
+        }
         $this->registry->failed($data->handler, $data->data, $error);
     }
+
     public function finished(Job $job, bool $successful): void
     {
         $this->process->check();
         unset($this->trusted[$job]);
         $frame = $this->frames[$job] ?? null;
-        if ($frame === null || $frame['attempt'] !== $job->attempts()) return;
+        if ($frame === null || $frame['attempt'] !== $job->attempts()) {
+            return;
+        }
         // A foreign/out-of-order/duplicate completion never pops another frame.
-        try { $this->runtime->restore($frame['token']); }
-        catch (\Throwable) { $this->process->stop(); }
+        try {
+            $this->runtime->restore($frame['token']);
+        } catch (Throwable) {
+            $this->process->stop();
+        }
         unset($this->frames[$job]);
         $this->process->check();
-        if ($successful && !$job->isDeletedOrReleased() && !$job->hasFailed()) $job->delete();
+        if ($successful && ! $job->isDeletedOrReleased() && ! $job->hasFailed()) {
+            $job->delete();
+        }
     }
 }

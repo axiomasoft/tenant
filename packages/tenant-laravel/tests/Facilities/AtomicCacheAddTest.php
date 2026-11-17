@@ -21,7 +21,7 @@ it('preserves atomic Redis add across independent guarded processes and rejects 
     $winner=array_values(array_filter($results,fn($r)=>$r['claimed']))[0];
     expect($held->get($key))->toBe($winner['claimant']);
     $b=$h->runtime->enter($h->selection('b'),$h->purpose());$h->runtime->restore($b);
-    expect(fn()=>$held->add($key,'stale',60))->toThrow(\Tenant\Exceptions\StaleHandle::class);
+    expect(fn()=>$held->add($key,'stale',60))->toThrow(\Tenant\Exceptions\Runtime\StaleHandle::class);
     expect($h->cache()->add($key,'duplicate',60))->toBeFalse();
     expect($h->cache()->get($key))->toBe($winner['claimant']);$h->cache()->forget($key);$h->runtime->restore($a);
     file_put_contents(getenv('TENANT_OBSERVATIONS').'/atomic-add.json',json_encode($results,JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR));

@@ -1,29 +1,63 @@
 <?php
 
 declare(strict_types=1);
-use Illuminate\Database\Migrations\Migration;
+
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-return new class extends Migration {
+use Packman\Schema\Laravel\PackmanMigration;
+
+return new class extends PackmanMigration
+{
     public function up(): void
     {
-        Schema::create('tenant_pg_control',function(Blueprint $t):void {
-            $t->unsignedInteger('id')->primary();$t->string('recovery_generation',128);
+        Schema::create('tenant_pg_control', function (Blueprint $table): void {
+            $table->unsignedInteger('id')->primary();
+            $table->string('recovery_generation', 128);
         });
-        Schema::create('tenant_pg_lifecycle_operations',function(Blueprint $t):void {
-            $t->uuid('id')->primary();$t->string('key_hash',64)->unique();$t->string('key_namespace',128);$t->string('operation_key',128);
-            $t->string('input_digest',64);$t->string('intent_digest',64);$t->string('kind',16);$t->string('purpose_ref',128);
-            $t->string('resource_ref',128);$t->string('incarnation',128);$t->uuid('cluster_id');$t->string('database_name',63);$t->string('route_revision',128);$t->string('recovery_generation',128);
-            $t->string('status',16);$t->unsignedInteger('attempt_generation');$t->unsignedInteger('receipt_version');$t->string('observed_effect',32);$t->boolean('cancel_requested')->default(false);
-            $t->uuid('export_id')->nullable()->unique();$t->json('export_ref')->nullable();$t->string('destination_ref',128)->nullable();$t->string('retention_ref',128)->nullable();$t->json('manifest')->nullable();
-            $t->integer('backend_pid')->nullable();$t->string('backend_start',128)->nullable();$t->string('database_oid',32)->nullable();
+
+        Schema::create('tenant_pg_lifecycle_operations', function (Blueprint $table): void {
+            $this->uuidPrimary($table);
+            $table->string('key_hash', 64)->unique();
+            $table->string('key_namespace', 128);
+            $table->string('operation_key', 128);
+            $table->string('input_digest', 64);
+            $table->string('intent_digest', 64);
+            $table->string('kind', 16);
+            $table->string('purpose_ref', 128);
+            $table->string('resource_ref', 128);
+            $table->string('incarnation', 128);
+            $table->uuid('cluster_id');
+            $table->string('database_name', 63);
+            $table->string('route_revision', 128);
+            $table->string('recovery_generation', 128);
+            $table->string('status', 16);
+            $table->unsignedInteger('attempt_generation');
+            $table->unsignedInteger('receipt_version');
+            $table->string('observed_effect', 32);
+            $table->boolean('cancel_requested')->default(false);
+            $table->uuid('export_id')->nullable()->unique();
+            $table->json('export_ref')->nullable();
+            $table->string('destination_ref', 128)->nullable();
+            $table->string('retention_ref', 128)->nullable();
+            $table->json('manifest')->nullable();
+            $table->integer('backend_pid')->nullable();
+            $table->string('backend_start', 128)->nullable();
+            $table->string('database_oid', 32)->nullable();
         });
-        Schema::create('tenant_pg_lifecycle_outbox',function(Blueprint $t):void {
-            $t->uuid('operation_id')->primary();$t->string('resource_ref',128);$t->string('incarnation',128);$t->string('effect',32);$t->unsignedInteger('receipt_version');
+
+        Schema::create('tenant_pg_lifecycle_outbox', function (Blueprint $table): void {
+            $this->uuidPrimary($table, 'operation_id');
+            $table->string('resource_ref', 128);
+            $table->string('incarnation', 128);
+            $table->string('effect', 32);
+            $table->unsignedInteger('receipt_version');
         });
     }
+
     public function down(): void
     {
-        Schema::dropIfExists('tenant_pg_lifecycle_outbox');Schema::dropIfExists('tenant_pg_lifecycle_operations');Schema::dropIfExists('tenant_pg_control');
+        Schema::dropIfExists('tenant_pg_lifecycle_outbox');
+        Schema::dropIfExists('tenant_pg_lifecycle_operations');
+        Schema::dropIfExists('tenant_pg_control');
     }
 };

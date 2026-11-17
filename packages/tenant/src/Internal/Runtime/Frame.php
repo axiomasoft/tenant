@@ -4,15 +4,23 @@ declare(strict_types=1);
 
 namespace Tenant\Internal\Runtime;
 
-use Tenant\Contracts\Facility;
-use Tenant\Data\{ContextState, FrameToken, Purpose, ResolvedIsolation, Selection};
+use Packman\Attributes\Internal;
+use Tenant\Contracts\Runtime\Facility;
+use Tenant\Data\Context\ContextState;
+use Tenant\Data\Context\Purpose;
+use Tenant\Data\Context\ResolvedIsolation;
+use Tenant\Data\Context\Selection;
+use Tenant\Data\Runtime\FrameToken;
 
-/** @internal Source: CoreX DatabaseTenancyManager::$started, extended to frame-local state. */
+/** @internal Tracks started participants in frame-local LIFO order. */
+#[Internal]
 final class Frame
 {
     /** @var list<array{Facility, ParticipantFrameState}> Recorded BEFORE prepare. */
     public array $started = [];
+
     public readonly FrameToken $token;
+
     public readonly string $correlation;
 
     public function __construct(
@@ -21,7 +29,7 @@ final class Frame
         public readonly ResolvedIsolation $resolved,
         public readonly ContextState $previous,
     ) {
-        $this->token = new FrameToken();
+        $this->token = new FrameToken;
         $this->correlation = bin2hex(random_bytes(16));
     }
 }

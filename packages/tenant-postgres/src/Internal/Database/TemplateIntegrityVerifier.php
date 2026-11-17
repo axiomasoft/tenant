@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace Tenant\Postgres\Internal\Database;
 
-use Tenant\Postgres\Contracts\TemplateIntegrityVerifier as TemplateIntegrityVerifierContract;
-use Tenant\Postgres\Data\TemplateTrust;
-use Tenant\Postgres\Data\ClaimRequest;
-use Tenant\Postgres\Data\QualifiedTemplate;
-use Tenant\Postgres\Data\ResourceSnapshot;
-use Tenant\Postgres\Exceptions\TemplateIntegrityException;
-use Tenant\Postgres\Internal\DatabaseValue;
 use Illuminate\Database\Connection;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Connectors\ConnectionFactory;
 use Illuminate\Database\Eloquent\Model;
+use Packman\Attributes\Internal;
 use stdClass;
+use Tenant\Postgres\Contracts\Provisioning\TemplateIntegrityVerifier as TemplateIntegrityVerifierContract;
+use Tenant\Postgres\Data\Provisioning\ClaimRequest;
+use Tenant\Postgres\Data\Provisioning\QualifiedTemplate;
+use Tenant\Postgres\Data\Provisioning\ResourceSnapshot;
+use Tenant\Postgres\Data\Provisioning\TemplateTrust;
+use Tenant\Postgres\Exceptions\Provisioning\TemplateIntegrityException;
 
 /** @internal */
+#[Internal]
 final readonly class TemplateIntegrityVerifier implements TemplateIntegrityVerifierContract
 {
     public function __construct(
@@ -87,14 +88,24 @@ final readonly class TemplateIntegrityVerifier implements TemplateIntegrityVerif
             // Resolve the lock identity without a row lock, then always take advisory
             // before row. Cloners hold the same advisory lock for the whole DDL session.
             $lookup = $connection->table('tenant_pg_templates')->where('status', 'ready');
-            if ($templateId !== null) $lookup->where('id', $templateId);
-            if ($version !== null) $lookup->where('version', $version);
+            if ($templateId !== null) {
+                $lookup->where('id', $templateId);
+            }
+            if ($version !== null) {
+                $lookup->where('version', $version);
+            }
             $identity = $lookup->first(['id']);
-            if ($identity === null) throw new TemplateIntegrityException('The requested template is unavailable.');
+            if ($identity === null) {
+                throw new TemplateIntegrityException('The requested template is unavailable.');
+            }
             $this->lock->acquire(connection: $connection, templateId: DatabaseValue::text($identity->id));
             $query = $connection->table('tenant_pg_templates')->where('id', $identity->id)->where('status', 'ready');
-            if ($templateId !== null) $query->where('id', $templateId);
-            if ($version !== null) $query->where('version', $version);
+            if ($templateId !== null) {
+                $query->where('id', $templateId);
+            }
+            if ($version !== null) {
+                $query->where('version', $version);
+            }
             $template = $query->lockForUpdate()->first();
             if ($template === null || ! is_string($template->schema_hash)) {
                 throw new TemplateIntegrityException('The requested template has no trusted schema hash.');

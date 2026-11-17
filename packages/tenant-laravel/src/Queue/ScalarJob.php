@@ -1,9 +1,13 @@
 <?php
 
 declare(strict_types=1);
+
 namespace Tenant\Laravel\Queue;
 
+use Packman\Attributes\Api;
+
 /** Local producer request; only scalar data is persisted, never this object. */
+#[Api(since: '1.0')]
 final readonly class ScalarJob
 {
     /** @param array<string, scalar|null> $data */

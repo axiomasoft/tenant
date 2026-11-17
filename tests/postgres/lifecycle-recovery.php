@@ -15,9 +15,10 @@ function nativeTool(array $args,?string $output=null):void
 $catalogDump=$m['root'].'/old-catalog.dump';nativeTool(['/usr/lib/postgresql/16/bin/pg_dump','-Fc','--no-owner','--no-privileges','-d',$m['central']],$catalogDump);
 $r=makeResource('restore');$export=$journal->request(exportIntent($r),new OperationKey('lab','restore-export'),$allow);$manifest=$journal->queryExport($export->exportRef,$allow)->manifest;
 $delete=$journal->request(deleteIntent($r,$export),new OperationKey('lab','restore-delete'),$allow);
-$operator=new RecoveryOperator($c,$journal,$route,$m['runtime'],$runtimeRoute);
+$makeOp=Closure::bind(static fn($cat,$j,$r,$role,$rt)=>new RecoveryOperator($cat,$j,$r,$role,$rt),null,RecoveryOperator::class);
+$operator=$makeOp($c,$journal,$route,$m['runtime'],$runtimeRoute);
 $intent=new RecoveryIntent('restore',$export->exportRef,$manifest->sha256,$r->resource_ref,$r->incarnation,$r->cluster_id,$r->database_name,'recovery:restore');
-$noAnchor=new LifecycleJournal($c,$verify,$archives,null,$policy);$unsupported=new RecoveryOperator($c,$noAnchor,$route,$m['runtime'],$runtimeRoute);
+$noAnchor=new LifecycleJournal($c,$verify,$archives,null,$policy);$unsupported=$makeOp($c,$noAnchor,$route,$m['runtime'],$runtimeRoute);
 refuse(fn()=>$unsupported->admit($intent,$allow),'recovery_unsupported');
 refuse(fn()=>$operator->admit($intent,new Admission(static fn()=>false)),'denied');
 $plan=$operator->admit($intent,$allow);check($c->selectOne('SELECT oid FROM pg_database WHERE datname=?',[$r->database_name])===null,'admitRecovery performed IO');

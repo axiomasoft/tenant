@@ -1,20 +1,20 @@
 <?php
 
 declare(strict_types=1);
+use TenantTests\Scenarios;
 
 require_once __DIR__.'/../Support/Scenarios.php';
 
 it('STATE-02 executes original synthetic contract through default and decorator', function (): void {
     foreach ([false, true] as $decorated) {
-        $result = \TenantTests\Scenarios::execute('STATE-02', $decorated);
+        $result = Scenarios::execute('STATE-02', $decorated);
         expect($result['assertions'])->toBeGreaterThan(0);
     }
 });
 
 it('STATE-03 executes original synthetic contract through default and decorator', function (): void {
     foreach ([false, true] as $decorated) {
-        $result = \TenantTests\Scenarios::execute('STATE-03', $decorated);
+        $result = Scenarios::execute('STATE-03', $decorated);
         expect($result['assertions'])->toBeGreaterThan(0);
     }
 });
-

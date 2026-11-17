@@ -1,0 +1,25 @@
+{
+    "schema": "packman-agent-pack/1",
+    "pack": "packman-canonical-ai",
+    "version": "1.0.0",
+    "rules": [
+        "architecture-boundaries",
+        "errors-and-diagnostics",
+        "extensions-plugins-modules",
+        "options-config",
+        "panels-and-filament",
+        "public-api-semver",
+        "schema-and-migrations",
+        "service-providers",
+        "testing-and-gates"
+    ],
+    "agents": [
+        "packman-api-auditor",
+        "packman-builder",
+        "packman-orchestrator",
+        "packman-reviewer",
+        "packman-security-reviewer",
+        "packman-test-verifier"
+    ],
+    "checksum": "4facebcb5ba7392ee70a0cd5d63bdb41f1ac25f2f3e5a769368e760f038792f9"
+}

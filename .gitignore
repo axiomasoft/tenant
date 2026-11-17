@@ -1,0 +1,9 @@
+/vendor/
+/build/
+/.phpunit.cache/
+/packages/*/vendor/
+/packages/*/.phpunit.cache/
+.DS_Store
+*.sqlite
+*.sqlite-journal
+*.log

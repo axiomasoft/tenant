@@ -1,20 +1,37 @@
 {
     "name": "axiomasoft/tenant-postgres",
-    "description": "PostgreSQL physical isolation support for Tenant",
+    "description": "PostgreSQL physical isolation support for Tenant.",
     "type": "library",
     "require": {
         "php": ">=8.4 <8.6",
-        "ext-sodium": "*",
-        "illuminate/database": "^12.0 || ^13.0",
-        "axiomasoft/tenant": "^1.0",
         "ext-pdo": "*",
         "ext-pdo_pgsql": "*",
+        "ext-sodium": "*",
+        "axiomasoft/packman": "^0.1",
+        "axiomasoft/packman-schema": "^0.1",
+        "axiomasoft/tenant": "^1.0",
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "illuminate/database": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0",
         "ramsey/uuid": "^4.7"
     },
     "autoload": {
         "psr-4": {
             "Tenant\\Postgres\\": "src/",
             "Tenant\\Exceptions\\": "src/Exceptions/Public/"
+        },
+        "files": [
+            "src/aliases.php"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tenant\\Postgres\\TenantPostgresServiceProvider"
+            ]
+        },
+        "packman": {
+            "error-prefix": "tenant"
         }
     }
 }

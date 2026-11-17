@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tenant\Postgres\Internal\Database;
 
-use const JSON_THROW_ON_ERROR;
-use const SORT_STRING;
-
-use Tenant\Postgres\Internal\DatabaseValue;
 use Illuminate\Database\Connection;
+use Packman\Attributes\Internal;
 
 use function array_map;
 use function array_values;
 use function hash;
 use function json_encode;
 use function ksort;
+
+use const JSON_THROW_ON_ERROR;
+use const SORT_STRING;
 
 /**
  * Stable, read-only projection of the supported PostgreSQL schema surface.
@@ -24,6 +24,7 @@ use function ksort;
  *
  * @internal
  */
+#[Internal]
 final class SchemaCatalogueSerializer
 {
     /** @return array<string, mixed> */

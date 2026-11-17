@@ -1,12 +1,23 @@
 {
     "name": "axiomasoft/tenant",
-    "description": "Portable isolation context and scoped execution contracts",
+    "description": "Portable isolation context and scoped execution contracts.",
     "type": "library",
     "require": {
         "php": ">=8.4 <8.6",
-        "ext-intl": "*"
+        "ext-intl": "*",
+        "axiomasoft/packman": "^0.1"
     },
     "autoload": {
-        "psr-4": { "Tenant\\": "src/" }
+        "psr-4": {
+            "Tenant\\": "src/"
+        },
+        "files": [
+            "src/aliases.php"
+        ]
+    },
+    "extra": {
+        "packman": {
+            "error-prefix": "tenant"
+        }
     }
 }

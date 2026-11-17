@@ -1,0 +1,73 @@
+{
+    "schema_version": 1,
+    "name": "axiomasoft/tenant-monorepo",
+    "profile": "laravel-package",
+    "php": ">=8.4 <8.6",
+    "phpstan_level": "max",
+    "provider_max_lines": 80,
+    "packages": [
+        {
+            "name": "axiomasoft/tenant",
+            "path": "packages/tenant",
+            "namespace": "Tenant\\",
+            "profile": "php-library",
+            "layer": "L1",
+            "type": "domain",
+            "owns": [
+                "Attributes",
+                "Composition",
+                "Contracts",
+                "Data",
+                "Enums",
+                "Errors",
+                "Exceptions",
+                "Extensions",
+                "Internal",
+                "Runtime"
+            ]
+        },
+        {
+            "name": "axiomasoft/tenant-laravel",
+            "path": "packages/tenant-laravel",
+            "namespace": "Tenant\\Laravel\\",
+            "profile": "laravel-package",
+            "layer": "L2",
+            "type": "addon",
+            "owns": [
+                "Codec",
+                "Configuration",
+                "Contracts",
+                "Data",
+                "Diagnostics",
+                "Http",
+                "Internal",
+                "Laravel",
+                "Queue",
+                "Registrars"
+            ]
+        },
+        {
+            "name": "axiomasoft/tenant-postgres",
+            "path": "packages/tenant-postgres",
+            "namespace": "Tenant\\Postgres\\",
+            "profile": "laravel-package",
+            "layer": "L2",
+            "type": "addon",
+            "owns": [
+                "Contracts",
+                "Data",
+                "Database",
+                "Exceptions",
+                "Internal",
+                "Registrars"
+            ]
+        }
+    ],
+    "gates": {
+        "strict_ownership": true,
+        "provider_size_limit": 80,
+        "disallow_internal_cross_imports": true,
+        "require_api_manifest": true,
+        "error_urn_prefix": "urn:packman:problem:"
+    }
+}

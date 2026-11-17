@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Packman\Schema\Laravel\PackmanMigration;
 
-return new class extends Migration {
+return new class extends PackmanMigration
+{
     public function up(): void
     {
         Schema::table('tenant_pg_resources', function (Blueprint $table): void {
@@ -16,8 +17,9 @@ return new class extends Migration {
             $table->string('route_revision', 128)->nullable();
             $table->string('recovery_generation', 128)->nullable();
         });
+
         Schema::create('tenant_pg_operations', function (Blueprint $table): void {
-            $table->uuid('id')->primary();
+            $this->uuidPrimary($table);
             $table->string('key_hash', 64)->unique();
             $table->string('intent_digest', 64);
             $table->string('key_namespace', 128);
@@ -32,11 +34,12 @@ return new class extends Migration {
             $table->string('observed_effect', 32);
         });
     }
+
     public function down(): void
     {
         Schema::dropIfExists('tenant_pg_operations');
         Schema::table('tenant_pg_resources', function (Blueprint $table): void {
-            $table->dropColumn(['resource_ref','incarnation','database_name','route_revision','recovery_generation']);
+            $table->dropColumn(['resource_ref', 'incarnation', 'database_name', 'route_revision', 'recovery_generation']);
         });
     }
 };

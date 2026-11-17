@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tenant\Postgres\Internal\Database;
 
-use Tenant\Postgres\Exceptions\TemplateIntegrityException;
-use Tenant\Postgres\Internal\DatabaseValue;
+use Packman\Attributes\Internal;
 use stdClass;
+use Tenant\Postgres\Exceptions\Provisioning\TemplateIntegrityException;
 
 use function base64_decode;
 use function hash;
@@ -16,6 +16,7 @@ use function sodium_crypto_sign_verify_detached;
 use function strtr;
 
 /** @internal */
+#[Internal]
 final readonly class TemplateManifest
 {
     /** @param array<string, mixed> $payload */
@@ -60,7 +61,7 @@ final readonly class TemplateManifest
         $signature = self::decodeBase64Url($this->signature);
         $publicKey = self::decodeBase64Url($key);
         $payload = $serializer->encode($this->payload);
-        $message = "corex-template-manifest/v1\0".$payload;
+        $message = "tenant-template-manifest/v1\0".$payload;
 
         if (! sodium_crypto_sign_verify_detached($signature, $message, $publicKey)) {
             throw new TemplateIntegrityException('The template manifest signature is invalid.');

@@ -2,7 +2,7 @@
 
 Optional `PostgresLifecycle` implements provisioning, original export/delete
 receipts, cancellation and reconciliation. `PostgresFactory::owner()` composes
-the CoreX-derived template, clone, pool, binding verifier and lifecycle mechanisms.
+the template, clone, pool, binding verifier and lifecycle mechanisms.
 The supported factory profile uses one frozen PostgreSQL management server;
 cluster selection does not authorize moving a database to a different server.
 PHP 8.4/8.5, Illuminate 12/13 and PostgreSQL 16 are qualification lanes.
@@ -79,10 +79,10 @@ or replace host admission with a resource reference. Successful claim publicatio
 marks technical availability in the same transaction as the original receipt;
 it grants no trial, grace or commercial rights.
 
-The isolated CoreX P5.4 source cohort selects this owner and retains product
-accounts plus original account-to-resource/operation references in CoreX. It
-disables the old allocator/marker/export writers and mixed physical migrations.
-Bulk pending-create/clear is explicitly unsupported. CoreX product schema DDL uses
+The host source cohort selects this owner and retains product
+accounts plus original account-to-resource/operation references in the host. It
+disables legacy allocator/marker/export writers and mixed physical migrations.
+Bulk pending-create/clear is explicitly unsupported. Host product schema DDL uses
 an independently admitted management connection through its own schema migrator;
 the ordinary runtime role remains unable to create databases or mutate markers.
 This source switch is for a fresh disposable baseline, without deployed-data

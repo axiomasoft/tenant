@@ -93,7 +93,7 @@ $keypair = sodium_crypto_sign_keypair();
 $encode = static fn (string $value): string => rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
 $proof = ['templateId' => $payload['template_id'], 'clusterId' => '13131313-1313-4313-8313-131313131313',
     'payload' => $payload, 'marker' => $marker, 'digest' => hash('sha256', $serializer->encode($payload)),
-    'signature' => $encode(sodium_crypto_sign_detached("corex-template-manifest/v1\0".$serializer->encode($payload), sodium_crypto_sign_secretkey($keypair))),
+    'signature' => $encode(sodium_crypto_sign_detached("tenant-template-manifest/v1\0".$serializer->encode($payload), sodium_crypto_sign_secretkey($keypair))),
     'publicKey' => $encode(sodium_crypto_sign_publickey($keypair))];
 file_put_contents($m['root'].'/template-proof.json', json_encode($proof, JSON_THROW_ON_ERROR));
 chmod($m['root'].'/template-proof.json', 0600);

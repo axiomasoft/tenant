@@ -25,7 +25,7 @@ $factory=new ConnectionFactory($app);$config['database']=$name;$template=$factor
 $template->statement('CREATE TABLE fixture (id integer PRIMARY KEY, note text NOT NULL)');$template->statement("INSERT INTO fixture VALUES (1,'original')");
 $serializer=new SchemaCatalogueSerializer;$hash=$serializer->hash($template);$template->disconnect();
 $id='77777777-7777-4777-8777-777777777777';$cluster='88888888-8888-4888-8888-888888888888';
-$payload=['template_id'=>$id,'template_version'=>2,'canonical_schema_sha256'=>$hash];$pair=sodium_crypto_sign_keypair();$enc=static fn(string $v):string=>rtrim(strtr(base64_encode($v),'+/','-_'),'=');$signature=sodium_crypto_sign_detached("corex-template-manifest/v1\0".$serializer->encode($payload),sodium_crypto_sign_secretkey($pair));
+$payload=['template_id'=>$id,'template_version'=>2,'canonical_schema_sha256'=>$hash];$pair=sodium_crypto_sign_keypair();$enc=static fn(string $v):string=>rtrim(strtr(base64_encode($v),'+/','-_'),'=');$signature=sodium_crypto_sign_detached("tenant-template-manifest/v1\0".$serializer->encode($payload),sodium_crypto_sign_secretkey($pair));
 $trust=new TemplateTrust([$id=>['payload'=>$payload,'signature'=>$enc($signature),'trusted_key_id'=>'lab']],['lab'=>$enc(sodium_crypto_sign_publickey($pair))]);
 $central->table('tenant_pg_templates')->insert(['id'=>$id,'version'=>2,'status'=>'ready','db_name'=>$name,'schema_hash'=>$hash]);
 $central->table('tenant_pg_clusters')->insert(['id'=>$cluster,'status'=>'active','template_version'=>2]);

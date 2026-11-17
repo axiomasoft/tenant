@@ -18,7 +18,7 @@ $public = sodium_crypto_sign_publickey($pair);
 $secret = sodium_crypto_sign_secretkey($pair);
 $payload = ['template_version' => 1, 'template_id' => 't', 'canonical_schema_sha256' => str_repeat('a', 64)];
 $encode = static fn (string $value): string => rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
-$signature = sodium_crypto_sign_detached("corex-template-manifest/v1\0".$serializer->encode($payload), $secret);
+$signature = sodium_crypto_sign_detached("tenant-template-manifest/v1\0".$serializer->encode($payload), $secret);
 $manifest = TemplateManifest::fromConfig(['payload' => $payload, 'signature' => $encode($signature), 'trusted_key_id' => 'k']);
 $manifest->assertTrusted(['k' => $encode($public)], $serializer);
 $manifest->assertMatches((object) ['id' => 't', 'version' => 1, 'schema_hash' => str_repeat('a', 64)], str_repeat('a', 64));

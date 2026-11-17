@@ -9,7 +9,7 @@ it('keeps the transaction lease until commit and releases it before afterCommit 
         $h->runtime->run($h->selection('a'),$h->purpose(),function()use($h,$mode,$marker,&$callbacks):void{
             $db=$h->db();
             $body=function()use($db,$h,$marker,&$callbacks):void{
-                try{$h->runtime->enter($h->selection('b'),$h->purpose());throw new RuntimeException('Open transaction allowed a switch');}catch(\Tenant\Exceptions\OpenResource){}
+                try{$h->runtime->enter($h->selection('b'),$h->purpose());throw new RuntimeException('Open transaction allowed a switch');}catch(\Tenant\Exceptions\Runtime\OpenResource){}
                 $db->afterCommit(function()use($h,$marker,&$callbacks):void{$h->runtime->run($h->selection('b'),$h->purpose(),function()use($h,$marker,&$callbacks):void{$h->db()->table('probes')->insert(['name'=>$marker,'value'=>'callback-b']);$callbacks++;});});
                 $db->table('probes')->insert(['name'=>$marker,'value'=>'committed-a']);
             };
@@ -23,7 +23,7 @@ it('retains the outer lease on savepoint rollback and discards rolled back callb
     $m=json_decode(file_get_contents(getenv('TENANT_LAB_MANIFEST')),true,flags:JSON_THROW_ON_ERROR);$h=new \TenantLab\LabHost($m);$callbacks=0;
     $h->runtime->run($h->selection('a'),$h->purpose(),function()use($h,&$callbacks):void{
         $db=$h->db();$db->beginTransaction();$db->beginTransaction();$db->afterCommit(function()use(&$callbacks):void{$callbacks++;});$db->rollBack();
-        try{$h->runtime->enter($h->selection('b'),$h->purpose());throw new RuntimeException('Savepoint rollback released outer lease');}catch(\Tenant\Exceptions\OpenResource){}
+        try{$h->runtime->enter($h->selection('b'),$h->purpose());throw new RuntimeException('Savepoint rollback released outer lease');}catch(\Tenant\Exceptions\Runtime\OpenResource){}
         $db->rollBack();$h->runtime->run($h->selection('b'),$h->purpose(),fn()=>null);
     });
     expect($callbacks)->toBe(0)->and($h->runtime->current()->kind)->toBe('missing');
@@ -46,7 +46,7 @@ it('releases the committed lease before callbacks on nested transaction records'
                     });
                 });
                 expect(fn () => $host->runtime->enter($host->selection('b'), $host->purpose()))
-                    ->toThrow(\Tenant\Exceptions\OpenResource::class);
+                    ->toThrow(\Tenant\Exceptions\Runtime\OpenResource::class);
             };
             if ($mode === 'manual') {
                 $connection->beginTransaction();
