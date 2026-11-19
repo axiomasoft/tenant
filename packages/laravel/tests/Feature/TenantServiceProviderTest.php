@@ -161,6 +161,7 @@ it('fails closed during normal boot on invalid central_connection or non-array r
             ->toThrow(TenantFailure::class, 'facility_configuration');
 
         foreach ([
+            ['artisan', 'package:discover', '--ansi'],
             ['artisan', 'packman:doctor', '--json'],
             ['artisan', 'packman:config:validate'],
             ['artisan', 'list'],

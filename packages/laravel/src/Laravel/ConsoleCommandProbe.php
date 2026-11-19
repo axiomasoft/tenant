@@ -15,6 +15,7 @@ final class ConsoleCommandProbe
 {
     /** @var list<string> */
     private const array DIAGNOSTIC_COMMANDS = [
+        'package:discover',
         'packman:doctor',
         'packman:config:validate',
         'list',
