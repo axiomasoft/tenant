@@ -6,10 +6,12 @@ Tenant provides one isolation runtime shared by application packages. A host sel
 
 | Package | Responsibility | Install when |
 | --- | --- | --- |
-| [`axiomasoft/tenant`](packages/tenant/README.md) | Portable identities, references, composition, runtime and errors | Every integration; PHP and Packman only |
-| [`axiomasoft/tenant-laravel`](packages/tenant-laravel/README.md) | Context for Eloquent consumers, cache/session/storage, HTTP and queues; optional guarded database switching | The host uses Laravel |
-| [`axiomasoft/tenant-postgres`](packages/tenant-postgres/README.md) | Physical PostgreSQL ownership, provisioning, binding verification and recovery | This package owns the physical resource lifecycle |
-| [`axiomasoft/tenant-panels`](packages/tenant-panels/README.md) | Optional Packman panel entry inside the same runtime | The host connects features through panels |
+| [`axiomasoft/tenant`](packages/core/README.md) | Portable identities, references, composition, runtime and errors | Every integration; PHP and Packman only |
+| [`axiomasoft/tenant-laravel`](packages/laravel/README.md) | Context for Eloquent consumers, cache/session/storage, HTTP and queues; optional guarded database switching | The host uses Laravel |
+| [`axiomasoft/tenant-postgres`](packages/postgres/README.md) | Physical PostgreSQL ownership, provisioning, binding verification and recovery | This package owns the physical resource lifecycle |
+| [`axiomasoft/tenant-panels`](packages/panels/README.md) | Optional Packman panel entry inside the same runtime | The host connects features through panels |
+
+Install `axiomasoft/tenant-postgres` when the host asks Tenant to clone PostgreSQL templates, allocate pooled databases, verify physical bindings or maintain lifecycle receipts and recovery archives. A host that owns its database connections can use `axiomasoft/tenant-laravel` with the `laravel-scoped` profile.
 
 The adapters depend on the core. They do not require each other. Panels do not require Filament, the Laravel adapter or the PostgreSQL owner. Installing the core does not install a framework or a database owner.
 

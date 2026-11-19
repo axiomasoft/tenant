@@ -3,12 +3,8 @@
 declare(strict_types=1);
 
 require __DIR__.'/../../vendor/autoload.php';
-require __DIR__.'/../../packages/tenant-postgres/src/Exceptions/TemplateIntegrityException.php';
-require __DIR__.'/../../packages/tenant-postgres/src/Internal/DatabaseValue.php';
-require __DIR__.'/../../packages/tenant-postgres/src/Internal/Database/SchemaCatalogueSerializer.php';
-require __DIR__.'/../../packages/tenant-postgres/src/Internal/Database/TemplateManifest.php';
 
-use Tenant\Postgres\Exceptions\TemplateIntegrityException;
+use Tenant\Postgres\Exceptions\Provisioning\TemplateIntegrityException;
 use Tenant\Postgres\Internal\Database\SchemaCatalogueSerializer;
 use Tenant\Postgres\Internal\Database\TemplateManifest;
 

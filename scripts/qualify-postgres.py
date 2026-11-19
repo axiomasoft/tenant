@@ -13,7 +13,7 @@ def run(lane,label,item='P4.1'):
  if folder.exists():raise RuntimeError('Existing lane evidence: inspect outcome; do not overwrite')
  folder.mkdir(parents=True);autoload=HOSTS/host/'vendor/autoload.php';assert pathlib.Path(php).is_file() and autoload.is_file()
  env={**os.environ,'P4_ITEM':item,'P41_ARTIFACT_DIR':str(folder),'P41_MANIFEST':str(folder/'lab-manifest.json'),'P41_AUTOLOAD':str(autoload),'P41_PHP':php,'P41_INSTALL_DIR':str(folder/'install-host'),'P41_LARAVEL_MAJOR':'12' if lane.endswith('l12') else '13'}
- source={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
+ source={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
  checks=[]
  stages=[('setup',['python3','-I',str(ROOT/'tests/postgres/lab/setup.py')]),('manifest-regression',[php,str(ROOT/'tests/postgres/manifest-regression.php')]),('spi-contract',[php,str(ROOT/'tests/postgres/spi-contract.php')])]+[(x,['python3','-I',str(ROOT/('tests/postgres/'+x+'.py'))]) for x in STAGES]
  if item=='P4.2':
@@ -39,7 +39,7 @@ def recovery_lane(lane,label,folder,env,checks,source):
   check={'stage':stage,'argv':args,'cwd':str(ROOT),'started':started,'durationSeconds':round(time.monotonic()-t,4),'exit':p.returncode,'status':'passed' if p.returncode==0 else 'failed','log':str(log),'sha256':sha(log)};checks.append(check)
   (folder/'progress.json').write_text(json.dumps({'lane':lane,'status':'in_progress' if not p.returncode else 'failed','checks':checks,'sourceHashes':source},indent=2)+'\n');print(lane,stage,check['status'],flush=True)
   if p.returncode:raise RuntimeError('Stage failed; inspect '+str(log))
- current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
+ current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
  assert current==source,'source changed during qualification'
  result={'lane':lane,'status':'passed','scope':'P4.1 regression plus real P4.2 lifecycle/recovery/installed IO; corpus ledger separately verified','sourceHashes':source,'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifests':[{'path':str(d/'lab-manifest.json'),'sha256':sha(d/'lab-manifest.json')} for d in [folder,recovery,installed]],'checks':checks}
  (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');return result
@@ -47,9 +47,9 @@ def recovery_lane(lane,label,folder,env,checks,source):
 def repair_install(lane,label):
  php,host=LANES[lane];folder=ART.parent/'P4.2'/'lanes'/label/lane;progress=json.loads((folder/'progress.json').read_text())
  assert progress['checks'][-1]['stage']=='installed-lifecycle' and progress['checks'][-1]['status']=='failed'
- old=progress['sourceHashes'];current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
+ old=progress['sourceHashes'];current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
  changes=[p for p in set(old)|set(current) if old.get(p)!=current.get(p)]
- assert changes==['packages/tenant-postgres/composer.json'],changes
+ assert changes==['packages/postgres/composer.json'],changes
  assert json.loads((ROOT/changes[0]).read_text())['require']['ramsey/uuid']=='^4.7'
  fresh=folder/'uuid-dependency-repair';fresh.mkdir();installed=fresh/'installed';installed.mkdir()
  env={**os.environ,'P4_ITEM':'P4.2','P41_ARTIFACT_DIR':str(installed),'P41_MANIFEST':str(installed/'lab-manifest.json'),'P41_PHP':php,'P41_LARAVEL_MAJOR':'12' if lane.endswith('l12') else '13','P41_INSTALL_DIR':str(fresh/'install-host')}
@@ -67,7 +67,7 @@ def repair_install(lane,label):
 def resume_install(lane,label):
  php,host=LANES[lane];folder=ART.parent/'P4.2'/'lanes'/label/lane;fresh=folder/'uuid-dependency-repair'
  original=json.loads((folder/'progress.json').read_text());saved=json.loads((fresh/'progress.json').read_text());checks=saved['checks'];assert checks[-1]['stage']=='repaired-installed-io' and all(c['status']=='passed' and c['exit']==0 and sha(c['log'])==c['sha256'] for c in checks)
- current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts};assert current==saved['sourceHashes']
+ current={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts};assert current==saved['sourceHashes']
  assert (ART.parent/'P4.2/enospc-state.json').is_file(),'Inspect original interrupted lab before continuing'
  # Never replay DDL into the interrupted lab; use a new uniquely created server.
  isolated=fresh/'race-after-enospc';isolated.mkdir()
@@ -76,13 +76,13 @@ def resume_install(lane,label):
   started=stamp();t=time.monotonic();p=subprocess.run(args,cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);log=isolated/(stage+'.log');log.write_bytes(p.stdout)
   c={'stage':stage,'argv':args,'cwd':str(ROOT),'started':started,'durationSeconds':round(time.monotonic()-t,4),'exit':p.returncode,'status':'passed' if p.returncode==0 else 'failed','log':str(log),'sha256':sha(log)};checks.append(c);(isolated/'progress.json').write_text(json.dumps({'checks':checks,'sourceHashes':current},indent=2)+'\n');print(lane,stage,c['status'],flush=True)
   if p.returncode:raise RuntimeError('Fresh post-ENOSPC lab failed: '+str(log))
- result={'lane':lane,'status':'passed','scope':'Manifest-only UUID dependency repaired in fresh installed archive/recovery IO and new isolated installed races after ENOSPC; interrupted original DDL never replayed','sourceHashes':current,'sourceAtOriginalRuntimeStages':original['sourceHashes'],'sourceReconciliation':{'changedPaths':['packages/tenant-postgres/composer.json'],'reason':'Required Ramsey UUID added; runtime and test bodies byte-identical','failedCheck':original['checks'][-1],'interruptedCheck':{'stage':'repaired-installed-races','status':'unavailable','reason':'ENOSPC prevented persisting stdout; original drop remains quarantined, enospc-state.json preserved'}},'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifests':[{'path':str(d/'lab-manifest.json'),'sha256':sha(d/'lab-manifest.json')} for d in [folder,folder/'recovery',folder/'installed',fresh/'installed',isolated]],'checks':checks}
+ result={'lane':lane,'status':'passed','scope':'Manifest-only UUID dependency repaired in fresh installed archive/recovery IO and new isolated installed races after ENOSPC; interrupted original DDL never replayed','sourceHashes':current,'sourceAtOriginalRuntimeStages':original['sourceHashes'],'sourceReconciliation':{'changedPaths':['packages/postgres/composer.json'],'reason':'Required Ramsey UUID added; runtime and test bodies byte-identical','failedCheck':original['checks'][-1],'interruptedCheck':{'stage':'repaired-installed-races','status':'unavailable','reason':'ENOSPC prevented persisting stdout; original drop remains quarantined, enospc-state.json preserved'}},'hostComposerLock':sha(HOSTS/host/'composer.lock'),'labManifests':[{'path':str(d/'lab-manifest.json'),'sha256':sha(d/'lab-manifest.json')} for d in [folder,folder/'recovery',folder/'installed',fresh/'installed',isolated]],'checks':checks}
  (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');return result
 
 def finalize(lane,label):
  php,host=LANES[lane];folder=ART/'lanes'/label/lane;autoload=HOSTS/host/'vendor/autoload.php';progress=json.loads((folder/'progress.json').read_text());checks=progress['checks']
  assert len(checks)==len(STAGES)+3 and all(c['status']=='passed' and c['exit']==0 and sha(c['log'])==c['sha256'] for c in checks)
- source={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/tenant-postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
+ source={str(p.relative_to(ROOT)):sha(p) for d in [ROOT/'packages/postgres',ROOT/'tests/postgres'] for p in sorted(d.rglob('*')) if p.is_file() and '__pycache__' not in p.parts}
  assert source==progress['sourceHashes'], 'source changed after tests'
  env={**os.environ,'P41_AUTOLOAD':str(autoload)}
  versions=subprocess.check_output([php,'-r',"require getenv('P41_AUTOLOAD'); echo PHP_VERSION, ' ', Illuminate\\Foundation\\Application::VERSION;"],text=True,env=env)

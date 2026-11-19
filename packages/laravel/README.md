@@ -64,4 +64,4 @@ $boundary->send(Request::capture(), $app->make(Kernel::class));
 
 Resident authentication/session state is cleared before host selection and after success or failure, including failures before frame activation. For resource-scoped sessions, place `ScopeSessionToResource` after `StartSession` and before authentication/admission.
 
-The optional [panel adapter](../tenant-panels/README.md) can admit panel entry inside this boundary with either profile. It does not replace it. See [profile guarantees and migration](../../docs/architecture/laravel-profiles.md) before changing an existing host's profile or queued references.
+The optional [panel adapter](../panels/README.md) can admit panel entry inside this boundary with either profile. It does not replace it. See [profile guarantees and migration](../../docs/architecture/laravel-profiles.md) before changing an existing host's profile or queued references.

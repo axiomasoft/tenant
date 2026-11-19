@@ -11,7 +11,7 @@ use Tenant\Postgres\Internal\{ClaimReceiptStore,ClaimResource,PostgresBindingVer
 use Tenant\Postgres\Internal\Database\{SchemaCatalogueSerializer,TemplateIntegrityLock,TemplateIntegrityVerifier};
 require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
-spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/tenant-postgres/src/','Tenant\\'=>__DIR__.'/../../packages/tenant/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
+spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/postgres/src/','Tenant\\'=>__DIR__.'/../../packages/core/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
 $run=getenv('P41_RUN_ID');$base='tenant_p41_'.$run;$name=$base.'_receipt_test';$gold=$base.'_gold5_test';$runtime=$base.'_runtime';
 if(!preg_match('/^[a-f0-9]{12}$/D',$run)||getenv('P41_DB')!==$base.'_central_test'||getenv('P41_HOST')!=='127.0.0.1'||getenv('P41_USER')!==$base.'_admin')throw new RuntimeException('Unsafe target');
 $app=new Container;$db=new Manager($app);$admin=['driver'=>'pgsql','host'=>getenv('P41_HOST'),'port'=>getenv('P41_PORT'),'database'=>getenv('P41_DB'),'username'=>getenv('P41_USER'),'password'=>getenv('P41_PASSWORD'),'charset'=>'utf8','prefix'=>'','schema'=>'public'];$db->addConnection($admin,'lab');$db->getDatabaseManager()->setDefaultConnection('lab');$app->instance('db',$db->getDatabaseManager());$central=$db->getConnection('lab');$app->instance('db.schema',$central->getSchemaBuilder());Facade::setFacadeApplication($app);
@@ -19,8 +19,8 @@ if($central->selectOne('select current_database() db')->db!==getenv('P41_DB'))th
 $factory=new ConnectionFactory($app);$resourceConfig=$admin;$resourceConfig['database']=$name;
 if (!$central->getSchemaBuilder()->hasTable('tenant_pg_operations')) {
     if($central->selectOne('SELECT datname FROM pg_database WHERE datname=?',[$name]))throw new RuntimeException('Existing target; refuse CREATE');
-    $migration=require __DIR__.'/../../packages/tenant-postgres/database/migrations/2026_10_29_000002_create_tenant_pg_operations.php';$central->transaction(fn()=>$migration->up());
-    foreach(['2026_10_29_000003_create_tenant_pg_provision_attempts.php','2026_10_29_000005_add_cancellation_intent.php'] as $file){$migration=require __DIR__.'/../../packages/tenant-postgres/database/migrations/'.$file;$central->transaction(fn()=>$migration->up());}
+    $migration=require __DIR__.'/../../packages/postgres/database/migrations/2026_10_29_000002_create_tenant_pg_operations.php';$central->transaction(fn()=>$migration->up());
+    foreach(['2026_10_29_000003_create_tenant_pg_provision_attempts.php','2026_10_29_000005_add_cancellation_intent.php'] as $file){$migration=require __DIR__.'/../../packages/postgres/database/migrations/'.$file;$central->transaction(fn()=>$migration->up());}
     $central->statement('CREATE DATABASE "'.$name.'"');$physical=$factory->make($resourceConfig,'p41-receipt');
     $physical->statement('CREATE TABLE tenant_binding (singleton boolean PRIMARY KEY CHECK(singleton), protocol text NOT NULL, owner_id text NOT NULL, resource_ref text NOT NULL, incarnation text NOT NULL, recovery_generation text NOT NULL)');
     $physical->statement("INSERT INTO tenant_binding VALUES (true,'tenant.binding/1','tenant-postgres','resource:receipt','incarnation:1','generation:1')");

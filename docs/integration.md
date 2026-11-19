@@ -67,7 +67,7 @@ Wrap the complete request lifecycle with `ContextRequestBoundary::send()`: selec
 
 Use `ScopeSessionToResource` after `StartSession` and before authentication/admission when sessions belong to tenant resources. Queue producers use `ContextDispatcher`, an explicit frozen target and the registered scalar job contract; raw application objects and live connections do not belong in the wire payload.
 
-For panels, install `tenant-panels` and implement its host scope projection. `PanelTenant::run()` activates the explicit selection, checks panel admission and runs the callback; normal runtime restoration covers denials and exceptions. `PanelTenant::admit()` integrates with an existing HTTP frame. Admission is checked on every entry and is not an authorization grant for individual record actions. See the [panel adapter examples](../packages/tenant-panels/README.md).
+For panels, install `tenant-panels` and implement its host scope projection. `PanelTenant::run()` activates the explicit selection, checks panel admission and runs the callback; normal runtime restoration covers denials and exceptions. `PanelTenant::admit()` integrates with an existing HTTP frame. Admission is checked on every entry and is not an authorization grant for individual record actions. See the [panel adapter examples](../packages/panels/README.md).
 
 ## Qualification boundaries
 

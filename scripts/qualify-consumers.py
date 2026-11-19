@@ -65,7 +65,7 @@ def inputs(checkout):
         for path in (checkout / 'packages' / base).rglob('*.php'):
             if 'vendor' not in path.parts:
                 files['corex/' + str(path.relative_to(checkout))] = sha(path)
-    for pattern in ['packages/tenant-laravel/src/**/*.php','tests/consumers/**/*.php','tests/laravel/Support/*.php','packages/tenant-laravel/tests/**/*.php']:
+    for pattern in ['packages/laravel/src/**/*.php','tests/consumers/**/*.php','tests/laravel/Support/*.php','packages/laravel/tests/**/*.php']:
         for path in ROOT.glob(pattern): files['tenant/' + str(path.relative_to(ROOT))] = sha(path)
     files['tenant/scripts/qualify-consumers.py'] = sha(__file__)
     return files
@@ -93,7 +93,7 @@ FIXTURES = {
 def installed(art,lanes):
     archive = json.loads((art/'archives.json').read_text())
     checkout=pathlib.Path(json.loads((art/'checkout-manifest.json').read_text())['checkout'])
-    roots={'tenant':ROOT/'packages/tenant','tenant-laravel':ROOT/'packages/tenant-laravel','corex':checkout/'packages/core','corex-tenant':checkout/'packages/tenant','corex-tenancy':checkout/'packages/tenancy','corex-intl':checkout/'packages/intl','flex-crm':checkout/'products/flex-crm'}
+    roots={'tenant':ROOT/'packages/core','tenant-laravel':ROOT/'packages/laravel','corex':checkout/'packages/core','corex-tenant':checkout/'packages/tenant','corex-tenancy':checkout/'packages/tenancy','corex-intl':checkout/'packages/intl','flex-crm':checkout/'products/flex-crm'}
     for key,meta in archive.items():
         source=roots[key]
         current={}
@@ -281,7 +281,7 @@ def main():
                         q=subprocess.run([LANES[lane],'-l',str(path)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT);assert q.returncode==0,q.stdout
                     testenv={**env,'TENANT_LAB_MANIFEST':str(args.run_manifest.resolve()),'TENANT_LANE_AUTOLOAD':str(host/'vendor/autoload.php'),'TENANT_USE_SOURCE':'0','TENANT_OBSERVATIONS':str(art/'final'/lane/'adapter-observations'),'APP_ENV':'testing'}
                     junit=art/'final'/lane/'adapter-junit.xml'
-                    report['commands'].append(command([LANES[lane],str(ROOT/'vendor/bin/pest'),'--configuration',str(ROOT/'packages/tenant-laravel/phpunit.xml'),'--compact','--log-junit',str(junit)],ROOT,testenv,art/'final'/lane/'adapter-regression.log'))
+                    report['commands'].append(command([LANES[lane],str(ROOT/'vendor/bin/pest'),'--configuration',str(ROOT/'packages/laravel/phpunit.xml'),'--compact','--log-junit',str(junit)],ROOT,testenv,art/'final'/lane/'adapter-regression.log'))
                     tree=ET.parse(junit);assert len(tree.findall('.//testcase'))>=32 and not tree.findall('.//skipped')
                     report.setdefault('locks',{})[lane]=sha(host/'composer.lock')
                 assert all(c['exit']==0 for c in report['commands']),report['commands']

@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9613b655af63f71b495ed81bf18c97c0",
+    "content-hash": "8435c2aa19659d7748b58b1fdc13f20c",
     "packages": [
         {
             "name": "axiomasoft/packman",
-            "version": "0.1.0",
+            "version": "0.1.1",
             "dist": {
                 "type": "path",
                 "url": "../packman/packages/core",
-                "reference": "d59304489dbd8c1c265dac688c6e03f22bf0bce6"
+                "reference": "03f3e687e4608163b53dc8a812169735f45ddf0c"
             },
             "require": {
                 "php": "^8.4",
@@ -90,11 +90,11 @@
         },
         {
             "name": "axiomasoft/packman-schema",
-            "version": "0.1.0",
+            "version": "0.1.1",
             "dist": {
                 "type": "path",
                 "url": "../packman/packages/schema",
-                "reference": "8f70671de59880cf7721b47bab1cca07552495f2"
+                "reference": "80134fd6eba0ab2ff4d9dbc29af498a563f3b0f2"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -143,7 +143,7 @@
             "version": "1.0.x-dev",
             "dist": {
                 "type": "path",
-                "url": "packages/tenant",
+                "url": "packages/core",
                 "reference": "dd82ef3802a1b944c1f250f8f248d8d786abfa27"
             },
             "require": {
@@ -191,7 +191,7 @@
             "version": "1.0.x-dev",
             "dist": {
                 "type": "path",
-                "url": "packages/tenant-laravel",
+                "url": "packages/laravel",
                 "reference": "8d219fee88a0283f9e923e29eb6832cc0c79851f"
             },
             "require": {
@@ -256,7 +256,7 @@
             "version": "1.0.x-dev",
             "dist": {
                 "type": "path",
-                "url": "packages/tenant-postgres",
+                "url": "packages/postgres",
                 "reference": "3f4462a7ded10bdb449e4a207147ccc95d94826a"
             },
             "require": {
@@ -6231,11 +6231,11 @@
     "packages-dev": [
         {
             "name": "axiomasoft/packman-devtools",
-            "version": "0.1.0",
+            "version": "0.1.1",
             "dist": {
                 "type": "path",
                 "url": "../packman/packages/devtools",
-                "reference": "02a6ce246ef81b858ae6c003c1f6d9dbbe9960b0"
+                "reference": "e733e967eccd29ce2ce030d8c85291770bc583ae"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -6288,11 +6288,11 @@
         },
         {
             "name": "axiomasoft/packman-panels",
-            "version": "0.1.0",
+            "version": "0.1.1",
             "dist": {
                 "type": "path",
                 "url": "../packman/packages/panels",
-                "reference": "638450b29a80eaa17dfd54e7627d1cf9f9fb3bf6"
+                "reference": "6ca35336cb919362098ae5b2081c975f8cec3351"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -6342,11 +6342,11 @@
         },
         {
             "name": "axiomasoft/packman-testkit",
-            "version": "0.1.0",
+            "version": "0.1.1",
             "dist": {
                 "type": "path",
                 "url": "../packman/packages/testkit",
-                "reference": "451cf33d32ca05859bc955e814c58f562de17f0a"
+                "reference": "1a8e30e1794ae2927d05bb8da6d5f69a408bc9ab"
             },
             "require": {
                 "axiomasoft/packman": "^0.1",
@@ -6402,7 +6402,7 @@
             "version": "1.0.x-dev",
             "dist": {
                 "type": "path",
-                "url": "packages/tenant-panels",
+                "url": "packages/panels",
                 "reference": "f0b15482344084a49307da23b6d7ce58c3a41009"
             },
             "require": {

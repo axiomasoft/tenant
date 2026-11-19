@@ -2,6 +2,26 @@
 
 declare(strict_types=1);
 
+// Fresh hosts mirror the kernel and its clock contract from the root lock.
+function coreRepositories(array $package, string $root): array
+{
+    $repositories = [['type' => 'package', 'package' => $package]];
+    $lock = json_decode(file_get_contents($root.'/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
+    foreach ($lock['packages'] as $dependency) {
+        $name = $dependency['name'];
+        if (in_array($name, ['axiomasoft/packman', 'psr/clock'], true)) {
+            $repositories[] = [
+                'type' => 'path',
+                'url' => $root.'/vendor/'.$name,
+                'options' => ['symlink' => false, 'versions' => [$name => $dependency['version']]],
+            ];
+        }
+    }
+    $repositories[] = ['packagist.org' => false];
+
+    return $repositories;
+}
+
 $options = getopt('', ['item:', 'lane:', 'plan-root:']);
 if (($options['item'] ?? '') === 'P2.2') {
     require __DIR__.'/qualify-runtime.php';
@@ -46,11 +66,11 @@ function command(array $args, string $cwd): void
         throw new RuntimeException('Command failed');
     }
 }
-$sourceFiles = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/packages/tenant', FilesystemIterator::SKIP_DOTS));
+$sourceFiles = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/packages/core', FilesystemIterator::SKIP_DOTS));
 $sourceHashes = [];
 foreach ($sourceFiles as $source) {
     if ($source->isFile()) {
-        $sourceHashes[substr($source->getPathname(), strlen($root.'/packages/tenant/'))] = hash_file('sha256', $source->getPathname());
+        $sourceHashes[substr($source->getPathname(), strlen($root.'/packages/core/'))] = hash_file('sha256', $source->getPathname());
     }
 }
 ksort($sourceHashes);
@@ -58,17 +78,17 @@ $sourceDigest = hash('sha256', json_encode($sourceHashes, JSON_THROW_ON_ERROR));
 $archiveName = 'tenant-core-'.$sourceDigest;
 $archive = $artifacts.'/'.$archiveName.'.zip';
 if (! is_file($archive)) {
-    command([PHP_BINARY, $composer, 'archive', '--format=zip', '--dir='.$artifacts, '--file='.$archiveName, '--no-interaction'], $root.'/packages/tenant');
+    command([PHP_BINARY, $composer, 'archive', '--format=zip', '--dir='.$artifacts, '--file='.$archiveName, '--no-interaction'], $root.'/packages/core');
 }
 file_put_contents($artifacts.'/package-manifest.json', json_encode(['archive' => $archive, 'sha256' => hash_file('sha256', $archive), 'sourceDigest' => $sourceDigest, 'sourceFiles' => $sourceHashes], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n");
 $host = $artifacts.'/host-'.$lane.'-'.bin2hex(random_bytes(6));
 if (! mkdir($host, 0775, true)) {
     throw new RuntimeException('Cannot create host');
 }
-$package = json_decode(file_get_contents($root.'/packages/tenant/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+$package = json_decode(file_get_contents($root.'/packages/core/composer.json'), true, flags: JSON_THROW_ON_ERROR);
 $package['version'] = '1.0.0';
 $package['dist'] = ['type' => 'zip', 'url' => 'file://'.$archive];
-$hostManifest = ['name' => 'qualification/empty-host', 'type' => 'project', 'repositories' => [['type' => 'package', 'package' => $package], ['packagist.org' => false]], 'require' => ['axiomasoft/tenant' => '1.0.0'], 'config' => ['secure-http' => true]];
+$hostManifest = ['name' => 'qualification/empty-host', 'type' => 'project', 'repositories' => coreRepositories($package, $root), 'require' => ['axiomasoft/tenant' => '1.0.0'], 'config' => ['secure-http' => true]];
 file_put_contents($host.'/composer.json', json_encode($hostManifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n");
 command([PHP_BINARY, $composer, 'install', '--no-dev', '--no-interaction', '--no-progress', '--no-scripts', '--no-plugins'], $host);
 copy($root.'/contracts/fixtures/index.json', $host.'/corpus.json');
@@ -90,7 +110,7 @@ foreach (['CoreInstallTest.php', 'NeutralGraphTest.php', 'ExternalPluginInstallT
 $corpus = json_decode(file_get_contents(__DIR__.'/corpus.json'), true, flags: JSON_THROW_ON_ERROR);
 $observations = [
   'INSTALL-01' => 'Archive installed with only tenant runtime dependency; public facade and configured host A executed.',
-  'REL-03' => 'Runtime manifest contains PHP and ext-intl only; payer and resource identities remain distinct; product effects are outside this install proof.',
+  'REL-03' => 'Runtime dependencies are PHP, ext-intl and Packman; payer and resource identities remain distinct; product effects are outside this install proof.',
   'EXT01-PLUGIN' => 'External facility replacement compiled with the capability dependency; selected resolver decorator delegated once.',
   'SINGLE-01' => 'Configured A entered Active(single); B and missing binding refused.',
 ];

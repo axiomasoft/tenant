@@ -3,7 +3,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
-spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/tenant-postgres/src/','Tenant\\'=>__DIR__.'/../../packages/tenant/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
+spl_autoload_register(static function(string $class):void{foreach(['Tenant\\Postgres\\'=>__DIR__.'/../../packages/postgres/src/','Tenant\\'=>__DIR__.'/../../packages/core/src/'] as $prefix=>$root)if(str_starts_with($class,$prefix)){require $root.str_replace('\\','/',substr($class,strlen($prefix))).'.php';return;}});
 use Tenant\Postgres\{ExportIntent,DeleteIntent,RecoveryIntent,OperationKey,OperationRef,ExportRef};
 $operation=new OperationRef('lab','op-1','A','i1');$export=new ExportRef('export-1',$operation);
 $a=new ExportIntent('A','i1','archive:local','retention:lab');

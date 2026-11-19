@@ -17,7 +17,7 @@ run(['/usr/bin/php8.5',str(CHECKOUT/'vendor/bin/pint'),*php],CHECKOUT,'final-pin
 corex=pathlib.Path(json.loads((PLAN/'artifacts/P5.1/consumer-manifest.json').read_text())['checkouts']['corex'])
 vaulter=pathlib.Path(json.loads((PLAN/'artifacts/P5.2/consumer-manifest.json').read_text())['sources']['vaulter']['checkout'])
 az=CHECKOUT.parent/'azguard-0.3';assert (az/'packages/core/composer.json').is_file()
-roots={'tenant':ROOT/'packages/tenant','tenant-laravel':ROOT/'packages/tenant-laravel',**{f'corex-{k}':corex/'packages'/k for k in ['core','tenant','tenancy','operations','tasks','intl']},'flex-crm':corex/'products/flex-crm',**{f'flexcrm-{k}':CHECKOUT/'packages/flexcrm'/k for k in ['auth','crm','tasks']},'vaulter-core':vaulter/'packages/core',**{f'azguard-{k}':az/'packages'/k for k in ['core','filament']}}
+roots={'tenant':ROOT/'packages/core','tenant-laravel':ROOT/'packages/laravel',**{f'corex-{k}':corex/'packages'/k for k in ['core','tenant','tenancy','operations','tasks','intl']},'flex-crm':corex/'products/flex-crm',**{f'flexcrm-{k}':CHECKOUT/'packages/flexcrm'/k for k in ['auth','crm','tasks']},'vaulter-core':vaulter/'packages/core',**{f'azguard-{k}':az/'packages'/k for k in ['core','filament']}}
 archives={};dist=CHECKOUT/'delivery/tenant-p53/artifacts';dist.mkdir(parents=True,exist_ok=True)
 for key,source in roots.items():
  target=ART/'archives'/(key+'.zip');target.parent.mkdir(exist_ok=True);files={}

@@ -14,11 +14,11 @@
         "tests/consumers",
         "tests/laravel",
         "tests/postgres",
-        "packages/tenant-laravel/tests/Boundary",
-        "packages/tenant-laravel/tests/Codec",
-        "packages/tenant-laravel/tests/Compatibility",
-        "packages/tenant-laravel/tests/Facilities",
-        "packages/tenant-laravel/tests/Http",
-        "packages/tenant-laravel/tests/Queue"
+        "packages/laravel/tests/Boundary",
+        "packages/laravel/tests/Codec",
+        "packages/laravel/tests/Compatibility",
+        "packages/laravel/tests/Facilities",
+        "packages/laravel/tests/Http",
+        "packages/laravel/tests/Queue"
     ]
 }

@@ -51,8 +51,8 @@ def command(argv, cwd, log, env=None):
 
 
 def packages(checkout):
-    return {'tenant': ROOT / 'packages/tenant', 'tenant-laravel': ROOT / 'packages/tenant-laravel',
-            'tenant-postgres': ROOT / 'packages/tenant-postgres', 'corex': checkout / 'packages/core',
+    return {'tenant': ROOT / 'packages/core', 'tenant-laravel': ROOT / 'packages/laravel',
+            'tenant-postgres': ROOT / 'packages/postgres', 'corex': checkout / 'packages/core',
             'corex-tenancy': checkout / 'packages/tenancy', 'corex-tenant': checkout / 'packages/tenant',
             'corex-intl': checkout / 'packages/intl', 'flex-crm': checkout / 'products/flex-crm'}
 
@@ -329,15 +329,15 @@ def package_checks(args, checkout, source, lab):
         commands.append(command([LANES[lane], '/usr/local/bin/composer', 'validate', '--no-check-publish'], root, generation/'package'/(lane+'-composer.log')))
     for lane in ['php84-l13', 'php85-l13']:
         env = environment(lab, lane, 'source', checkout)
-        paths = [str(p) for directory in [ROOT/'packages/tenant-postgres/src', ROOT/'packages/tenant-laravel/src', checkout/'packages/tenant/src'] for p in sorted(directory.rglob('*.php'))]
+        paths = [str(p) for directory in [ROOT/'packages/postgres/src', ROOT/'packages/laravel/src', checkout/'packages/tenant/src'] for p in sorted(directory.rglob('*.php'))]
         script = generation/'package'/(lane+'-lint.py')
         script.write_text('import subprocess\npaths='+repr(paths)+'\nfor p in paths:\n subprocess.run('+repr([LANES[lane], '-l'])+'+[p],check=True,stdout=subprocess.DEVNULL)\nprint("Linted",len(paths),"files")\n')
         commands.append(command(['python3', '-B', str(script)], ROOT, generation/'package'/(lane+'-lint.log')))
         # New public seams and the actual CoreX bridge. Preserve defensive legacy PG checks.
-        new_paths = [ROOT/'packages/tenant-postgres/src/Contracts/ResourceBindings.php', ROOT/'packages/tenant-postgres/src/Data/ResolvedBinding.php',
-                     ROOT/'packages/tenant-postgres/src/Internal/CatalogResourceBindings.php', ROOT/'packages/tenant-postgres/src/PostgresFactory.php',
-                     ROOT/'packages/tenant-postgres/src/PostgresSchema.php', ROOT/'packages/tenant-laravel/src/Internal/Facilities/SessionFacility.php',
-                     ROOT/'packages/tenant-laravel/src/Internal/Facilities/SessionGeneration.php', checkout/'packages/tenant/src']
+        new_paths = [ROOT/'packages/postgres/src/Contracts/Provisioning/ResourceBindings.php', ROOT/'packages/postgres/src/Data/Binding/ResolvedBinding.php',
+                     ROOT/'packages/postgres/src/Internal/Binding/CatalogResourceBindings.php', ROOT/'packages/postgres/src/PostgresFactory.php',
+                     ROOT/'packages/postgres/src/PostgresSchema.php', ROOT/'packages/laravel/src/Internal/Facilities/SessionFacility.php',
+                     ROOT/'packages/laravel/src/Internal/Facilities/SessionGeneration.php', checkout/'packages/tenant/src']
         commands.append(command([LANES[lane], str(ROOT/'vendor/bin/phpstan'), 'analyse', '--no-progress', '--level=5', '--autoload-file='+str(ROOT/'tests/consumers/postgres/bootstrap.php'), *map(str,new_paths)], ROOT, generation/'package'/(lane+'-phpstan.log'), env))
     for mode in ['source', 'installed']:
         env = environment(lab, 'php84-l13', mode, checkout)

@@ -15,4 +15,4 @@ The host implements `Contracts\Context\ContextResolver`, supplies immutable prof
 
 The core has no Laravel, PostgreSQL or panel dependency. Physical facilities and product adapters participate through public SPI. Contexts are explicitly missing, central or active; missing never grants central access. Durable references preserve resource incarnation and route revision.
 
-Read the [host integration guide](../../docs/integration.md) before implementing a resolver, participant or runtime decorator. The [optional panel adapter](../tenant-panels/README.md) uses this same runtime without adding UI dependencies to the core.
+Read the [host integration guide](../../docs/integration.md) before implementing a resolver, participant or runtime decorator. The [optional panel adapter](../panels/README.md) uses this same runtime without adding UI dependencies to the core.

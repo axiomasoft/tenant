@@ -13,7 +13,7 @@ def fixtureproof():
    folder=FOLDER/lane;result=json.loads((folder/'result.json').read_text());assert result['status']=='passed'
    # Every current product byte was exercised, excluding later-added audit/test scripts.
    for path,digest in result['sourceHashes'].items():
-    if path.startswith('packages/tenant-postgres/'):assert sha(ROOT/path)==digest,('source changed',path)
+    if path.startswith('packages/postgres/'):assert sha(ROOT/path)==digest,('source changed',path)
    bystage={x['stage']:x for x in result['checks']}
    for stage in stages:
     x=json.loads((folder/'pool-progress.json').read_text()) if stage=='pool-progress' else bystage[stage];log=pathlib.Path(x['log']);assert x['status']=='passed' and x['exit']==0 and sha(log)==x['sha256']
@@ -27,17 +27,17 @@ def fixtureproof():
 def reuse():
  doc=json.loads((PLAN/'artifacts/P4-detail/source-inspection.json').read_text());files={pathlib.Path(x['path']).name:x for x in doc['files']}
  targets={
- 'ClaimAccountSignup.php':['packages/tenant-postgres/src/Internal/ClaimResource.php','packages/tenant-postgres/src/Internal/ClaimReceiptStore.php'],
- 'TemplateClonePostgreSQLManager.php':['packages/tenant-postgres/src/Internal/Database/TemplateClonePostgreSQLManager.php'],
- 'TemplateManifest.php':['packages/tenant-postgres/src/Internal/Database/TemplateManifest.php'],
- 'SchemaCatalogueSerializer.php':['packages/tenant-postgres/src/Internal/Database/SchemaCatalogueSerializer.php'],
- 'TemplateIntegrityVerifier.php':['packages/tenant-postgres/src/Internal/Database/TemplateIntegrityVerifier.php'],
- 'TemplateIntegrityLock.php':['packages/tenant-postgres/src/Internal/Database/TemplateIntegrityLock.php'],
- 'PendingPool.php':['packages/tenant-postgres/src/Internal/PendingPool.php','packages/tenant-postgres/src/Internal/ClaimWithPool.php'],
- 'CreateDatabaseFromTemplate.php':['packages/tenant-postgres/src/Internal/ReplayableProvision.php','packages/tenant-postgres/src/Internal/ProvisionJournal.php'],
- 'AccountTemplateSnapshot.php':['packages/tenant-postgres/src/Internal/ResourceSnapshotReader.php'],
- 'DatabaseTenantProvisioner.php':['packages/tenant-postgres/src/Internal/ReplayableProvision.php','packages/tenant-postgres/src/Internal/ClaimWithPool.php'],
- 'CorexBindingOwner.php':['packages/tenant-postgres/src/Internal/PostgresBindingVerifier.php','packages/tenant-postgres/src/Internal/Database/MarkerWriter.php']}
+ 'ClaimAccountSignup.php':['packages/postgres/src/Internal/Claim/ClaimResource.php','packages/postgres/src/Internal/Claim/ClaimReceiptStore.php'],
+ 'TemplateClonePostgreSQLManager.php':['packages/postgres/src/Internal/Database/TemplateClonePostgreSQLManager.php'],
+ 'TemplateManifest.php':['packages/postgres/src/Internal/Database/TemplateManifest.php'],
+ 'SchemaCatalogueSerializer.php':['packages/postgres/src/Internal/Database/SchemaCatalogueSerializer.php'],
+ 'TemplateIntegrityVerifier.php':['packages/postgres/src/Internal/Database/TemplateIntegrityVerifier.php'],
+ 'TemplateIntegrityLock.php':['packages/postgres/src/Internal/Database/TemplateIntegrityLock.php'],
+ 'PendingPool.php':['packages/postgres/src/Internal/Pool/PendingPool.php','packages/postgres/src/Internal/Claim/ClaimWithPool.php'],
+ 'CreateDatabaseFromTemplate.php':['packages/postgres/src/Internal/Claim/ReplayableProvision.php','packages/postgres/src/Internal/Claim/ProvisionJournal.php'],
+ 'AccountTemplateSnapshot.php':['packages/postgres/src/Internal/Pool/ResourceSnapshotReader.php'],
+ 'DatabaseTenantProvisioner.php':['packages/postgres/src/Internal/Claim/ReplayableProvision.php','packages/postgres/src/Internal/Claim/ClaimWithPool.php'],
+ 'CorexBindingOwner.php':['packages/postgres/src/Internal/Binding/PostgresBindingVerifier.php','packages/postgres/src/Internal/Database/MarkerWriter.php']}
  sources=[]
  for name,paths in targets.items():
   # The source-inspection list has both original and P5.1 source for some names: use original unless binding helper.
@@ -77,7 +77,7 @@ def reuse():
  save(PLAN/'artifacts/reuse/P4.1.json',result);return result
 
 def ledger(proofs):
- index=json.loads((ROOT/'contracts/fixtures/index.json').read_text());schema=ROOT/'contracts/fixtures/index.schema.json';resultSchema=ROOT/'contracts/fixtures/results.schema.json';package=ROOT/'packages/tenant-postgres';fileHashes={str(p.relative_to(package)):sha(p) for p in sorted(package.rglob('*')) if p.is_file()};digest=hashlib.sha256(json.dumps(fileHashes,sort_keys=True,separators=(',',':')).encode()).hexdigest();artifact={'tenant-postgres-source':digest};rows=[]
+ index=json.loads((ROOT/'contracts/fixtures/index.json').read_text());schema=ROOT/'contracts/fixtures/index.schema.json';resultSchema=ROOT/'contracts/fixtures/results.schema.json';package=ROOT/'packages/postgres';fileHashes={str(p.relative_to(package)):sha(p) for p in sorted(package.rglob('*')) if p.is_file()};digest=hashlib.sha256(json.dumps(fileHashes,sort_keys=True,separators=(',',':')).encode()).hexdigest();artifact={'tenant-postgres-source':digest};rows=[]
  for p in index['portions']:
   if p['item']!='P4.1':continue
   fixture=p['fixtureId'];conditional=fixture=='LIFE-09';path='@plan/artifacts/P4.1/fixtures/'+fixture+'.json'

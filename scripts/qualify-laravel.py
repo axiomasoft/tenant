@@ -17,7 +17,7 @@ def now(): return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def save(path,value):
     path=pathlib.Path(path);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n')
 def source_hashes():
-    files=sorted([*ROOT.glob('packages/tenant-laravel/src/**/*.php'),*ROOT.glob('packages/tenant-laravel/config/*.php'),*ROOT.glob('packages/tenant-laravel/tests/**/*.php'),*ROOT.glob('tests/laravel/Support/*.php'),ROOT/'scripts/qualify-laravel.py',ROOT/'packages/tenant-laravel/composer.json',ROOT/'packages/tenant-laravel/phpunit.xml',ROOT/'tests/laravel/lab/setup.py',ROOT/'tests/laravel/lab/compose.yaml',ROOT/'tests/laravel/lab/telemetry-resolver.c'])
+    files=sorted([*ROOT.glob('packages/laravel/src/**/*.php'),*ROOT.glob('packages/laravel/config/*.php'),*ROOT.glob('packages/laravel/tests/**/*.php'),*ROOT.glob('tests/laravel/Support/*.php'),ROOT/'scripts/qualify-laravel.py',ROOT/'packages/laravel/composer.json',ROOT/'packages/laravel/phpunit.xml',ROOT/'tests/laravel/lab/setup.py',ROOT/'tests/laravel/lab/compose.yaml',ROOT/'tests/laravel/lab/telemetry-resolver.c'])
     return {str(p.relative_to(ROOT)):sha(p) for p in files}
 def digest(value): return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 def command(argv,log,env=None,cwd=ROOT,expect=0):
@@ -46,11 +46,12 @@ def environment(lane,manifest,install=None):
     return {'TENANT_LAB_MANIFEST':str(ART/'lab-manifest.json'),'TENANT_LANE_AUTOLOAD':str(host/'vendor/autoload.php'),'TENANT_USE_SOURCE':'0','TENANT_OBSERVATIONS':str(ART/lane/'observations'),'APP_ENV':'testing','XDEBUG_MODE':'off'}
 
 def archives():
-    inputs={str(p.relative_to(ROOT)):sha(p) for package in ['tenant','tenant-laravel'] for p in (ROOT/'packages'/package).rglob('*') if p.is_file() and ('src' in p.parts or 'config' in p.parts or p.name=='composer.json')}
+    sources={'tenant':ROOT/'packages/core','tenant-laravel':ROOT/'packages/laravel'}
+    inputs={str(p.relative_to(ROOT)):sha(p) for source in sources.values() for p in source.rglob('*') if p.is_file() and ('src' in p.parts or 'config' in p.parts or p.name=='composer.json')}
     folder=ART/'archive'/digest(inputs)[:20];folder.mkdir(parents=True,exist_ok=True)
     result={}
-    for package in ['tenant','tenant-laravel']:
-        source=ROOT/'packages'/package;out=folder/(package+'.zip')
+    for package, source in sources.items():
+        out=folder/(package+'.zip')
         with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED) as z:
             for path in sorted(source.rglob('*')):
                 if not path.is_file() or not ('src' in path.parts or 'config' in path.parts or path==source/'composer.json'):continue
@@ -77,8 +78,8 @@ def tests(stage,lanes,manifest):
     source_item='P3.1' if stage in ['facilities','integration'] else ITEM
     rows=[r for r in mapping if r['item']==source_item and r['stage']==stage]
     files=sorted({r['targetTest'].split('::')[0] for r in rows})
-    if stage=='facilities':files.extend(['packages/tenant-laravel/tests/Facilities/CacheSessionTest.php','packages/tenant-laravel/tests/Facilities/AtomicCacheAddTest.php','packages/tenant-laravel/tests/Facilities/SessionRecreationTest.php'])
-    if stage=='integration':files.append('packages/tenant-laravel/tests/Http/SessionBindingTest.php')
+    if stage=='facilities':files.extend(['packages/laravel/tests/Facilities/CacheSessionTest.php','packages/laravel/tests/Facilities/AtomicCacheAddTest.php','packages/laravel/tests/Facilities/SessionRecreationTest.php'])
+    if stage=='integration':files.append('packages/laravel/tests/Http/SessionBindingTest.php')
     assert rows and files
     results=[]
     hashes=source_hashes();archive=json.loads((ART/'archives.json').read_text())
@@ -94,7 +95,7 @@ def tests(stage,lanes,manifest):
             for variant in ['default','decorator']:
                 raw=pathlib.Path(env['TENANT_OBSERVATIONS'])/(fixture+'-'+variant+'.json')
                 if raw.exists():raw.unlink()
-        records.append(command([LANES[lane],host/'vendor/bin/pest','--configuration',ROOT/'packages/tenant-laravel/phpunit.xml','--compact','--log-junit',junit,*[ROOT/f for f in files]],ART/lane/(stage+'.log'),env))
+        records.append(command([LANES[lane],host/'vendor/bin/pest','--configuration',ROOT/'packages/laravel/phpunit.xml','--compact','--log-junit',junit,*[ROOT/f for f in files]],ART/lane/(stage+'.log'),env))
         import xml.etree.ElementTree as ET
         cases=ET.parse(junit).findall('.//testcase');assert len(cases)>=len(files) and not ET.parse(junit).findall('.//skipped')
         for fixture in {r['fixtureId'] for r in rows}:assert any(fixture in c.attrib.get('name','') for c in cases),'Fixture not discovered '+fixture
@@ -139,13 +140,13 @@ def package(lanes,manifest):
             for path,h in meta['sourceFiles'].items():assert sha(root/'vendor/axiomasoft'/pkg/path)==h
         records.append(command([php,ROOT/'tests/laravel/Support/preflight.php'],ART/lane/'fresh-runtime.log',environment(lane,manifest,root)))
         # Production package sources only, analysed against each actual locked framework.
-        records.append(command([php,host/'vendor/bin/phpstan','analyse','--configuration',ROOT/'packages/tenant-laravel/phpstan.neon','--autoload-file',host/'vendor/autoload.php','--no-progress','--error-format=table'],ART/lane/'phpstan.log',environment(lane,manifest)))
-        for source in (ROOT/'packages/tenant-laravel/src').rglob('*.php'):
+        records.append(command([php,host/'vendor/bin/phpstan','analyse','--configuration',ROOT/'packages/laravel/phpstan.neon','--autoload-file',host/'vendor/autoload.php','--no-progress','--error-format=table'],ART/lane/'phpstan.log',environment(lane,manifest)))
+        for source in (ROOT/'packages/laravel/src').rglob('*.php'):
             proc=subprocess.run([php,'-l',str(source)],capture_output=True);assert proc.returncode==0,proc.stdout.decode()
         # Strict validate has a deliberate release-only missing-license diagnostic, retained raw.
-        log=ART/lane/'strict-validate.log';v=subprocess.run([php,COMPOSER,'validate','--strict',str(ROOT/'packages/tenant-laravel/composer.json')],capture_output=True,cwd=ROOT);log.write_bytes(v.stdout+v.stderr)
+        log=ART/lane/'strict-validate.log';v=subprocess.run([php,COMPOSER,'validate','--strict',str(ROOT/'packages/laravel/composer.json')],capture_output=True,cwd=ROOT);log.write_bytes(v.stdout+v.stderr)
         assert v.returncode in [1,2] and b'license' in log.read_bytes().lower()
-        results.append({'lane':lane,'status':'passed','freshRoot':str(root),'commands':records,'graph':names,'lockHash':sha(host/'composer.lock'),'installedFiles':{str(p.relative_to(root)):sha(p) for p in (root/'vendor/axiomasoft').rglob('*') if p.is_file()},'strictValidate':{'exit':v.returncode,'log':str(log.relative_to(PLAN)),'sha256':sha(log),'classification':'E09 release-only OPEN; not a passing strict validate'},'lintFiles':len(list((ROOT/'packages/tenant-laravel/src').rglob('*.php')))})
+        results.append({'lane':lane,'status':'passed','freshRoot':str(root),'commands':records,'graph':names,'lockHash':sha(host/'composer.lock'),'installedFiles':{str(p.relative_to(root)):sha(p) for p in (root/'vendor/axiomasoft').rglob('*') if p.is_file()},'strictValidate':{'exit':v.returncode,'log':str(log.relative_to(PLAN)),'sha256':sha(log),'classification':'E09 release-only OPEN; not a passing strict validate'},'lintFiles':len(list((ROOT/'packages/laravel/src').rglob('*.php')))})
     value={'stage':'package','status':'passed','lanes':results,'archives':archive,'sources':source_hashes(),'composerHash':sha(COMPOSER),'binaryHashes':{k:sha(v) for k,v in LANES.items()}}
     save(ART/('package-manifest.json' if ITEM=='P3.1' else 'framework-manifest.json'),value);return value
 

@@ -26,13 +26,13 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->removeUnusedImports();
 
     PackmanRectorSet::configure($rectorConfig, [
-        __DIR__.'/packages/tenant-laravel/tests/Boundary',
-        __DIR__.'/packages/tenant-laravel/tests/Codec',
-        __DIR__.'/packages/tenant-laravel/tests/Compatibility',
-        __DIR__.'/packages/tenant-laravel/tests/Facilities',
-        __DIR__.'/packages/tenant-laravel/tests/Http',
-        __DIR__.'/packages/tenant-laravel/tests/Queue',
-        __DIR__.'/packages/tenant-laravel/tests/TestCase.php',
+        __DIR__.'/packages/laravel/tests/Boundary',
+        __DIR__.'/packages/laravel/tests/Codec',
+        __DIR__.'/packages/laravel/tests/Compatibility',
+        __DIR__.'/packages/laravel/tests/Facilities',
+        __DIR__.'/packages/laravel/tests/Http',
+        __DIR__.'/packages/laravel/tests/Queue',
+        __DIR__.'/packages/laravel/tests/TestCase.php',
         ReadOnlyClassRector::class,
         ReadOnlyPropertyRector::class,
         ReadOnlyAnonymousClassRector::class,

@@ -75,7 +75,7 @@ def load_evidence(plan):
    for c in d['commands']:guard(c['exit']==0,'Laravel command failed');raw(plan,c['log'],c['sha256'])
  for lane in ['php84-cli','php85-cli']:
   h=read(art/'core-plan/artifacts/P2.2'/(lane+'-host.json'))
-  for rel,expected in h['sourceFiles'].items():guard(sha(ROOT/'packages/tenant'/rel)==expected,'core source drift '+rel)
+  for rel,expected in h['sourceFiles'].items():guard(sha(ROOT/'packages/core'/rel)==expected,'core source drift '+rel)
   guard(sha(pathlib.Path(h['host'])/'observations.json')==h['hashes']['observations'],'core observations drift')
  boundary=read(art/'boundary-graph.json');guard(boundary['status']=='passed','boundary graph failure')
  trace=read(art/'flexcrm-trace-inputs.json');guard(sha(art/'flexcrm-source-trace.json')==trace['traceSha256'],'source trace drift')

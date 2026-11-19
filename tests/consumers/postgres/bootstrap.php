@@ -13,12 +13,12 @@ if (getenv('P54_TENANT_CHECKOUT') && (!str_starts_with($p54Root, '/tmp/tenant-p5
 $p54Checkout = getenv('COREX_CONSUMER_CHECKOUT');
 if (getenv('P54_SOURCE') === '1') {
     $loader = new Composer\Autoload\ClassLoader();
-    foreach (['Tenant\\Postgres\\' => $p54Root.'/packages/tenant-postgres/src', 'Tenant\\Laravel\\' => $p54Root.'/packages/tenant-laravel/src',
-        'Tenant\\' => $p54Root.'/packages/tenant/src', 'CoreX\\Tenant\\' => $p54Checkout.'/packages/tenant/src',
+    foreach (['Tenant\\Postgres\\' => $p54Root.'/packages/postgres/src', 'Tenant\\Laravel\\' => $p54Root.'/packages/laravel/src',
+        'Tenant\\' => $p54Root.'/packages/core/src', 'CoreX\\Tenant\\' => $p54Checkout.'/packages/tenant/src',
         'CoreX\\Tenancy\\' => $p54Checkout.'/packages/tenancy/src', 'CoreX\\' => $p54Checkout.'/packages/core/src'] as $prefix => $path) {
         $loader->addPsr4($prefix, $path);
     }
-    $loader->addPsr4('Tenant\\Exceptions\\', $p54Root.'/packages/tenant-postgres/src/Exceptions/Public');
+    $loader->addPsr4('Tenant\\Exceptions\\', $p54Root.'/packages/postgres/src/Exceptions/Public');
     $loader->register(true);
 }
 $loader = new Composer\Autoload\ClassLoader();

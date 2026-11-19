@@ -36,9 +36,9 @@ function runtimeCommand(array $args, string $cwd, string $log): void
     }
 }
 $hashes = [];
-foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/packages/tenant', FilesystemIterator::SKIP_DOTS)) as $f) {
+foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root.'/packages/core', FilesystemIterator::SKIP_DOTS)) as $f) {
     if ($f->isFile()) {
-        $hashes[substr($f->getPathname(), strlen($root.'/packages/tenant/'))] = hash_file('sha256', $f->getPathname());
+        $hashes[substr($f->getPathname(), strlen($root.'/packages/core/'))] = hash_file('sha256', $f->getPathname());
     }
 }
 ksort($hashes);
@@ -50,12 +50,12 @@ if (! mkdir($host, 0775, true)) {
 $archiveName = 'tenant-core-'.$digest;
 $archive = $artifacts.'/'.$archiveName.'.zip';
 if (! is_file($archive)) {
-    runtimeCommand([PHP_BINARY, $composer, 'archive', '--format=zip', '--dir='.$artifacts, '--file='.$archiveName, '--no-interaction'], $root.'/packages/tenant', $host.'/archive');
+    runtimeCommand([PHP_BINARY, $composer, 'archive', '--format=zip', '--dir='.$artifacts, '--file='.$archiveName, '--no-interaction'], $root.'/packages/core', $host.'/archive');
 }
-$package = json_decode(file_get_contents($root.'/packages/tenant/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+$package = json_decode(file_get_contents($root.'/packages/core/composer.json'), true, flags: JSON_THROW_ON_ERROR);
 $package['version'] = '1.0.0';
 $package['dist'] = ['type' => 'zip', 'url' => 'file://'.$archive];
-$manifest = ['name' => 'qualification/runtime-host', 'type' => 'project', 'repositories' => [['type' => 'package', 'package' => $package], ['packagist.org' => false]], 'require' => ['axiomasoft/tenant' => '1.0.0']];
+$manifest = ['name' => 'qualification/runtime-host', 'type' => 'project', 'repositories' => coreRepositories($package, $root), 'require' => ['axiomasoft/tenant' => '1.0.0']];
 file_put_contents($host.'/composer.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n");
 runtimeCommand([PHP_BINARY, $composer, 'install', '--no-dev', '--no-interaction', '--no-progress', '--no-scripts', '--no-plugins'], $host, $host.'/install');
 copy($root.'/contracts/fixtures/index.json', $host.'/corpus.json');

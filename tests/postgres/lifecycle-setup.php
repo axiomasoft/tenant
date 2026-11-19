@@ -1,6 +1,6 @@
 <?php
 require __DIR__.'/lifecycle-support.php';
-$packageRoot=getenv('P42_INSTALLED')?dirname((new ReflectionClass(Tenant\Postgres\PostgresFactory::class))->getFileName(),2):__DIR__.'/../../packages/tenant-postgres';
+$packageRoot=getenv('P42_INSTALLED')?dirname((new ReflectionClass(Tenant\Postgres\PostgresFactory::class))->getFileName(),2):__DIR__.'/../../packages/postgres';
 foreach (glob($packageRoot.'/database/migrations/*.php') as $path) {
     $table=match(true) {
         str_contains($path,'000001')=>'tenant_pg_resources',str_contains($path,'000002')=>'tenant_pg_operations',str_contains($path,'000003')=>'tenant_pg_provision_attempts',str_contains($path,'000006')=>'tenant_pg_control',default=>null,

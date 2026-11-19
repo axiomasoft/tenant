@@ -12,29 +12,29 @@
 >
     <testsuites>
         <testsuite name="Tenant">
-            <directory>packages/tenant/tests</directory>
+            <directory>packages/core/tests</directory>
         </testsuite>
         <testsuite name="TenantLaravel">
-            <directory>packages/tenant-laravel/tests/Unit</directory>
-            <directory>packages/tenant-laravel/tests/Feature</directory>
+            <directory>packages/laravel/tests/Unit</directory>
+            <directory>packages/laravel/tests/Feature</directory>
         </testsuite>
         <testsuite name="TenantPostgres">
-            <directory>packages/tenant-postgres/tests</directory>
+            <directory>packages/postgres/tests</directory>
         </testsuite>
         <testsuite name="Install">
             <directory>tests/install</directory>
         </testsuite>
         <testsuite name="TenantPanels">
-            <directory>packages/tenant-panels/tests</directory>
+            <directory>packages/panels/tests</directory>
         </testsuite>
     </testsuites>
 
     <source>
         <include>
-            <directory>packages/tenant/src</directory>
-            <directory>packages/tenant-laravel/src</directory>
-            <directory>packages/tenant-postgres/src</directory>
-            <directory>packages/tenant-panels/src</directory>
+            <directory>packages/core/src</directory>
+            <directory>packages/laravel/src</directory>
+            <directory>packages/postgres/src</directory>
+            <directory>packages/panels/src</directory>
         </include>
     </source>
 

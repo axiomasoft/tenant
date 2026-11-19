@@ -73,7 +73,7 @@ def inputs(checkout):
                 files["vaulter/"+str(f.relative_to(checkout))] = sha(f)
     for name in ["README.md","composer.json","composer.lock"]:
         files["vaulter/"+name]=sha(checkout/name)
-    for base in ["packages/tenant","packages/tenant-laravel","tests/consumers/vaulter"]:
+    for base in ["packages/core","packages/laravel","tests/consumers/vaulter"]:
         for f in sorted((ROOT/base).rglob("*")):
             if f.is_file() and not any(x in f.relative_to(ROOT).parts for x in ["vendor","node_modules","__pycache__",".phpunit.cache"]):
                 files["tenant/"+str(f.relative_to(ROOT))]=sha(f)
@@ -88,7 +88,7 @@ def installed(checkout, lanes):
     for key,meta in archives.items():
         assert sha(meta["path"])==meta["sha256"],("archive",key)
         source=pathlib.Path(meta["source"])
-        assert source==({"tenant":ROOT/"packages/tenant","tenant-laravel":ROOT/"packages/tenant-laravel"}.get(key)
+        assert source==({"tenant":ROOT/"packages/core","tenant-laravel":ROOT/"packages/laravel"}.get(key)
                         or checkout/"packages"/key.removeprefix("vaulter-"))
         current={}
         for f in sorted(source.rglob("*")):
@@ -160,7 +160,7 @@ def consumer(checkout,manifest,manifest_path,lanes,source):
         suites=ET.parse(junit).getroot();cases=suites.findall(".//testcase")
         assert len(cases)==35 and not suites.findall(".//skipped") and not suites.findall(".//failure") and not suites.findall(".//error")
         transaction_junit=generation/lane/"transaction-junit.xml"
-        transaction=command(["/usr/bin/php8.4",str(dev/"vendor/bin/pest"),"--configuration",str(ROOT/"packages/tenant-laravel/phpunit.xml"),"--log-junit",str(transaction_junit),str(ROOT/"packages/tenant-laravel/tests/Facilities/TransactionCallbackTest.php")],ROOT,env,generation/lane/"transaction.log")
+        transaction=command(["/usr/bin/php8.4",str(dev/"vendor/bin/pest"),"--configuration",str(ROOT/"packages/laravel/phpunit.xml"),"--log-junit",str(transaction_junit),str(ROOT/"packages/laravel/tests/Facilities/TransactionCallbackTest.php")],ROOT,env,generation/lane/"transaction.log")
         commands.append(transaction);result["commands"].append(transaction)
         assert transaction["exit"]==0,transaction
         txroot=ET.parse(transaction_junit).getroot()

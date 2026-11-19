@@ -14,7 +14,7 @@ use Tenant\Postgres\Internal\Database\TemplateIntegrityVerifier;
 
 require_once __DIR__.'/public-errors-autoload.php';
 require getenv('P41_AUTOLOAD');
-spl_autoload_register(static function(string $class): void { $prefix='Tenant\\Postgres\\'; if(str_starts_with($class,$prefix))require __DIR__.'/../../packages/tenant-postgres/src/'.str_replace('\\','/',substr($class,strlen($prefix))).'.php'; });
+spl_autoload_register(static function(string $class): void { $prefix='Tenant\\Postgres\\'; if(str_starts_with($class,$prefix))require __DIR__.'/../../packages/postgres/src/'.str_replace('\\','/',substr($class,strlen($prefix))).'.php'; });
 $run=getenv('P41_RUN_ID');$name='tenant_p41_'.$run.'_template_test';
 if (!preg_match('/^[a-f0-9]{12}$/D',$run) || getenv('P41_DB')!=='tenant_p41_'.$run.'_central_test' || getenv('P41_HOST')!=='127.0.0.1' || getenv('P41_USER')!=='tenant_p41_'.$run.'_admin') throw new RuntimeException('Unsafe lab target');
 $app=new Container;$db=new Manager($app);$config=['driver'=>'pgsql','host'=>getenv('P41_HOST'),'port'=>getenv('P41_PORT'),'database'=>getenv('P41_DB'),'username'=>getenv('P41_USER'),'password'=>getenv('P41_PASSWORD'),'charset'=>'utf8','prefix'=>'','schema'=>'public'];$db->addConnection($config,'lab');$central=$db->getConnection('lab');

@@ -68,7 +68,7 @@ def apply(source, target, inventory, union, foreign):
 roots={'tenant':ROOT,'corex':COREX}
 candidates={}; baselines={}; copies={}; baseline_roots={}; foreign={}
 for label, root in roots.items():
-    own = (lambda p:p.startswith(('packages/tenant-postgres/','tests/consumers/postgres/')) or p in ['scripts/qualify-corex-postgres.py','tests/postgres/consumer-fixtures.php']) if label=='tenant' else (lambda p:p.startswith('packages/'))
+    own = (lambda p:p.startswith(('packages/postgres/','tests/consumers/postgres/')) or p in ['scripts/qualify-corex-postgres.py','tests/postgres/consumer-fixtures.php']) if label=='tenant' else (lambda p:p.startswith('packages/'))
     candidates[label]=current(root,own)
     baseline_roots[label]=work/'baseline'/label
     base=reverse_tenant if label=='tenant' else checkout_info['baseline']

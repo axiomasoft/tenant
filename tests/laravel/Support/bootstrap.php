@@ -9,8 +9,8 @@ define('TENANT_LANE_AUTOLOAD', getenv('TENANT_LANE_AUTOLOAD'));
 require TENANT_LANE_AUTOLOAD;
 $loader=new Composer\Autoload\ClassLoader();
 if (getenv('TENANT_USE_SOURCE') === '1') {
-    $loader->addPsr4('Tenant\\Laravel\\',TENANT_SOURCE_ROOT.'/packages/tenant-laravel/src');
-    $loader->addPsr4('Tenant\\',TENANT_SOURCE_ROOT.'/packages/tenant/src');
+    $loader->addPsr4('Tenant\\Laravel\\',TENANT_SOURCE_ROOT.'/packages/laravel/src');
+    $loader->addPsr4('Tenant\\',TENANT_SOURCE_ROOT.'/packages/core/src');
 }
 $loader->addPsr4('TenantLab\\',__DIR__);
 $loader->register(true);

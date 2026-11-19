@@ -13,7 +13,7 @@ require getenv('P41_AUTOLOAD');
 spl_autoload_register(static function (string $class): void {
     $prefix = 'Tenant\\Postgres\\';
     if (str_starts_with($class, $prefix)) {
-        require __DIR__.'/../../packages/tenant-postgres/src/'.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
+        require __DIR__.'/../../packages/postgres/src/'.str_replace('\\', '/', substr($class, strlen($prefix))).'.php';
     }
 });
 $run = getenv('P41_RUN_ID');

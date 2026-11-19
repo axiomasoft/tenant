@@ -12,7 +12,7 @@ $app=new Container; $db=new Manager($app);
 $db->addConnection(['driver'=>'pgsql','host'=>getenv('P41_HOST'),'port'=>getenv('P41_PORT'),'database'=>getenv('P41_DB'),'username'=>getenv('P41_USER'),'password'=>getenv('P41_PASSWORD'),'charset'=>'utf8','prefix'=>'','schema'=>'public'],'lab');
 $db->getDatabaseManager()->setDefaultConnection('lab'); $app->instance('db',$db->getDatabaseManager()); Facade::setFacadeApplication($app);
 $c=$db->getConnection('lab');$app->instance('db.schema',$c->getSchemaBuilder());if($c->selectOne('select current_database() as db')->db!==getenv('P41_DB'))throw new RuntimeException('Wrong setup database');
-$migration=require __DIR__.'/../../packages/tenant-postgres/database/migrations/2026_10_29_000001_create_tenant_pg_catalog.php'; $migration->up();
+$migration=require __DIR__.'/../../packages/postgres/database/migrations/2026_10_29_000001_create_tenant_pg_catalog.php'; $migration->up();
 $c->table('tenant_pg_clusters')->insert(['id'=>'11111111-1111-4111-8111-111111111111','status'=>'active','template_version'=>1]);
 $c->table('tenant_pg_templates')->insert(['id'=>'22222222-2222-4222-8222-222222222222','status'=>'ready','version'=>1,'db_name'=>'fixture_test']);
 foreach (['33333333-3333-4333-8333-333333333333','44444444-4444-4444-8444-444444444444'] as $id) $c->table('tenant_pg_resources')->insert(['id'=>$id,'cluster_id'=>'11111111-1111-4111-8111-111111111111','template_version'=>1,'status'=>'pending']);

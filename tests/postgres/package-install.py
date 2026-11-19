@@ -5,14 +5,15 @@ root=pathlib.Path(__file__).resolve().parents[2];folder=pathlib.Path(os.environ[
 if folder.exists():raise SystemExit('Existing host; refuse overwrite')
 folder.mkdir(parents=True)
 repos=[]
-for name in ['tenant','tenant-postgres']:
- repos.append({'type':'path','url':str(root/'packages'/name),'options':{'symlink':False,'versions':{'axiomasoft/'+name:'1.0.0'}}})
+sources={'tenant': root/'packages/core', 'tenant-postgres': root/'packages/postgres'}
+for name, source in sources.items():
+ repos.append({'type':'path','url':str(source),'options':{'symlink':False,'versions':{'axiomasoft/'+name:'1.0.0'}}})
 config={'name':'tenant/pg-qualification-host','type':'project','repositories':repos,'require':{'php':'>=8.4 <8.6','axiomasoft/tenant-postgres':'1.0.0','illuminate/database':'^'+major+'.0'},'config':{'allow-plugins':False,'sort-packages':True}}
 (folder/'composer.json').write_text(json.dumps(config,indent=2)+'\n')
 p=subprocess.run([php,'/usr/local/bin/composer','update','--no-dev','--no-interaction','--prefer-dist'],cwd=folder,stdout=subprocess.PIPE,stderr=subprocess.STDOUT);(folder.parent/'composer-install.log').write_bytes(p.stdout)
 if p.returncode:sys.stdout.buffer.write(p.stdout);raise SystemExit(p.returncode)
-for package in ['tenant','tenant-postgres']:
- source=root/'packages'/package;installed=folder/'vendor/axiomasoft'/package
+for package, source in sources.items():
+ installed=folder/'vendor/axiomasoft'/package
  for path in source.rglob('*'):
   if path.is_file():
    target=installed/path.relative_to(source)

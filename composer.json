@@ -22,14 +22,14 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "axiomasoft/packman": "0.1.0",
-                    "axiomasoft/packman-schema": "0.1.0",
-                    "axiomasoft/packman-plugins": "0.1.0",
-                    "axiomasoft/packman-modules": "0.1.0",
-                    "axiomasoft/packman-panels": "0.1.0",
-                    "axiomasoft/packman-filament": "0.1.0",
-                    "axiomasoft/packman-testkit": "0.1.0",
-                    "axiomasoft/packman-devtools": "0.1.0"
+                    "axiomasoft/packman": "0.1.1",
+                    "axiomasoft/packman-schema": "0.1.1",
+                    "axiomasoft/packman-plugins": "0.1.1",
+                    "axiomasoft/packman-modules": "0.1.1",
+                    "axiomasoft/packman-panels": "0.1.1",
+                    "axiomasoft/packman-filament": "0.1.1",
+                    "axiomasoft/packman-testkit": "0.1.1",
+                    "axiomasoft/packman-devtools": "0.1.1"
                 }
             }
         }
@@ -62,11 +62,11 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tenant\\Core\\Tests\\": "packages/tenant/tests/",
-            "Tenant\\Laravel\\Tests\\": "packages/tenant-laravel/tests/",
-            "Tenant\\Postgres\\Tests\\": "packages/tenant-postgres/tests/",
-            "Tenant\\Panels\\Tests\\": "packages/tenant-panels/tests/",
-            "TenantTests\\": "packages/tenant/tests/Support/"
+            "Tenant\\Core\\Tests\\": "packages/core/tests/",
+            "Tenant\\Laravel\\Tests\\": "packages/laravel/tests/",
+            "Tenant\\Postgres\\Tests\\": "packages/postgres/tests/",
+            "Tenant\\Panels\\Tests\\": "packages/panels/tests/",
+            "TenantTests\\": "packages/core/tests/Support/"
         }
     },
     "minimum-stability": "dev",

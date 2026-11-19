@@ -8,7 +8,7 @@
     "packages": [
         {
             "name": "axiomasoft/tenant",
-            "path": "packages/tenant",
+            "path": "packages/core",
             "namespace": "Tenant\\",
             "profile": "php-library",
             "layer": "L1",
@@ -28,7 +28,7 @@
         },
         {
             "name": "axiomasoft/tenant-laravel",
-            "path": "packages/tenant-laravel",
+            "path": "packages/laravel",
             "namespace": "Tenant\\Laravel\\",
             "profile": "laravel-package",
             "layer": "L2",
@@ -48,7 +48,7 @@
         },
         {
             "name": "axiomasoft/tenant-postgres",
-            "path": "packages/tenant-postgres",
+            "path": "packages/postgres",
             "namespace": "Tenant\\Postgres\\",
             "profile": "laravel-package",
             "layer": "L2",
@@ -64,7 +64,7 @@
         },
         {
             "name": "axiomasoft/tenant-panels",
-            "path": "packages/tenant-panels",
+            "path": "packages/panels",
             "namespace": "Tenant\\Panels\\",
             "profile": "laravel-package",
             "layer": "L2",
