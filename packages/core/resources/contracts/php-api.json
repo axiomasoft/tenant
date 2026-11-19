@@ -1425,7 +1425,28 @@
                     "doc": []
                 }
             },
-            "properties": {},
+            "properties": {
+                "context": {
+                    "flags": 1,
+                    "type": "?Tenant\\Data\\Context\\IsolationContext",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "kind": {
+                    "flags": 1,
+                    "type": "string",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                }
+            },
             "constants": [],
             "enum_backing": null,
             "enum_cases": []
@@ -2055,9 +2076,49 @@
                 }
             },
             "properties": {
+                "expectedBinding": {
+                    "flags": 1,
+                    "type": "?Tenant\\Data\\Verification\\BindingExpectation",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "expectedProfile": {
+                    "flags": 1,
+                    "type": "Tenant\\Data\\Context\\ProfileRef",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
                 "extensions": {
                     "flags": 1,
                     "type": "array",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "identity": {
+                    "flags": 1,
+                    "type": "?Tenant\\Data\\Context\\IsolationIdentity",
+                    "readonly": true,
+                    "visibility": "public",
+                    "static": false,
+                    "default": null,
+                    "doc": [],
+                    "hooks": []
+                },
+                "mode": {
+                    "flags": 1,
+                    "type": "string",
                     "readonly": true,
                     "visibility": "public",
                     "static": false,
