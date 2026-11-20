@@ -51,7 +51,7 @@ function bootQueueControlApplication(array $centralCacheStores): Application
 
 function queueControlRepository(ControlQueueManager $manager): CacheRepository
 {
-    $store = (new ReflectionProperty($manager, 'control'))->getValue($manager);
+    $store = new ReflectionProperty($manager, 'control')->getValue($manager);
     expect($store)->toBeInstanceOf(CacheRepository::class);
 
     return $store;
@@ -59,7 +59,7 @@ function queueControlRepository(ControlQueueManager $manager): CacheRepository
 
 function workerCacheRepository(Worker $worker): CacheRepository
 {
-    $store = (new ReflectionProperty($worker, 'cache'))->getValue($worker);
+    $store = new ReflectionProperty($worker, 'cache')->getValue($worker);
     expect($store)->toBeInstanceOf(CacheRepository::class);
 
     return $store;

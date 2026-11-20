@@ -24,7 +24,7 @@ it('accepts a nested file and refuses the root again after that path becomes a s
         expect(rename($root, $moved))->toBeTrue()
             ->and(symlink($moved, $root))->toBeTrue();
 
-        expect(fn () => $filesystem->get('nested/file.txt'))
+        expect(fn (): ?string => $filesystem->get('nested/file.txt'))
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.');
     } finally {
         guardedFilesystemRemove($base);
@@ -40,11 +40,11 @@ it('rejects a symlinked root and a symlinked ancestor', function (): void {
 
         expect(fn () => GuardedFilesystem::assertRoot($base.'/root-link'))
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.')
-            ->and(fn () => $root->files())
+            ->and(fn (): array => $root->files())
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.')
-            ->and(fn () => $root->delete([]))
+            ->and(fn (): bool => $root->delete([]))
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.')
-            ->and(fn () => $root->exists('nested/file.txt'))
+            ->and(fn (): bool => $root->exists('nested/file.txt'))
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.');
 
         expect(symlink($base.'/real', $base.'/ancestor'))->toBeTrue();
@@ -52,7 +52,7 @@ it('rejects a symlinked root and a symlinked ancestor', function (): void {
 
         expect(fn () => GuardedFilesystem::assertRoot($base.'/ancestor/storage'))
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.')
-            ->and(fn () => $ancestor->exists('nested/file.txt'))
+            ->and(fn (): bool => $ancestor->exists('nested/file.txt'))
             ->toThrow(RuntimeException::class, 'Storage roots must not contain symbolic links.');
     } finally {
         guardedFilesystemRemove($base);
@@ -71,7 +71,7 @@ it('rejects a symlink in a relative path without reading outside the root', func
 
         expect($filesystem->put('nested/file.txt', 'ok'))->toBeTrue()
             ->and($filesystem->get('nested/file.txt'))->toBe('ok')
-            ->and(fn () => $filesystem->get('alias/secret.txt'))
+            ->and(fn (): ?string => $filesystem->get('alias/secret.txt'))
             ->toThrow(RuntimeException::class, 'Storage paths must not contain symbolic links.')
             ->and(is_file($base.'/outside/secret.txt'))->toBeTrue();
     } finally {
