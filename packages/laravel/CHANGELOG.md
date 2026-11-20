@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Declared the MIT license in package metadata.
+- Wire queue pause and restart to the single configured central cache store. Any other list length fails closed before a store is resolved.
+- Reuse the session handler captured during prepare when the driver, store, prefix, and session root are unchanged, and chmod the session directory only when its mode is not already 0700.
+- Walk each local storage root once per operation. A symlink in the root, an ancestor, or a relative segment is still refused.
 - Refuse `connect_via_database`, `connect_via_port`, `search_path`, `schema`, and `server_options` on the guarded PostgreSQL connection, and require the facet route to name host, database, username, and password instead of inheriting the central login.
 - Keep a database transaction lease until the PDO transaction is actually gone, including when begin or rollback throws after the transaction level changes.
 - Delete an expired file session when the guarded handler destroys it.

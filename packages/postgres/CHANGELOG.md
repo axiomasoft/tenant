@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Pin `search_path` to `public` and read `public.tenant_binding` during binding verification, recovery completion, and marker updates.
+- Release one `database_count` slot in the same transaction as a verified DROP publication, including a cancelled receipt that still observed the drop. A missing cluster or a count of zero rolls that publication back.
 - Report a failed archive self-check as `ArchiveUnverified` so lifecycle callers receive `tenant.archive_unverified` instead of `tenant.operation_unknown`.
 - Quote allowlisted PostgreSQL identifiers at clone, marker, and `DROP DATABASE` call sites, and reject every other physical name before DDL.
 - Require an absolute `pg_dump` path and pass the child process only the archive route plus `PATH`.

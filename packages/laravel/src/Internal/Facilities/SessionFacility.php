@@ -75,7 +75,10 @@ final readonly class SessionFacility implements Facility
                 if (! is_writable($facet->sessionRoot)) {
                     throw new RuntimeException('session directory not writable');
                 }
-                chmod($facet->sessionRoot, 0700);
+                $mode = fileperms($facet->sessionRoot);
+                if (! is_int($mode) || ($mode & 0777) !== 0700) {
+                    chmod($facet->sessionRoot, 0700);
+                }
                 $this->config->set('session.files', $facet->sessionRoot);
             } elseif ($this->config->get('session.driver') === 'redis') {
                 $name = $this->config->text('session.store');
@@ -91,7 +94,41 @@ final readonly class SessionFacility implements Facility
                 $store->setExists(false);
             }
         }
-        $this->swap();
+        $this->swap($this->reusableHandlers($state));
+    }
+
+    /**
+     * Handlers captured in prepare() stay valid when the driver, store, prefix, and session root are unchanged.
+     *
+     * @return array<string, SessionHandlerInterface>
+     */
+    private function reusableHandlers(FrameState $state): array
+    {
+        $captured = $state->get('config');
+        if (! is_array($captured)) {
+            return [];
+        }
+
+        foreach (['driver', 'store', 'prefix', 'files'] as $key) {
+            if (($captured[$key] ?? null) !== $this->config->get('session.'.$key)) {
+                return [];
+            }
+        }
+
+        $handlers = $state->get('handlers') ?? [];
+        if (! is_array($handlers)) {
+            return [];
+        }
+
+        $reusable = [];
+        foreach ($handlers as $key => $handler) {
+            if (! is_string($key) || ! $handler instanceof SessionHandlerInterface) {
+                return [];
+            }
+            $reusable[$key] = $handler;
+        }
+
+        return $reusable;
     }
 
     /** @param array<string, SessionHandlerInterface> $handlers */

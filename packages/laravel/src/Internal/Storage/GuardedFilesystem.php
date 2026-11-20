@@ -37,14 +37,14 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'exists', arguments: $arguments, operation: fn () => $this->filesystem->exists(...$arguments));
+        return $this->call(method: 'exists', arguments: $arguments, operation: fn () => $this->filesystem->exists(...$arguments), rootWalked: true);
     }
 
     public function get(string $path): ?string
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'get', arguments: $arguments, operation: fn () => $this->filesystem->get(...$arguments));
+        return $this->call(method: 'get', arguments: $arguments, operation: fn () => $this->filesystem->get(...$arguments), rootWalked: true);
     }
 
     public function readStream(string $path): TrackedLocalStream
@@ -64,7 +64,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
                 $release();
                 throw $failure;
             }
-        });
+        }, rootWalked: true);
     }
 
     /** @param array<mixed>|string $options */
@@ -75,7 +75,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
         }
         $arguments = [$this->safePath($path), $contents, $options];
 
-        return $this->call(method: 'put', arguments: $arguments, operation: fn () => $this->filesystem->put(...$arguments));
+        return $this->call(method: 'put', arguments: $arguments, operation: fn () => $this->filesystem->put(...$arguments), rootWalked: true);
     }
 
     /** @param array<mixed>|string $options */
@@ -90,7 +90,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
         }
         $arguments = [$this->safePath($path), $file, $options];
 
-        return $this->call(method: 'putFile', arguments: $arguments, operation: fn () => $this->filesystem->putFile(...$arguments));
+        return $this->call(method: 'putFile', arguments: $arguments, operation: fn () => $this->filesystem->putFile(...$arguments), rootWalked: true);
     }
 
     /** @param array<mixed>|string $options */
@@ -103,9 +103,9 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
         if (! is_string($file) && ! $file instanceof File && ! $file instanceof UploadedFile && $file !== null && ! is_array($file)) {
             throw new StorageOperationFailed('Invalid upload');
         }
-        $arguments = [$this->safePath($path), $file, $this->safePath($name), $options];
+        $arguments = [$this->safePath($path), $file, $this->safePath($name, rootWalked: true), $options];
 
-        return $this->call(method: 'putFileAs', arguments: $arguments, operation: fn () => $this->filesystem->putFileAs(...$arguments));
+        return $this->call(method: 'putFileAs', arguments: $arguments, operation: fn () => $this->filesystem->putFileAs(...$arguments), rootWalked: true);
     }
 
     /** @param array<mixed> $options */
@@ -116,71 +116,81 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
         }
         $arguments = [$this->safePath($path), $resource, $options];
 
-        return $this->call(method: 'writeStream', arguments: $arguments, operation: fn () => $this->filesystem->writeStream(...$arguments));
+        return $this->call(method: 'writeStream', arguments: $arguments, operation: fn () => $this->filesystem->writeStream(...$arguments), rootWalked: true);
     }
 
     public function getVisibility(string $path): string
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'getVisibility', arguments: $arguments, operation: fn () => $this->filesystem->getVisibility(...$arguments));
+        return $this->call(method: 'getVisibility', arguments: $arguments, operation: fn () => $this->filesystem->getVisibility(...$arguments), rootWalked: true);
     }
 
     public function setVisibility(string $path, string $visibility): bool
     {
         $arguments = [$this->safePath($path), $visibility];
 
-        return $this->call(method: 'setVisibility', arguments: $arguments, operation: fn () => $this->filesystem->setVisibility(...$arguments));
+        return $this->call(method: 'setVisibility', arguments: $arguments, operation: fn () => $this->filesystem->setVisibility(...$arguments), rootWalked: true);
     }
 
     public function prepend(string $path, string $data): bool
     {
         $arguments = [$this->safePath($path), $data];
 
-        return $this->call(method: 'prepend', arguments: $arguments, operation: fn () => $this->filesystem->prepend(...$arguments));
+        return $this->call(method: 'prepend', arguments: $arguments, operation: fn () => $this->filesystem->prepend(...$arguments), rootWalked: true);
     }
 
     public function append(string $path, string $data): bool
     {
         $arguments = [$this->safePath($path), $data];
 
-        return $this->call(method: 'append', arguments: $arguments, operation: fn () => $this->filesystem->append(...$arguments));
+        return $this->call(method: 'append', arguments: $arguments, operation: fn () => $this->filesystem->append(...$arguments), rootWalked: true);
     }
 
     /** @param string|array<mixed> $paths */
     public function delete(string|array $paths): bool
     {
-        $arguments = [is_array($paths) ? array_map($this->safePath(...), $paths) : $this->safePath($paths)];
+        if (is_array($paths)) {
+            $safe = [];
+            foreach ($paths as $path) {
+                $safe[] = $this->safePath($path, rootWalked: $safe !== []);
+            }
+            $arguments = [$safe];
+            $rootWalked = $safe !== [];
+        } else {
+            $arguments = [$this->safePath($paths)];
+            $rootWalked = true;
+        }
 
-        return $this->call(method: 'delete', arguments: $arguments, operation: fn () => $this->filesystem->delete(...$arguments));
+        return $this->call(method: 'delete', arguments: $arguments, operation: fn () => $this->filesystem->delete(...$arguments), rootWalked: $rootWalked);
     }
 
     public function copy(string $from, string $to): bool
     {
-        $arguments = [$this->safePath($from), $this->safePath($to)];
+        $arguments = [$this->safePath($from), $this->safePath($to, rootWalked: true)];
 
-        return $this->call(method: 'copy', arguments: $arguments, operation: fn () => $this->filesystem->copy(...$arguments));
+        return $this->call(method: 'copy', arguments: $arguments, operation: fn () => $this->filesystem->copy(...$arguments), rootWalked: true);
     }
 
     public function move(string $from, string $to): bool
     {
-        $arguments = [$this->safePath($from), $this->safePath($to)];
+        $arguments = [$this->safePath($from), $this->safePath($to, rootWalked: true)];
 
-        return $this->call(method: 'move', arguments: $arguments, operation: fn () => $this->filesystem->move(...$arguments));
+        return $this->call(method: 'move', arguments: $arguments, operation: fn () => $this->filesystem->move(...$arguments), rootWalked: true);
     }
 
     public function size(string $path): int
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'size', arguments: $arguments, operation: fn () => $this->filesystem->size(...$arguments));
+        return $this->call(method: 'size', arguments: $arguments, operation: fn () => $this->filesystem->size(...$arguments), rootWalked: true);
     }
 
     public function lastModified(string $path): int
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'lastModified', arguments: $arguments, operation: fn () => $this->filesystem->lastModified(...$arguments));
+        return $this->call(method: 'lastModified', arguments: $arguments, operation: fn () => $this->filesystem->lastModified(...$arguments), rootWalked: true);
     }
 
     /** @return array<string> */
@@ -188,7 +198,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
     {
         $arguments = [$directory === null ? null : $this->safePath($directory), $recursive];
 
-        return $this->call(method: 'files', arguments: $arguments, operation: fn () => $this->filesystem->files(...$arguments));
+        return $this->call(method: 'files', arguments: $arguments, operation: fn () => $this->filesystem->files(...$arguments), rootWalked: $directory !== null);
     }
 
     /** @return array<string> */
@@ -196,7 +206,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
     {
         $arguments = [$directory === null ? null : $this->safePath($directory)];
 
-        return $this->call(method: 'allFiles', arguments: $arguments, operation: fn () => $this->filesystem->allFiles(...$arguments));
+        return $this->call(method: 'allFiles', arguments: $arguments, operation: fn () => $this->filesystem->allFiles(...$arguments), rootWalked: $directory !== null);
     }
 
     /** @return array<string> */
@@ -204,7 +214,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
     {
         $arguments = [$directory === null ? null : $this->safePath($directory), $recursive];
 
-        return $this->call(method: 'directories', arguments: $arguments, operation: fn () => $this->filesystem->directories(...$arguments));
+        return $this->call(method: 'directories', arguments: $arguments, operation: fn () => $this->filesystem->directories(...$arguments), rootWalked: $directory !== null);
     }
 
     /** @return array<string> */
@@ -212,21 +222,21 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
     {
         $arguments = [$directory === null ? null : $this->safePath($directory)];
 
-        return $this->call(method: 'allDirectories', arguments: $arguments, operation: fn () => $this->filesystem->allDirectories(...$arguments));
+        return $this->call(method: 'allDirectories', arguments: $arguments, operation: fn () => $this->filesystem->allDirectories(...$arguments), rootWalked: $directory !== null);
     }
 
     public function makeDirectory(string $path): bool
     {
         $arguments = [$this->safePath($path)];
 
-        return $this->call(method: 'makeDirectory', arguments: $arguments, operation: fn () => $this->filesystem->makeDirectory(...$arguments));
+        return $this->call(method: 'makeDirectory', arguments: $arguments, operation: fn () => $this->filesystem->makeDirectory(...$arguments), rootWalked: true);
     }
 
     public function deleteDirectory(string $directory): bool
     {
         $arguments = [$this->safePath($directory)];
 
-        return $this->call(method: 'deleteDirectory', arguments: $arguments, operation: fn () => $this->filesystem->deleteDirectory(...$arguments));
+        return $this->call(method: 'deleteDirectory', arguments: $arguments, operation: fn () => $this->filesystem->deleteDirectory(...$arguments), rootWalked: true);
     }
 
     public function url(string $path): string
@@ -244,10 +254,11 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
      * @param  Closure(): T  $operation
      * @return T
      */
-    private function call(string $method, array $arguments, Closure $operation): mixed
+    private function call(string $method, array $arguments, Closure $operation, bool $rootWalked = false): mixed
     {
         $this->assertCurrentContext();
-        $this->assertNoSymlink(path: '');
+        // safePath() already walked this root when $rootWalked is true. Calls with no path still walk here.
+        $this->assertNoSymlink(path: '', rootWalked: $rootWalked);
 
         if (! $this->localPaths) {
             $optionIndex = match ($method) {
@@ -275,7 +286,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
         $this->guard->check();
     }
 
-    private function safePath(mixed $path): string
+    private function safePath(mixed $path, bool $rootWalked = false): string
     {
         if (! is_string($path) || str_contains($path, "\0") || str_contains($path, '\\')) {
             throw new StorageOperationFailed('Storage path is invalid.');
@@ -302,24 +313,21 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
             }
         }
 
-        $this->assertNoSymlink(path: $decoded);
+        $this->assertNoSymlink(path: $decoded, rootWalked: $rootWalked);
 
         return $decoded;
     }
 
-    private function assertNoSymlink(string $path): void
+    private function assertNoSymlink(string $path, bool $rootWalked = false): void
     {
         if (! $this->localPaths) {
             return;
         }
 
-        self::assertRoot($this->root);
+        // One ancestor walk. The public assertRoot() check is what session roots use too.
         $candidate = rtrim($this->root, DIRECTORY_SEPARATOR);
-
-        for ($ancestor = $candidate; $ancestor !== '' && $ancestor !== dirname($ancestor); $ancestor = dirname($ancestor)) {
-            if (is_link($ancestor)) {
-                throw new StorageOperationFailed('Storage roots must not contain symbolic links.');
-            }
+        if (! $rootWalked) {
+            self::assertRoot($candidate);
         }
 
         foreach (explode('/', $path) as $segment) {

@@ -345,7 +345,7 @@ final readonly class LifecycleJournal
 
         return $this->connection->transaction(function () use ($r, $id, $expectedAttemptGeneration, $resourceRef, $incarnation, $manifest, $effect): OperationReceipt {
             $current = $this->table()->where('id', $id)->lockForUpdate()->first();
-            $this->resource($r, allowDeleted: true);
+            $resource = $this->resource($r, allowDeleted: true);
             if ($current === null || ! in_array(DbRow::str($current, 'status'), ['running', 'unknown'], true) || DbRow::int($current, 'attempt_generation') !== $expectedAttemptGeneration) {
                 throw new ClaimUnavailable('Attempt changed before publication.');
             }
@@ -361,11 +361,28 @@ final readonly class LifecycleJournal
             if ($effect === 'dropped') {
                 $target['deleted_at'] = new DateTimeImmutable;
             }
-            $this->connection->table('tenant_pg_resources')->where('resource_ref', $resourceRef)->where('incarnation', $incarnation)->update($target);
+            $updated = $this->connection->table('tenant_pg_resources')->where('resource_ref', $resourceRef)->where('incarnation', $incarnation)->update($target);
+            // An observed DROP removed the database, including when the receipt is cancelled.
+            if ($effect === 'dropped' && $updated === 1) {
+                $this->releaseDatabaseCapacity($resource);
+            }
             $this->connection->table('tenant_pg_lifecycle_outbox')->insert(['operation_id' => $id, 'resource_ref' => $resourceRef, 'incarnation' => $incarnation, 'effect' => $effect, 'receipt_version' => $receiptVersion]);
 
             return $this->receipt($this->find($id));
         });
+    }
+
+    private function releaseDatabaseCapacity(object $resource): void
+    {
+        $clusterId = DbRow::str($resource, 'cluster_id');
+        $cluster = $this->connection->table('tenant_pg_clusters')->where('id', $clusterId)->lockForUpdate()->first();
+        if ($cluster === null || DbRow::int($cluster, 'database_count') < 1) {
+            throw new ClaimUnavailable('Cluster capacity cannot be released.');
+        }
+        $released = $this->connection->table('tenant_pg_clusters')->where('id', $clusterId)->where('database_count', '>', 0)->decrement('database_count');
+        if ($released !== 1) {
+            throw new ClaimUnavailable('Cluster capacity cannot be released.');
+        }
     }
 
     private function unknown(object $r): OperationReceipt
