@@ -54,6 +54,9 @@ it('rejects unsafe roots for every scoped facility', function (string $property,
     expect(fn (): ScopeDescriptor => new ScopeDescriptor(...$values))->toThrow(InvalidArgumentException::class, 'facility_configuration');
 })->with([
     ['prefix', ''],
+    ['prefix', ':'],
+    ['prefix', 'tenant:a'],
+    ['prefix', "tenant:a:\0"],
     ['durableRoot', 'relative/storage'],
     ['ephemeralRoot', 'relative/storage'],
     ['sessionRoot', 'relative/storage'],

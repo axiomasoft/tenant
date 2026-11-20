@@ -9,6 +9,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Connectors\PostgresConnector;
 use Packman\Attributes\Internal;
 use PDO;
+use PDOException;
 use RuntimeException;
 use Tenant\Contracts\Verification\BindingVerifier;
 use Tenant\Data\Verification\BindingVerificationInput;
@@ -99,6 +100,9 @@ final readonly class PostgresBindingVerifier implements BindingVerifier
 
             return new VerifiedBinding($expected, 'tenant-postgres', $recoveryGeneration);
         } catch (Throwable $failure) {
+            if ($failure instanceof PDOException) {
+                $failure = new RuntimeException('PostgreSQL binding verification failed.');
+            }
             throw new BindingMismatch([$failure]);
         }
     }

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Declared the MIT license in package metadata.
+- Require a facility prefix to end with `:` and reject a null byte, so cache and Redis session keys cannot cross a tenant boundary by concatenation.
 - Wire queue pause and restart to the single configured central cache store. Any other list length fails closed before a store is resolved.
 - Reuse the session handler captured during prepare when the driver, store, prefix, and session root are unchanged, and chmod the session directory only when its mode is not already 0700.
 - Walk each local storage root once per operation. A symlink in the root, an ancestor, or a relative segment is still refused.
