@@ -69,6 +69,10 @@ it('preserves PostgreSQL descriptor routing restrictions', function (): void {
     expect(fn (): ResourceDescriptor => new ResourceDescriptor(['driver' => 'sqlite'], 'a:', '/a', '/b', '/c'))
         ->toThrow(InvalidArgumentException::class, 'facility_configuration')
         ->and(fn (): ResourceDescriptor => new ResourceDescriptor(['driver' => 'pgsql'], 'a:', '/a', '/b', '/c', ['database' => 'another']))
+        ->toThrow(InvalidArgumentException::class, 'routing keys in options')
+        ->and(fn (): ResourceDescriptor => new ResourceDescriptor(['driver' => 'pgsql'], 'a:', '/a', '/b', '/c', ['connect_via_database' => 'other']))
+        ->toThrow(InvalidArgumentException::class, 'routing keys in options')
+        ->and(fn (): ResourceDescriptor => new ResourceDescriptor(['driver' => 'pgsql'], 'a:', '/a', '/b', '/c', ['search_path' => 'evil', 'server_options' => ['search_path' => 'evil']]))
         ->toThrow(InvalidArgumentException::class, 'routing keys in options');
 });
 

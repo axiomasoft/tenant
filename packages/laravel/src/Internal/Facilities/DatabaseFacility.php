@@ -23,6 +23,9 @@ use Tenant\Laravel\Internal\Configuration\FrameworkConfig;
 #[Internal]
 final readonly class DatabaseFacility implements Facility
 {
+    /** @var list<string> */
+    private const array STRIPPED_ROUTING = ['url', 'read', 'write', 'connect_via_database', 'connect_via_port', 'search_path', 'schema', 'server_options'];
+
     public function __construct(private DatabaseManager $databases, private FrameworkConfig $config, private string $central) {}
 
     public function prepare(PhaseContext $context, FrameState $state): void
@@ -45,11 +48,7 @@ final readonly class DatabaseFacility implements Facility
                 throw new InvalidArgumentException('unsupported_capability');
             }
             $base = (new ConfigurationUrlParser)->parseConfiguration($this->config->map('database.connections.'.$this->central));
-            unset($base['url'], $base['read'], $base['write']);
-            $route = array_replace($base, $facet->route, $facet->options);
-            $route['driver'] = 'tenant-guarded-pgsql';
-            unset($route['url'], $route['read'], $route['write']);
-            $this->config->set('database.connections.tenant', $route);
+            $this->config->set('database.connections.tenant', $this->tenantRoute($facet, $base));
         }
         $this->databases->purge('tenant');
         // Default tenant IO must refuse even in Missing/Central; central callers name their port.
@@ -75,5 +74,23 @@ final readonly class DatabaseFacility implements Facility
         if ($state->get('captured') === true && ($this->config->get('database.connections.tenant') !== $state->get('config') || $this->databases->getDefaultConnection() !== $state->get('default'))) {
             throw new RuntimeException('database restore mismatch');
         }
+    }
+
+    /** @param array<string, mixed> $base
+     * @return array<string, mixed> */
+    private function tenantRoute(ResourceDescriptor $facet, array $base): array
+    {
+        foreach (['host', 'database', 'username', 'password'] as $key) {
+            $value = $facet->route[$key] ?? null;
+            if (! is_string($value) || $value === '') {
+                throw new InvalidArgumentException('unsupported_capability');
+            }
+        }
+        $stripped = array_flip(self::STRIPPED_ROUTING);
+        $route = array_replace(array_diff_key($base, $stripped), $facet->route, $facet->options);
+        $route = array_diff_key($route, $stripped);
+        $route['driver'] = 'tenant-guarded-pgsql';
+
+        return $route;
     }
 }

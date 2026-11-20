@@ -1,6 +1,6 @@
 # Tenant Panels (`axiomasoft/tenant-panels`)
 
-Optional integration with `axiomasoft/packman-panels`. Panel entry runs inside the host's existing Tenant runtime. This package adds no physical resource owner, current-tenant store, Filament dependency or implicit authorization policy.
+Optional integration with `axiomasoft/packman-panels`. Panel entry runs inside the host's existing Tenant runtime. This package adds no physical resource owner, current-tenant store, Filament dependency or implicit authorization policy. Released under the MIT license.
 
 ## Install and configure
 

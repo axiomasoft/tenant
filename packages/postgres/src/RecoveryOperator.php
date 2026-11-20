@@ -115,9 +115,10 @@ final readonly class RecoveryOperator
                 throw new ResourceQuarantined('Recovery route mismatch.');
             }
             $pdo = (new PostgresConnector)->connect($route);
+            $pdo->exec('SET search_path TO public');
             $fence();
             $marker = ['protocol' => 'tenant.binding/1', 'owner_id' => 'tenant-postgres', 'resource_ref' => $plan->archive->resourceRef, 'incarnation' => $plan->archive->incarnation, 'recovery_generation' => $plan->archive->recoveryGeneration];
-            $beforeStmt = $pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM tenant_binding');
+            $beforeStmt = $pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM public.tenant_binding');
             if ($beforeStmt === false || $beforeStmt->fetchAll(PDO::FETCH_ASSOC) !== [$marker]) {
                 throw new ResourceQuarantined('Restored marker differs from original archive.');
             }
@@ -134,7 +135,7 @@ final readonly class RecoveryOperator
             $writer = new MarkerWriter(new ConnectionFactory(new Container), $route, $this->runtimeRole, $generation, $marker, $fence);
             $writer->stamp(new ResourceSnapshot($rowRef, $incarnation, DbRow::int($row, 'template_version'), DbRow::str($row, 'cluster_id'), $rowDatabase));
             $expected = ['protocol' => 'tenant.binding/1', 'owner_id' => 'tenant-postgres', 'resource_ref' => $rowRef, 'incarnation' => $incarnation, 'recovery_generation' => $generation];
-            $afterStmt = $pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM tenant_binding');
+            $afterStmt = $pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM public.tenant_binding');
             if ($afterStmt === false || $afterStmt->fetchAll(PDO::FETCH_ASSOC) !== [$expected]) {
                 throw new ResourceQuarantined('Replacement marker verification failed.');
             }

@@ -1,6 +1,6 @@
 # Tenant Core (`axiomasoft/tenant`)
 
-Portable, framework-agnostic isolation context, deterministic composition builder, and scoped execution runtime (`php-library`, PHP `^8.4`, `ext-intl`, `axiomasoft/packman`).
+Portable, framework-agnostic isolation context, deterministic composition builder, and scoped execution runtime (`php-library`, PHP `^8.4`, `ext-intl`, `axiomasoft/packman`). Released under the MIT license.
 
 ## Features
 

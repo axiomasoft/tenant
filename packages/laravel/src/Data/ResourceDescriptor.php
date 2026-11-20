@@ -22,7 +22,7 @@ final readonly class ResourceDescriptor implements ResourceScope
         if (($route['driver'] ?? null) !== 'pgsql' || $prefix === '') {
             throw new InvalidArgumentException('facility_configuration');
         }
-        foreach (['driver', 'url', 'host', 'port', 'database', 'username', 'read', 'write'] as $key) {
+        foreach (['driver', 'url', 'host', 'port', 'database', 'username', 'password', 'read', 'write', 'connect_via_database', 'connect_via_port', 'search_path', 'schema', 'server_options', 'prefix'] as $key) {
             if (array_key_exists($key, $options)) {
                 throw new InvalidArgumentException('routing keys in options');
             }

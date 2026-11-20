@@ -1,6 +1,6 @@
 # Tenant Laravel (`axiomasoft/tenant-laravel`)
 
-Laravel context, Eloquent integration, guarded cache/session/local storage, HTTP and queue integration for `axiomasoft/tenant`. Database switching is a separate profile.
+Laravel context, Eloquent integration, guarded cache/session/local storage, HTTP and queue integration for `axiomasoft/tenant`. Database switching is a separate profile. Released under the MIT license.
 
 ## Features
 
@@ -16,7 +16,7 @@ Install `axiomasoft/tenant-laravel` and bind `Tenant\Contracts\Context\ContextRe
 Choose the profile before boot:
 
 - **`laravel-scoped`** supplies a context for Eloquent consumers while leaving their connections and data-isolation rules intact. No PostgreSQL owner, physical verifier or connection named `central` is required unless another enabled integration needs one.
-- **`laravel-pg-database`** switches a guarded PostgreSQL connection per resource and additionally requires `Tenant\Contracts\Verification\BindingVerifier`. This remains the default for compatibility. It can use an existing physical owner; `tenant-postgres` is optional.
+- **`laravel-pg-database`** switches a guarded PostgreSQL connection per resource and additionally requires `Tenant\Contracts\Verification\BindingVerifier`. This remains the default for compatibility. It can use an existing physical owner; `tenant-postgres` is optional. The facet route must name `host`, `database`, `username`, and `password`. Central URL settings other than routing are kept, including `application_name`. Connector overrides (`connect_via_database`, `connect_via_port`, `search_path`, `schema`, `server_options`), replicas, and the central login are not copied onto the tenant connection.
 
 For an application that already owns all its database, cache, session and storage behavior, the minimal context-only `config/tenant.php` is:
 

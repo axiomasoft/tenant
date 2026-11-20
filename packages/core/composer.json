@@ -1,6 +1,7 @@
 {
     "name": "axiomasoft/tenant",
     "description": "Portable isolation context and scoped execution contracts.",
+    "license": "MIT",
     "type": "library",
     "require": {
         "php": ">=8.4 <8.6",

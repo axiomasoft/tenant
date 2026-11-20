@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tenant\Laravel\Internal\Facilities;
 
 use Closure;
-use Illuminate\Session\FileSessionHandler;
 use Packman\Attributes\Internal;
 use SessionHandlerInterface;
 
@@ -47,9 +46,6 @@ final readonly class GuardedSessionHandler implements SessionHandlerInterface
     public function destroy(string $id): bool
     {
         ($this->check)();
-        if ($this->delegate instanceof FileSessionHandler && $this->delegate->read($id) === '') {
-            return true;
-        }
 
         return $this->delegate->destroy($id);
     }

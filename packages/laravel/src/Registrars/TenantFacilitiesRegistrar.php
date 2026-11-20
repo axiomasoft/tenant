@@ -32,6 +32,7 @@ use Tenant\Contracts\Verification\BindingVerifier;
 use Tenant\Data\Verification\BindingVerificationInput;
 use Tenant\Exceptions\TenantFailure;
 use Tenant\Laravel\Configuration\TenantOptions;
+use Tenant\Laravel\Data\ResourceDescriptor;
 use Tenant\Laravel\Http\ScopeSessionToResource;
 use Tenant\Laravel\Internal\Cache\GuardedCache;
 use Tenant\Laravel\Internal\Configuration\FrameworkConfig;
@@ -81,7 +82,20 @@ final class TenantFacilitiesRegistrar implements PackageRegistrar
                 }
 
                 return new GuardedConnection(static function () use ($app, $config, $owner): PDO {
+                    foreach (['connect_via_database', 'connect_via_port', 'search_path', 'schema', 'server_options'] as $forbidden) {
+                        if (array_key_exists($forbidden, $config)) {
+                            throw new TenantFailure('facility_configuration');
+                        }
+                    }
                     $descriptor = LaravelRuntimeFactory::descriptor($app);
+                    if (! $descriptor instanceof ResourceDescriptor) {
+                        throw new TenantFailure('unsupported_capability');
+                    }
+                    foreach (['host', 'database', 'username', 'password'] as $key) {
+                        if (! isset($config[$key], $descriptor->route[$key]) || $config[$key] !== $descriptor->route[$key]) {
+                            throw new TenantFailure('facility_configuration');
+                        }
+                    }
                     $expected = $owner->current()->context->binding ?? throw new TenantFailure('missing');
                     FrameworkConfig::service($app, BindingVerifier::class, BindingVerifier::class)
                         ->verify(new BindingVerificationInput($expected, $descriptor));

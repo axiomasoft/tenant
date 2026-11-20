@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Declared the MIT license in package metadata.
+- Refuse `connect_via_database`, `connect_via_port`, `search_path`, `schema`, and `server_options` on the guarded PostgreSQL connection, and require the facet route to name host, database, username, and password instead of inheriting the central login.
+- Keep a database transaction lease until the PDO transaction is actually gone, including when begin or rollback throws after the transaction level changes.
+- Delete an expired file session when the guarded handler destroys it.
 - Added explicit `laravel-scoped` composition for host-owned Eloquent connections without PostgreSQL or a physical binding verifier. The existing `laravel-pg-database` default and its stronger database guarantees remain unchanged.
 - Added route-free `ScopeDescriptor` and the common `ResourceScope` facility SPI; cache/session/storage no longer need a database route in scoped mode.
 - Added SQLite/Eloquent consumer-pattern tests for host-owned row scopes, nested context restoration, stable named connections and explicit single-installation mode.

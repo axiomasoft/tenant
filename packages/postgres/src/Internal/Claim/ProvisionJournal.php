@@ -16,6 +16,7 @@ use Tenant\Postgres\Data\Provisioning\ResourceSnapshot;
 use Tenant\Postgres\Exceptions\Claim\ClaimConflict;
 use Tenant\Postgres\Exceptions\Claim\ClaimUnavailable;
 use Tenant\Postgres\Internal\Database\DbRow;
+use Tenant\Postgres\Internal\Database\PostgresIdentifier;
 use Tenant\Postgres\Internal\Database\TemplateClonePostgreSQLManager;
 use Tenant\Postgres\Internal\Database\TemplateIntegrityVerifier;
 use Tenant\Postgres\Internal\Recovery\AnchorHistory;
@@ -39,7 +40,7 @@ final readonly class ProvisionJournal
             throw new ClaimConflict('Snapshot differs from intent.');
         }
         foreach ([$snapshot->databaseName, $templateDatabase] as $identifier) {
-            if (preg_match('/^[A-Za-z0-9_]{1,63}$/D', $identifier) !== 1) {
+            if (! PostgresIdentifier::isValid($identifier)) {
                 throw new ClaimConflict('Invalid database identifier.');
             }
         }

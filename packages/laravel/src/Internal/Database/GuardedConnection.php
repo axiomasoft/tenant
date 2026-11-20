@@ -62,8 +62,8 @@ final class GuardedConnection extends PostgresConnection
         try {
             parent::beginTransaction();
         } catch (Throwable $failure) {
-            $release?->__invoke();
-            if ($release !== null) {
+            if ($this->transactions === 0) {
+                $release->__invoke();
                 $this->transactionRelease = null;
             }
             throw $failure;
@@ -94,20 +94,26 @@ final class GuardedConnection extends PostgresConnection
     public function commit(): void
     {
         $this->guard->check();
-        parent::commit();
-        if ($this->transactions === 0) {
-            ($this->transactionRelease)?->__invoke();
-            $this->transactionRelease = null;
+        try {
+            parent::commit();
+        } finally {
+            if ($this->transactions === 0) {
+                ($this->transactionRelease)?->__invoke();
+                $this->transactionRelease = null;
+            }
         }
     }
 
     public function rollBack($toLevel = null): void
     {
         $this->guard->check();
-        parent::rollBack($toLevel);
-        if ($this->transactions === 0) {
-            ($this->transactionRelease)?->__invoke();
-            $this->transactionRelease = null;
+        try {
+            parent::rollBack($toLevel);
+        } finally {
+            if ($this->transactions === 0) {
+                ($this->transactionRelease)?->__invoke();
+                $this->transactionRelease = null;
+            }
         }
     }
 

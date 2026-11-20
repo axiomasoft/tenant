@@ -31,6 +31,7 @@ use Tenant\Postgres\ExportRef;
 use Tenant\Postgres\Internal\Claim\CanonicalIntent;
 use Tenant\Postgres\Internal\Claim\OperationKeys;
 use Tenant\Postgres\Internal\Database\DbRow;
+use Tenant\Postgres\Internal\Database\PostgresIdentifier;
 use Tenant\Postgres\Internal\Recovery\AnchorHistory;
 use Tenant\Postgres\Internal\Recovery\PhysicalFence;
 use Tenant\Postgres\OperationKey;
@@ -316,7 +317,7 @@ final readonly class LifecycleJournal
                 // Direct pinned PDO: Illuminate must never reconnect/retry a lost DDL reply.
                 $pdo = $this->connection->getPdo();
                 $fence();
-                $pdo->exec('DROP DATABASE "'.$rDatabaseName.'"');
+                $pdo->exec('DROP DATABASE '.PostgresIdentifier::quote($rDatabaseName));
                 $this->checkpoint('after-drop', $r);
                 $this->guard($r, $fence);
                 if ($this->database($rDatabaseName) !== null) {

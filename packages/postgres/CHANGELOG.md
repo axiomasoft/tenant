@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Pin `search_path` to `public` and read `public.tenant_binding` during binding verification, recovery completion, and marker updates.
+- Report a failed archive self-check as `ArchiveUnverified` so lifecycle callers receive `tenant.archive_unverified` instead of `tenant.operation_unknown`.
+- Quote allowlisted PostgreSQL identifiers at clone, marker, and `DROP DATABASE` call sites, and reject every other physical name before DDL.
+- Require an absolute `pg_dump` path and pass the child process only the archive route plus `PATH`.
+- Declared the MIT license in package metadata.
 - Restrict runtime binding verification to ready/active resources; provisioning and recovery require the explicit maintenance path.
 - Reject marker column-write grants and marker/schema/database ownership even when direct table grants have been revoked.
 - Check both session and current role identities, including reachable `NOINHERIT` roles, so `SET ROLE` cannot restore forbidden privileges.

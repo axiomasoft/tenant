@@ -1,6 +1,11 @@
 /vendor/
 /build/
 /.phpunit.cache/
+/.claude/
+/.codex/
+/.gemini/
+/AGENTS.md
+/review/
 .phpunit.result.cache
 /packages/*/vendor/
 /packages/*/.phpunit.cache/

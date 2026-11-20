@@ -54,6 +54,7 @@ final readonly class PostgresBindingVerifier implements BindingVerifier
                 throw new RuntimeException('Route mismatch.');
             }
             $pdo = (new PostgresConnector)->connect($route);
+            $pdo->exec('SET search_path TO public');
             $roleStmt = $pdo->query("SELECT EXISTS (SELECT 1 FROM pg_roles WHERE (rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls) AND (pg_has_role(current_user,oid,'MEMBER') OR pg_has_role(session_user,oid,'MEMBER'))) AS privileged");
             $role = $roleStmt !== false ? $roleStmt->fetch(PDO::FETCH_ASSOC) : false;
             if (! is_array($role) || ! in_array($role['privileged'] ?? null, [false, 'f'], true)) {
@@ -68,14 +69,14 @@ final readonly class PostgresBindingVerifier implements BindingVerifier
                     WHERE (pg_has_role(current_user, runtime_role.oid, 'MEMBER')
                         OR pg_has_role(session_user, runtime_role.oid, 'MEMBER'))
                     AND (
-                        has_table_privilege(runtime_role.oid, 'tenant_binding', 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-                        OR has_any_column_privilege(runtime_role.oid, 'tenant_binding', 'INSERT,UPDATE,REFERENCES')
+                        has_table_privilege(runtime_role.oid, 'public.tenant_binding', 'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+                        OR has_any_column_privilege(runtime_role.oid, 'public.tenant_binding', 'INSERT,UPDATE,REFERENCES')
                         OR has_schema_privilege(runtime_role.oid, 'public', 'CREATE')
                         OR has_database_privilege(runtime_role.oid, current_database(), 'CREATE')
                         OR EXISTS (
                             SELECT 1 FROM pg_class AS relation
                             JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
-                            WHERE relation.oid = 'tenant_binding'::regclass
+                            WHERE relation.oid = 'public.tenant_binding'::regclass
                                 AND runtime_role.oid IN (relation.relowner, namespace.nspowner)
                         )
                         OR EXISTS (
@@ -89,7 +90,7 @@ final readonly class PostgresBindingVerifier implements BindingVerifier
             if (! is_array($privileges) || ! in_array($privileges['writable'] ?? null, [false, 'f'], true)) {
                 throw new RuntimeException('Runtime role can mutate binding or create schema objects.');
             }
-            $markerStmt = $pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM tenant_binding');
+            $markerStmt = $pdo->query('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM public.tenant_binding');
             $markers = $markerStmt !== false ? $markerStmt->fetchAll(PDO::FETCH_ASSOC) : false;
             $marker = ['protocol' => 'tenant.binding/1', 'owner_id' => 'tenant-postgres', 'resource_ref' => $expected->resourceRef, 'incarnation' => $expected->incarnation, 'recovery_generation' => $recoveryGeneration];
             if ($markers !== [$marker]) {

@@ -1,6 +1,7 @@
 {
     "name": "axiomasoft/tenant-monorepo",
     "description": "Development monorepo for Tenant — portable isolation runtime, guarded Laravel facilities, and PostgreSQL physical owner.",
+    "license": "MIT",
     "type": "project",
     "repositories": [
         {
@@ -85,11 +86,13 @@
         "refactor": "vendor/bin/rector process",
         "refactor:check": "vendor/bin/rector process --dry-run",
         "test": "vendor/bin/pest --exclude-group=pg",
+        "test:parallel": "vendor/bin/pest --parallel --exclude-group=pg",
         "test:pg": "vendor/bin/pest --group=pg",
         "gate": "@php vendor/bin/packman gate",
         "php-api": "@php vendor/bin/packman php-api --check",
         "error-codes": "@php vendor/bin/packman error-codes --check",
         "config-schema": "@php vendor/bin/packman config-schema --check",
-        "ai:sync": "@php vendor/bin/packman ai:sync --dry-run"
+        "security:audit": "@composer audit --abandoned=report --no-interaction",
+        "boundaries": "@php scripts/check-package-boundaries.php --package=packages/core"
     }
 }

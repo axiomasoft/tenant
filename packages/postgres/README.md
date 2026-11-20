@@ -6,6 +6,8 @@ the template, clone, pool, binding verifier and lifecycle mechanisms.
 The supported factory profile uses one frozen PostgreSQL management server;
 cluster selection does not authorize moving a database to a different server.
 PHP 8.4/8.5, Illuminate 12/13 and PostgreSQL 16 are qualification lanes.
+Released under the MIT license. `LICENSE.corex` keeps an additional MIT notice.
+Physical DDL quotes allowlisted identifiers (`[A-Za-z0-9_]`, at most 63 bytes) and rejects every other database or role name before execution.
 
 The host supplies restricted runtime routing, signed template trust, database
 naming, a qualified `ArchiveStore`, an independent `RecoveryAnchor`, fresh
@@ -15,7 +17,7 @@ checked at registration and before effects. Technical readiness gives no paid,
 trial, grace, legal retention or commercial entitlement. The lab policy is a
 synthetic test policy, not a product retention decision.
 
-`PgDumpArchiveStore` runs a configured native `pg_dump` executable, persists and
+`PgDumpArchiveStore` runs a configured absolute `pg_dump` executable, persists and
 syncs custom-format bytes and the original manifest under a private directory.
 Use the matching PostgreSQL client version. Its private directory is a trusted,
 durable storage boundary; it must not be writable by runtime users. Receipts
@@ -53,15 +55,17 @@ outbox row accompanies the final original receipt; events and ACKs are not proof
 `admitRecovery()` returns an operator-only `RecoveryPlan`; it never executes a
 restore. `ProvisioningOwner::recoveryOperator()` exposes the already composed
 operator. `RecoveryOperator` offers explicit quarantine, completion and reopening
-steps. The operator stops workers and writes, excludes old backends, advances the
-independent generation, restores the exact verified archive into the frozen
-isolated target using native tools, and retains all original receipts. Completion
-verifies the restored source marker, records a new incarnation before stamping,
-then verifies using the restricted runtime role. A clone also has a new logical
-resource. Completion remains quarantined; reopening needs separate fresh host
-admission. Other resources stay closed until explicitly reconciled. A failed or
-interrupted completion cannot be silently restamped or retried; retain its new
-binding and recover through an explicit operator procedure.
+steps and runs no `pg_restore`, `CREATE`, `DROP`, or automatic replay. The plan
+tells the host operator to stop workers and writes, exclude old backends, advance
+the independent generation, restore the exact verified archive into the frozen
+isolated target with the operator's own native tools, and retain all original
+receipts. Completion requires that restored marker to already match the archive.
+It then records a new incarnation before stamping and verifies using the
+restricted runtime role. A clone also has a new logical resource. Completion
+remains quarantined; reopening needs separate fresh host admission. Other
+resources stay closed until explicitly reconciled. A failed or interrupted
+completion cannot be silently restamped or retried; retain its new binding and
+recover through an explicit operator procedure.
 
 After restoring the control-plane catalog, `reconcileCatalogGeneration()` refuses
 missing original history or unresolved attempts. Changing a catalog-local epoch
