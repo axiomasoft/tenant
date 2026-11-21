@@ -19,7 +19,7 @@ runs:
       run: echo "files=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Composer package downloads
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ${{ steps.composer-cache.outputs.files }}
         key: composer-files-${{ hashFiles('composer.lock') }}
