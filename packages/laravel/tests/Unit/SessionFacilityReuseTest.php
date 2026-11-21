@@ -112,7 +112,7 @@ it('builds a new file handler when the session root changes', function (): void 
     }
 });
 
-it('builds a new file handler when the session prefix or store changes', function (): void {
+it('builds a new file handler when the session lifetime changes', function (): void {
     $base = sessionReuseBase();
     $sessionRoot = $base.'/sessions';
     try {
@@ -120,29 +120,18 @@ it('builds a new file handler when the session prefix or store changes', functio
         chmod($sessionRoot, 0700);
         ['facility' => $facility, 'repository' => $repository, 'store' => $store, 'handler' => $handler] = sessionReuseHarness($sessionRoot);
         $phase = sessionReusePhase($base, $sessionRoot);
-        $prefixed = sessionReuseFrame();
-        $facility->prepare($phase, $prefixed);
-        $repository->set('session.prefix', 'tenant-prefix');
-        $facility->activate($phase, $prefixed);
-        $afterPrefix = $store->getHandler();
-        if (! $afterPrefix instanceof GuardedSessionHandler) {
+        $state = sessionReuseFrame();
+        $facility->prepare($phase, $state);
+        $repository->set('session.lifetime', 15);
+        $facility->activate($phase, $state);
+        $current = $store->getHandler();
+        if (! $current instanceof GuardedSessionHandler) {
             throw new RuntimeException('session handler was not guarded');
         }
 
-        expect($afterPrefix->delegate)->not->toBe($handler)
-            ->and(sessionReuseFilePath($afterPrefix))->toBe($sessionRoot);
-
-        $stored = sessionReuseFrame();
-        $facility->prepare($phase, $stored);
-        $repository->set('session.store', 'other');
-        $facility->activate($phase, $stored);
-        $afterStore = $store->getHandler();
-        if (! $afterStore instanceof GuardedSessionHandler) {
-            throw new RuntimeException('session handler was not guarded');
-        }
-
-        expect($afterStore->delegate)->not->toBe($afterPrefix->delegate)
-            ->and(sessionReuseFilePath($afterStore))->toBe($sessionRoot);
+        expect($current->delegate)->not->toBe($handler)
+            ->and(sessionReuseFilePath($current))->toBe($sessionRoot)
+            ->and(new ReflectionProperty(FileSessionHandler::class, 'minutes')->getValue($current->delegate))->toBe(15);
     } finally {
         sessionReuseRemove($base);
     }

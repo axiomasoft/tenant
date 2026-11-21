@@ -34,7 +34,7 @@ beforeEach(function (): void {
 
 it('migrates TenantPostgresSchemaSets via PackmanMigration onto PostgreSQL and runs catalog/runtime checks', function (): void {
     $migrationFiles = glob(PostgresSchema::migrationPath().'/*.php');
-    expect($migrationFiles)->toBeArray()->toHaveCount(6);
+    expect($migrationFiles)->toBeArray()->toHaveCount(7);
     foreach ($migrationFiles ?: [] as $file) {
         $migration = require $file;
         expect($migration)->toBeInstanceOf(PackmanMigration::class);
@@ -54,6 +54,7 @@ it('migrates TenantPostgresSchemaSets via PackmanMigration onto PostgreSQL and r
     ] as $table) {
         expect(Schema::connection('pgsql')->hasTable($table))->toBeTrue();
     }
+    expect(Schema::connection('pgsql')->hasColumn('tenant_pg_resources', 'capacity_released'))->toBeTrue();
 
     expect($this->app->make(SchemaMigrator::class)->migrateSets(['axiomasoft/tenant-postgres:tenant-postgres'], 'pgsql'))
         ->toBe([]);

@@ -345,7 +345,7 @@ final readonly class LifecycleJournal
 
         return $this->connection->transaction(function () use ($r, $id, $expectedAttemptGeneration, $resourceRef, $incarnation, $manifest, $effect): OperationReceipt {
             $current = $this->table()->where('id', $id)->lockForUpdate()->first();
-            $resource = $this->resource($r, allowDeleted: true);
+            $resource = $this->resource($r);
             if ($current === null || ! in_array(DbRow::str($current, 'status'), ['running', 'unknown'], true) || DbRow::int($current, 'attempt_generation') !== $expectedAttemptGeneration) {
                 throw new ClaimUnavailable('Attempt changed before publication.');
             }
@@ -360,10 +360,15 @@ final readonly class LifecycleJournal
             $target = ['status' => $effect === 'dropped' ? 'deleted' : ($cancel ? 'quarantined' : 'exported')];
             if ($effect === 'dropped') {
                 $target['deleted_at'] = new DateTimeImmutable;
+                $target['capacity_released'] = true;
             }
-            $updated = $this->connection->table('tenant_pg_resources')->where('resource_ref', $resourceRef)->where('incarnation', $incarnation)->update($target);
+            $updated = $this->connection->table('tenant_pg_resources')
+                ->where('resource_ref', $resourceRef)->where('incarnation', $incarnation)->whereNull('deleted_at')->update($target);
+            if ($updated !== 1) {
+                throw new ClaimUnavailable('Resource changed before publication.');
+            }
             // An observed DROP removed the database, including when the receipt is cancelled.
-            if ($effect === 'dropped' && $updated === 1) {
+            if ($effect === 'dropped') {
                 $this->releaseDatabaseCapacity($resource);
             }
             $this->connection->table('tenant_pg_lifecycle_outbox')->insert(['operation_id' => $id, 'resource_ref' => $resourceRef, 'incarnation' => $incarnation, 'effect' => $effect, 'receipt_version' => $receiptVersion]);
@@ -375,10 +380,6 @@ final readonly class LifecycleJournal
     private function releaseDatabaseCapacity(object $resource): void
     {
         $clusterId = DbRow::str($resource, 'cluster_id');
-        $cluster = $this->connection->table('tenant_pg_clusters')->where('id', $clusterId)->lockForUpdate()->first();
-        if ($cluster === null || DbRow::int($cluster, 'database_count') < 1) {
-            throw new ClaimUnavailable('Cluster capacity cannot be released.');
-        }
         $released = $this->connection->table('tenant_pg_clusters')->where('id', $clusterId)->where('database_count', '>', 0)->decrement('database_count');
         if ($released !== 1) {
             throw new ClaimUnavailable('Cluster capacity cannot be released.');

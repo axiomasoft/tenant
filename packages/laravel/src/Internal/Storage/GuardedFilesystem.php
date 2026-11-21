@@ -70,7 +70,10 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
     /** @param array<mixed>|string $options */
     public function put(string $path, mixed $contents, array|string $options = []): bool
     {
-        if (! is_string($contents) && ! is_resource($contents) && ! $contents instanceof File && ! $contents instanceof UploadedFile && ! $contents instanceof StreamInterface) {
+        if ($contents instanceof File || $contents instanceof UploadedFile) {
+            return $this->putFile($path, $contents, $options) !== false;
+        }
+        if (! is_string($contents) && ! is_resource($contents) && ! $contents instanceof StreamInterface) {
             throw new StorageOperationFailed('Invalid contents');
         }
         $arguments = [$this->safePath($path), $contents, $options];
@@ -85,12 +88,13 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
             [$path, $file, $options] = ['', $path, $file ?? []];
         }
 
-        if (! is_string($file) && ! $file instanceof File && ! $file instanceof UploadedFile && $file !== null && ! is_array($file)) {
+        $this->assertCurrentContext();
+        $file = is_string($file) ? new File($file) : $file;
+        if (! $file instanceof File && ! $file instanceof UploadedFile) {
             throw new StorageOperationFailed('Invalid upload');
         }
-        $arguments = [$this->safePath($path), $file, $options];
 
-        return $this->call(method: 'putFile', arguments: $arguments, operation: fn () => $this->filesystem->putFile(...$arguments), rootWalked: true);
+        return $this->putFileAs($path, $file, $file->hashName(), $options);
     }
 
     /** @param array<mixed>|string $options */
@@ -100,10 +104,11 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
             [$path, $file, $name, $options] = ['', $path, $file, $name ?? []];
         }
 
-        if (! is_string($file) && ! $file instanceof File && ! $file instanceof UploadedFile && $file !== null && ! is_array($file)) {
+        if (! is_string($file) && ! $file instanceof File && ! $file instanceof UploadedFile) {
             throw new StorageOperationFailed('Invalid upload');
         }
-        $arguments = [$this->safePath($path), $file, $this->safePath($name, rootWalked: true), $options];
+        $directory = $this->safePath($path);
+        $arguments = [$directory, $file, $this->safePath($name, rootWalked: true, directory: $directory), $options];
 
         return $this->call(method: 'putFileAs', arguments: $arguments, operation: fn () => $this->filesystem->putFileAs(...$arguments), rootWalked: true);
     }
@@ -262,7 +267,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
 
         if (! $this->localPaths) {
             $optionIndex = match ($method) {
-                'put', 'putFile', 'writeStream' => 2,
+                'put', 'writeStream' => 2,
                 'putFileAs' => 3,
                 default => null,
             };
@@ -286,7 +291,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
         $this->guard->check();
     }
 
-    private function safePath(mixed $path, bool $rootWalked = false): string
+    private function safePath(mixed $path, bool $rootWalked = false, string $directory = ''): string
     {
         if (! is_string($path) || str_contains($path, "\0") || str_contains($path, '\\')) {
             throw new StorageOperationFailed('Storage path is invalid.');
@@ -313,7 +318,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
             }
         }
 
-        $this->assertNoSymlink(path: $decoded, rootWalked: $rootWalked);
+        $this->assertNoSymlink(path: $directory.'/'.$decoded, rootWalked: $rootWalked);
 
         return $decoded;
     }
@@ -345,7 +350,7 @@ final readonly class GuardedFilesystem implements ResourceFilesystem
 
     public static function assertRoot(string $root): void
     {
-        for ($path = $root; $path !== '' && $path !== dirname($path); $path = dirname($path)) {
+        for ($path = rtrim($root, DIRECTORY_SEPARATOR); $path !== '' && $path !== dirname($path); $path = dirname($path)) {
             if (is_link($path)) {
                 throw new StorageOperationFailed('Storage roots must not contain symbolic links.');
             }

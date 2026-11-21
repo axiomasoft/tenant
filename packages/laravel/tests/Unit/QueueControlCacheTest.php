@@ -8,8 +8,10 @@ use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Exceptions\Handler;
+use Illuminate\Queue\Console\RestartCommand;
 use Illuminate\Queue\QueueServiceProvider;
 use Illuminate\Queue\Worker;
+use Symfony\Component\Console\Tester\CommandTester;
 use Tenant\Data\Context\ProfileRef;
 use Tenant\Exceptions\TenantFailure;
 use Tenant\Laravel\Configuration\TenantOptions;
@@ -27,7 +29,7 @@ function bootQueueControlApplication(array $centralCacheStores): Application
     $app->instance('config', new Repository([
         'app' => ['name' => 'Test', 'env' => 'testing'],
         'cache' => [
-            'default' => 'array',
+            'default' => 'central',
             'stores' => [
                 'control' => ['driver' => 'array'],
                 'central' => ['driver' => 'array'],
@@ -39,6 +41,7 @@ function bootQueueControlApplication(array $centralCacheStores): Application
     $app->singleton(ExceptionHandler::class, static fn (Application $app): Handler => new Handler($app));
     $app->register(CacheServiceProvider::class);
     $app->register(QueueServiceProvider::class);
+    $app->singleton(RestartCommand::class, static fn (Application $app): RestartCommand => new RestartCommand($app->make('cache.store')));
     $app->instance(TenantOptions::class, TenantOptions::fromArray([
         'central_cache_stores' => $centralCacheStores,
     ]));
@@ -88,6 +91,12 @@ it('wires queue control and the worker to the single configured central cache st
     $control->forget('illuminate:queue:paused:database:emails');
     $central->forever('illuminate:queue:paused:database:emails', true);
     expect($queue->isPaused('database', 'emails'))->toBeFalse();
+
+    $command = $app->make(RestartCommand::class);
+    $command->setLaravel($app);
+    expect(new CommandTester($command)->execute([]))->toBe(0)
+        ->and($workerStore->get('illuminate:queue:restart'))->toBeInt()
+        ->and($central->get('illuminate:queue:restart'))->toBeNull();
 });
 
 it('fails closed when central cache stores is not exactly one name', function (): void {

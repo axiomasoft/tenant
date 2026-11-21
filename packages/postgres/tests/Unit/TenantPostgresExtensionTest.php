@@ -27,7 +27,7 @@ it('declares central platform SchemaSet and inspects TenantPostgresExtension fac
         ->and(is_dir($sets[0]->path))->toBeTrue();
 
     $migrations = glob($sets[0]->path.'/*.php');
-    expect($migrations)->toBeArray()->toHaveCount(6);
+    expect($migrations)->toBeArray()->toHaveCount(7);
 
     $profile = ExtensionInspector::inspect(new TenantPostgresExtension);
 

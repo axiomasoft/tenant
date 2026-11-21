@@ -72,12 +72,13 @@ final readonly class SessionFacility implements Facility
                 if (! is_dir($facet->sessionRoot) && ! mkdir($facet->sessionRoot, 0700, true) && ! is_dir($facet->sessionRoot)) {
                     throw new RuntimeException('session directory unavailable');
                 }
+                clearstatcache(true, $facet->sessionRoot);
+                $mode = fileperms($facet->sessionRoot);
+                if ((! is_int($mode) || ($mode & 07777) !== 0700) && ! chmod($facet->sessionRoot, 0700)) {
+                    throw new RuntimeException('session directory permissions unavailable');
+                }
                 if (! is_writable($facet->sessionRoot)) {
                     throw new RuntimeException('session directory not writable');
-                }
-                $mode = fileperms($facet->sessionRoot);
-                if (! is_int($mode) || ($mode & 0777) !== 0700) {
-                    chmod($facet->sessionRoot, 0700);
                 }
                 $this->config->set('session.files', $facet->sessionRoot);
             } elseif ($this->config->get('session.driver') === 'redis') {
@@ -98,21 +99,17 @@ final readonly class SessionFacility implements Facility
     }
 
     /**
-     * Handlers captured in prepare() stay valid when the driver, store, prefix, and session root are unchanged.
-     *
      * @return array<string, SessionHandlerInterface>
      */
     private function reusableHandlers(FrameState $state): array
     {
-        $captured = $state->get('config');
-        if (! is_array($captured)) {
+        if ($state->get('config') !== $this->config->get('session')) {
             return [];
         }
 
-        foreach (['driver', 'store', 'prefix', 'files'] as $key) {
-            if (($captured[$key] ?? null) !== $this->config->get('session.'.$key)) {
-                return [];
-            }
+        $name = $this->config->get('session.store');
+        if (is_string($name) && $state->get('cache') !== $this->config->get('cache.stores.'.$name)) {
+            return [];
         }
 
         $handlers = $state->get('handlers') ?? [];

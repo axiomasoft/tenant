@@ -28,12 +28,15 @@ it('keeps central application settings and refuses a route that inherits central
             'connections' => [
                 'central' => [
                     'driver' => 'pgsql',
-                    'url' => 'pgsql://central-user:secret@127.0.0.1:5432/central_db?application_name=url-central&connect_via_database=other_db',
+                    'url' => 'pgsql://central-user:secret@127.0.0.1:5433/central_db?application_name=url-central&connect_via_database=other_db',
                     'read' => ['host' => 'replica.invalid'],
                     'write' => ['host' => 'primary.invalid'],
                     'search_path' => 'evil',
                     'server_options' => ['search_path' => 'evil'],
                     'connect_via_port' => 1,
+                    'sslmode' => 'require',
+                    'sslcert' => '/private/central.crt',
+                    'options' => [PDO::ATTR_PERSISTENT => true],
                 ],
             ],
         ],
@@ -60,12 +63,12 @@ it('keeps central application settings and refuses a route that inherits central
     $route = [
         'driver' => 'pgsql',
         'host' => 'db.example',
-        'port' => 5432,
         'database' => 'tenant_a',
         'username' => 'tenant_role',
         'password' => 'tenant-secret',
         'search_path' => 'evil',
         'connect_via_database' => 'central_db',
+        'sslmode' => 'verify-full',
     ];
     $descriptor = new ResourceDescriptor($route, 'tenant:a:', '/private/a/durable', '/private/a/temporary', '/private/a/sessions');
     $phase = databaseRoutePhase($descriptor);
@@ -79,6 +82,8 @@ it('keeps central application settings and refuses a route that inherits central
         ->and($tenant['database'] ?? null)->toBe('tenant_a')
         ->and($tenant['username'] ?? null)->toBe('tenant_role')
         ->and($tenant['password'] ?? null)->toBe('tenant-secret')
+        ->and(array_intersect_key($tenant, array_flip(['port', 'sslcert', 'options'])))->toBe([])
+        ->and($tenant['sslmode'] ?? null)->toBe('verify-full')
         ->and(array_key_exists('url', $tenant))->toBeFalse()
         ->and(array_key_exists('read', $tenant))->toBeFalse()
         ->and(array_key_exists('write', $tenant))->toBeFalse()

@@ -8,8 +8,9 @@ foreach (glob($packageRoot.'/database/migrations/*.php') as $path) {
     if ($table!==null && $c->getSchemaBuilder()->hasTable($table)) continue;
     if (str_contains($path,'000004') && $c->getSchemaBuilder()->hasColumn('tenant_pg_clusters','capacity')) continue;
     if (str_contains($path,'000005') && $c->getSchemaBuilder()->hasColumn('tenant_pg_provision_attempts','cancel_requested')) continue;
+    if (str_contains($path,'000007') && $c->getSchemaBuilder()->hasColumn('tenant_pg_resources','capacity_released')) continue;
     $migration=require $path;$c->transaction(fn()=>$migration->up());
 }
 if(!is_dir($anchorDir))mkdir($anchorDir,0700);if(!is_dir($archiveDir))mkdir($archiveDir,0700);$anchor=Tenant\Postgres\FileRecoveryAnchor::create($anchorDir.'/anchor.json');
 $c->table('tenant_pg_control')->insert(['id'=>1,'recovery_generation'=>$anchor->generation()]);
-echo json_encode(['status'=>'passed','migrations'=>6,'generation'=>$anchor->generation(),'central'=>$m['central']]),"\n";
+echo json_encode(['status'=>'passed','migrations'=>7,'generation'=>$anchor->generation(),'central'=>$m['central']]),"\n";

@@ -25,6 +25,7 @@ $plan=$operator->admit($intent,$allow);check($c->selectOne('SELECT oid FROM pg_d
 // Clone has a distinct retained logical identity and frozen destination.
 $cloneRef='lab:clone_recovery';$cloneDb=$base.'_clone_recovery_test';$cloneId=(string)Illuminate\Support\Str::uuid7();
 $c->table('tenant_pg_resources')->insert(['id'=>$cloneId,'cluster_id'=>$r->cluster_id,'template_version'=>7,'status'=>'quarantined','resource_ref'=>$cloneRef,'incarnation'=>'inc:clone-original','database_name'=>$cloneDb,'route_revision'=>'route:1','recovery_generation'=>$anchor->generation()]);
+$c->table('tenant_pg_clusters')->where('id', $r->cluster_id)->increment('database_count');
 $cloneIntent=new RecoveryIntent('clone',$export->exportRef,$manifest->sha256,$cloneRef,'inc:clone-original',$r->cluster_id,$cloneDb,'recovery:clone');$clonePlan=$operator->admit($cloneIntent,$allow);
 $oldGeneration=$anchor->generation();$generation=$operator->quarantine($plan,$allow);check($generation!==$oldGeneration,'Recovery generation did not advance');
 foreach ([$r->database_name,$cloneDb] as $target) {
@@ -32,7 +33,9 @@ foreach ([$r->database_name,$cloneDb] as $target) {
     check($c->selectOne('SELECT oid FROM pg_database WHERE datname=?',[$target])===null,'Never overwrite an existing physical target');
     $c->getPdo()->exec('CREATE DATABASE "'.$target.'"');nativeTool(['/usr/lib/postgresql/16/bin/pg_restore','--exit-on-error','--no-owner','--no-privileges','-d',$target,$archiveDir.'/'.$manifest->exportId.'.dump']);
 }
+$countBeforeRestore = (int) $c->table('tenant_pg_clusters')->where('id', $r->cluster_id)->value('database_count');
 $restored=$operator->complete($plan,$generation,$allow);$clone=$operator->complete($clonePlan,$generation,$allow);
+check((int) $c->table('tenant_pg_clusters')->where('id', $r->cluster_id)->value('database_count') === $countBeforeRestore + 1, 'Recovery did not reclaim exactly the slot released by DROP');
 check($restored->resourceRef===$r->resource_ref && $restored->incarnation!==$r->incarnation,'Restore identity did not change');
 check($clone->resourceRef!==$r->resource_ref && $clone->incarnation!==$restored->incarnation,'Clone identity reused');
 refuse(fn()=>$journal->request(deleteIntent($r,$export),new OperationKey('lab','restore-delete'),$allow),'stale_incarnation');

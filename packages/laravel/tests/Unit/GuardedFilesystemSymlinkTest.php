@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Http\File;
 use League\Flysystem\Filesystem as Flysystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Tenant\Laravel\Internal\Storage\GuardedFilesystem;
@@ -74,6 +75,26 @@ it('rejects a symlink in a relative path without reading outside the root', func
             ->and(fn (): ?string => $filesystem->get('alias/secret.txt'))
             ->toThrow(RuntimeException::class, 'Storage paths must not contain symbolic links.')
             ->and(is_file($base.'/outside/secret.txt'))->toBeTrue();
+    } finally {
+        guardedFilesystemRemove($base);
+    }
+});
+
+it('checks the complete upload destination and reports successful file writes as booleans', function (): void {
+    $base = guardedFilesystemBase();
+    $root = $base.'/root';
+    try {
+        mkdir($root.'/uploads', 0700, true);
+        file_put_contents($base.'/source.txt', 'upload');
+        $file = new File($base.'/source.txt');
+        $filesystem = guardedFilesystem($root);
+
+        expect($filesystem->put('uploads', $file))->toBeTrue()
+            ->and($filesystem->putFileAs('uploads', $file, 'named.txt'))->toBe('uploads/named.txt');
+
+        symlink($base.'/source.txt', $root.'/uploads/linked.txt');
+        expect(fn (): string|false => $filesystem->putFileAs('uploads', $file, 'linked.txt'))
+            ->toThrow(RuntimeException::class, 'Storage paths must not contain symbolic links.');
     } finally {
         guardedFilesystemRemove($base);
     }

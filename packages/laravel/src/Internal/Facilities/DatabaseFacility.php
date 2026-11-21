@@ -26,6 +26,9 @@ final readonly class DatabaseFacility implements Facility
     /** @var list<string> */
     private const array STRIPPED_ROUTING = ['url', 'read', 'write', 'connect_via_database', 'connect_via_port', 'search_path', 'schema', 'server_options'];
 
+    /** @var list<string> */
+    private const array CENTRAL_DEFAULTS = ['application_name', 'charset', 'isolation_level', 'prefix', 'prefix_indexes', 'synchronous_commit', 'timezone'];
+
     public function __construct(private DatabaseManager $databases, private FrameworkConfig $config, private string $central) {}
 
     public function prepare(PhaseContext $context, FrameState $state): void
@@ -76,8 +79,10 @@ final readonly class DatabaseFacility implements Facility
         }
     }
 
-    /** @param array<string, mixed> $base
-     * @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $base
+     * @return array<string, mixed>
+     */
     private function tenantRoute(ResourceDescriptor $facet, array $base): array
     {
         foreach (['host', 'database', 'username', 'password'] as $key) {
@@ -86,9 +91,8 @@ final readonly class DatabaseFacility implements Facility
                 throw new InvalidArgumentException('unsupported_capability');
             }
         }
-        $stripped = array_flip(self::STRIPPED_ROUTING);
-        $route = array_replace(array_diff_key($base, $stripped), $facet->route, $facet->options);
-        $route = array_diff_key($route, $stripped);
+        $defaults = array_intersect_key($base, array_flip(self::CENTRAL_DEFAULTS));
+        $route = array_diff_key(array_replace($defaults, $facet->route, $facet->options), array_flip(self::STRIPPED_ROUTING));
         $route['driver'] = 'tenant-guarded-pgsql';
 
         return $route;

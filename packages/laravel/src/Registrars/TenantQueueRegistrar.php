@@ -11,6 +11,7 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Queue\Console\RestartCommand;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Queue\QueueServiceProvider;
 use Illuminate\Queue\Worker;
@@ -55,6 +56,14 @@ final class TenantQueueRegistrar implements PackageRegistrar
             if ($app->bound(QueueRegistry::class) && $worker instanceof Worker) {
                 $worker->setCache(self::controlCache($app));
             }
+        });
+
+        $app->extend(RestartCommand::class, static function (mixed $command, Container $container): mixed {
+            if (! $container->bound(QueueRegistry::class)) {
+                return $command;
+            }
+
+            return new RestartCommand(self::controlCache($container));
         });
 
         $app->singleton(ContextDispatcher::class, static fn (Container $app): LaravelContextDispatcher => new LaravelContextDispatcher(

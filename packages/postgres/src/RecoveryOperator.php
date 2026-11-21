@@ -125,11 +125,8 @@ final readonly class RecoveryOperator
             $incarnation = (string) Str::uuid7();
             $revision = (string) Str::uuid7();
             $rowRef = DbRow::str($row, 'resource_ref');
-            $rowIncarnation = DbRow::str($row, 'incarnation');
             // Durable claim before the marker changes; partial completion stays quarantined.
-            if ($this->catalog->table('tenant_pg_resources')->where('resource_ref', $rowRef)->where('incarnation', $rowIncarnation)->update(['status' => 'recovering', 'incarnation' => $incarnation, 'route_revision' => $revision, 'recovery_generation' => $generation]) !== 1) {
-                throw new ResourceQuarantined('Recovery target changed.');
-            }
+            $this->claimRecoveryTarget($row, $incarnation, $revision, $generation);
             // Reuse the P4.1 exact-marker CAS writer; restore is a different expected
             // source marker, not a second stamping engine.
             $writer = new MarkerWriter(new ConnectionFactory(new Container), $route, $this->runtimeRole, $generation, $marker, $fence);
@@ -141,7 +138,9 @@ final readonly class RecoveryOperator
             }
             $fence();
             $this->journal->assertHistory();
-            $this->catalog->table('tenant_pg_resources')->where('resource_ref', $rowRef)->where('incarnation', $incarnation)->update(['status' => 'quarantined', 'deleted_at' => null]);
+            if ($this->catalog->table('tenant_pg_resources')->where('resource_ref', $rowRef)->where('incarnation', $incarnation)->update(['status' => 'quarantined', 'deleted_at' => null]) !== 1) {
+                throw new ResourceQuarantined('Recovery target changed.');
+            }
             $recovery = new ResourceRecovery($rowRef, $incarnation, $revision, $generation);
             $this->verifyReplacement($recovery);
 
@@ -183,6 +182,25 @@ final readonly class RecoveryOperator
                 $this->catalog->table('tenant_pg_resources')->whereNull('deleted_at')->update(['status' => 'quarantined']);
                 $this->catalog->table('tenant_pg_control')->where('id', 1)->update(['recovery_generation' => $generation]);
             });
+        });
+    }
+
+    private function claimRecoveryTarget(object $row, string $incarnation, string $revision, string $generation): void
+    {
+        $this->catalog->transaction(function () use ($row, $incarnation, $revision, $generation): void {
+            $released = DbRow::bool($row, 'capacity_released');
+            $updated = $this->catalog->table('tenant_pg_resources')
+                ->where('resource_ref', DbRow::str($row, 'resource_ref'))
+                ->where('incarnation', DbRow::str($row, 'incarnation'))
+                ->where('capacity_released', $released)
+                ->update(['status' => 'recovering', 'incarnation' => $incarnation, 'route_revision' => $revision, 'recovery_generation' => $generation, 'capacity_released' => false]);
+            if ($updated !== 1) {
+                throw new ResourceQuarantined('Recovery target changed.');
+            }
+            if ($released && $this->catalog->table('tenant_pg_clusters')->where('id', DbRow::str($row, 'cluster_id'))
+                ->whereColumn('database_count', '<', 'capacity')->increment('database_count') !== 1) {
+                throw new ResourceQuarantined('Cluster capacity is unavailable for the recovery target.');
+            }
         });
     }
 

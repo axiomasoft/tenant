@@ -49,7 +49,12 @@ function makeResource(string $suffix):object
     $probe->statement('CREATE TABLE tenant_binding (singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton), protocol text NOT NULL,owner_id text NOT NULL,resource_ref text NOT NULL,incarnation text NOT NULL,recovery_generation text NOT NULL)');
     $probe->table('tenant_binding')->insert(['protocol'=>'tenant.binding/1','owner_id'=>'tenant-postgres','resource_ref'=>$ref,'incarnation'=>$inc,'recovery_generation'=>$generation]);
     $probe->statement('REVOKE CREATE ON SCHEMA public FROM PUBLIC');$probe->statement('REVOKE CREATE ON DATABASE "'.$name.'" FROM PUBLIC');$probe->statement('GRANT SELECT ON ALL TABLES IN SCHEMA public TO "'.$m['runtime'].'"');$probe->disconnect();
-    $c->table('tenant_pg_resources')->insert(['id'=>(string)Illuminate\Support\Str::uuid7(),'cluster_id'=>'13131313-1313-4313-8313-131313131313','template_version'=>7,'status'=>'ready','resource_ref'=>$ref,'incarnation'=>$inc,'database_name'=>$name,'route_revision'=>'route:1','recovery_generation'=>$generation]);
+    $clusterId = '13131313-1313-4313-8313-131313131313';
+    $c->transaction(function () use ($c, $clusterId, $ref, $inc, $name, $generation): void {
+        $c->table('tenant_pg_clusters')->insertOrIgnore(['id' => $clusterId, 'status' => 'active', 'template_version' => 7, 'capacity' => 32, 'database_count' => 0]);
+        $c->table('tenant_pg_resources')->insert(['id' => (string) Illuminate\Support\Str::uuid7(), 'cluster_id' => $clusterId, 'template_version' => 7, 'status' => 'ready', 'resource_ref' => $ref, 'incarnation' => $inc, 'database_name' => $name, 'route_revision' => 'route:1', 'recovery_generation' => $generation]);
+        $c->table('tenant_pg_clusters')->where('id', $clusterId)->increment('database_count');
+    });
     return $c->table('tenant_pg_resources')->where('resource_ref',$ref)->first();
 }
 function exportIntent(object $r):Tenant\Postgres\ExportIntent { return new Tenant\Postgres\ExportIntent($r->resource_ref,$r->incarnation,'archive:lab','policy:lab'); }

@@ -96,11 +96,16 @@ final class TenantFacilitiesRegistrar implements PackageRegistrar
                             throw new TenantFailure('facility_configuration');
                         }
                     }
+                    foreach (['port', 'sslmode', 'sslcert', 'sslkey', 'sslrootcert'] as $key) {
+                        if (($config[$key] ?? null) !== ($descriptor->route[$key] ?? null)) {
+                            throw new TenantFailure('facility_configuration');
+                        }
+                    }
                     $expected = $owner->current()->context->binding ?? throw new TenantFailure('missing');
                     FrameworkConfig::service($app, BindingVerifier::class, BindingVerifier::class)
                         ->verify(new BindingVerificationInput($expected, $descriptor));
 
-                    return (new PostgresConnector)->connect($config);
+                    return (new PostgresConnector)->connect([...$config, 'search_path' => 'public']);
                 }, $config['database'], $config['prefix'] ?? '', $config, $guard);
             });
         }
