@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Declared the MIT license in package metadata.
+- Require a facility prefix to end with `:` and reject null bytes. Hosts must assign non-overlapping prefixes on shared backends.
+- Wire queue pause and restart to the single configured central cache store. Any other list length fails closed before a store is resolved.
+- Reuse the session handler captured during prepare when the session and backing store configuration are unchanged. Require the session directory to have mode 0700.
+- Walk each local storage root once per operation. A symlink in the root, an ancestor, or a relative segment is still refused.
+- Pin the guarded PostgreSQL connection to the facet's host, database, credentials, port, and TLS settings. Use the `public` schema.
+- Keep a database transaction lease until the PDO transaction is actually gone, including when begin or rollback throws after the transaction level changes.
+- Delete an expired file session when the guarded handler destroys it.
 - Added explicit `laravel-scoped` composition for host-owned Eloquent connections without PostgreSQL or a physical binding verifier. The existing `laravel-pg-database` default and its stronger database guarantees remain unchanged.
 - Added route-free `ScopeDescriptor` and the common `ResourceScope` facility SPI; cache/session/storage no longer need a database route in scoped mode.
 - Added SQLite/Eloquent consumer-pattern tests for host-owned row scopes, nested context restoration, stable named connections and explicit single-installation mode.

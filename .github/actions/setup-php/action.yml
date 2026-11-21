@@ -1,0 +1,30 @@
+name: Setup PHP
+description: Install PHP 8.4, required extensions, and locked Composer dependencies.
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "8.4"
+        coverage: none
+        tools: composer:v2
+        extensions: bcmath, ctype, curl, dom, fileinfo, gd, gmp, intl, mbstring, pcntl, pdo_pgsql, pdo_sqlite, posix, sodium, sqlite3, tokenizer, xml, zip
+        ini-values: memory_limit=2G, assert.exception=1
+
+    - name: Locate Composer cache
+      id: composer-cache
+      shell: bash
+      run: echo "files=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Composer package downloads
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.composer-cache.outputs.files }}
+        key: composer-files-${{ hashFiles('composer.lock') }}
+        restore-keys: composer-files-
+
+    - name: Install monorepo dependencies
+      shell: bash
+      run: composer install --no-interaction --prefer-dist --no-progress --ansi

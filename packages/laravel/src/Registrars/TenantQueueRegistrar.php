@@ -6,9 +6,12 @@ namespace Tenant\Laravel\Registrars;
 
 use Illuminate\Cache\CacheManager;
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Container\Container as ContainerContract;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Queue\Console\RestartCommand;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Queue\QueueServiceProvider;
 use Illuminate\Queue\Worker;
@@ -43,8 +46,7 @@ final class TenantQueueRegistrar implements PackageRegistrar
                 return $original;
             }
 
-            $control = FrameworkConfig::service($container, 'cache', CacheManager::class)->store('central');
-            $manager = new ControlQueueManager($app, $control);
+            $manager = new ControlQueueManager($app, self::controlCache($container));
             new QueueServiceProvider($app)->registerConnectors($manager);
 
             return $manager;
@@ -52,8 +54,16 @@ final class TenantQueueRegistrar implements PackageRegistrar
 
         $app->afterResolving('queue.worker', static function (mixed $worker) use ($app): void {
             if ($app->bound(QueueRegistry::class) && $worker instanceof Worker) {
-                $worker->setCache(FrameworkConfig::service($app, 'cache', CacheManager::class)->store('central'));
+                $worker->setCache(self::controlCache($app));
             }
+        });
+
+        $app->extend(RestartCommand::class, static function (mixed $command, Container $container): mixed {
+            if (! $container->bound(QueueRegistry::class)) {
+                return $command;
+            }
+
+            return new RestartCommand(self::controlCache($container));
         });
 
         $app->singleton(ContextDispatcher::class, static fn (Container $app): LaravelContextDispatcher => new LaravelContextDispatcher(
@@ -97,6 +107,20 @@ final class TenantQueueRegistrar implements PackageRegistrar
         new QueueEventRegistrar(
             FrameworkConfig::service($app, QueueContextBoundary::class, QueueContextBoundary::class),
         )->boot(FrameworkConfig::service($app, 'events', Dispatcher::class));
+    }
+
+    private static function controlCache(ContainerContract $container): CacheRepository
+    {
+        $options = FrameworkConfig::service($container, TenantOptions::class, TenantOptions::class);
+        $names = $options->centralCacheStores;
+        $store = $names[0] ?? null;
+
+        // Checked before the cache manager resolves a store. TenantOptions itself allows a longer list.
+        if (count($names) !== 1 || ! is_string($store) || $store === '') {
+            throw new TenantFailure('facility_configuration');
+        }
+
+        return FrameworkConfig::service($container, 'cache', CacheManager::class)->store($store);
     }
 
     private function watchRebind(Container $container, QueueRegistry $registry): void

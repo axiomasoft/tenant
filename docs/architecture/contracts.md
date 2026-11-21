@@ -1,5 +1,7 @@
 # Контракты, расширения и recovery
 
+The current host guide is [integration.md](../integration.md). Laravel profile boundaries are in [laravel-profiles.md](laravel-profiles.md). This file remains the frozen v1 qualification record: wire shape, extension ownership, and recovery rules. It is not a transcript of the latest test run. PHP API manifests live in each package at `resources/contracts/php-api.json`.
+
 Semantic/wire/SPI v1 зафиксированы P1.1 в manifests ниже. Runtime и адаптеры реализованы в `packages/`; актуальные способы подключения описаны в [integration guide](../integration.md), а PHP API каждого пакета — в его `resources/contracts/php-api.json`. Исторические этапы квалификации ниже не являются отчётом о текущем запуске тестов. Контракт не предоставляет полномочия произвольному коду хоста: trust boundary — composition root и входы извне процесса.
 
 Необязательный `tenant-panels` добавляет допуск в панели через существующий runtime и host-owned проекцию scope. Он не меняет wire v1, не добавляет UI framework в ядро и не становится вторым владельцем tenant-контекста.

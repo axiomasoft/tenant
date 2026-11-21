@@ -72,10 +72,14 @@ final readonly class SessionFacility implements Facility
                 if (! is_dir($facet->sessionRoot) && ! mkdir($facet->sessionRoot, 0700, true) && ! is_dir($facet->sessionRoot)) {
                     throw new RuntimeException('session directory unavailable');
                 }
+                clearstatcache(true, $facet->sessionRoot);
+                $mode = fileperms($facet->sessionRoot);
+                if ((! is_int($mode) || ($mode & 07777) !== 0700) && ! chmod($facet->sessionRoot, 0700)) {
+                    throw new RuntimeException('session directory permissions unavailable');
+                }
                 if (! is_writable($facet->sessionRoot)) {
                     throw new RuntimeException('session directory not writable');
                 }
-                chmod($facet->sessionRoot, 0700);
                 $this->config->set('session.files', $facet->sessionRoot);
             } elseif ($this->config->get('session.driver') === 'redis') {
                 $name = $this->config->text('session.store');
@@ -91,7 +95,37 @@ final readonly class SessionFacility implements Facility
                 $store->setExists(false);
             }
         }
-        $this->swap();
+        $this->swap($this->reusableHandlers($state));
+    }
+
+    /**
+     * @return array<string, SessionHandlerInterface>
+     */
+    private function reusableHandlers(FrameState $state): array
+    {
+        if ($state->get('config') !== $this->config->get('session')) {
+            return [];
+        }
+
+        $name = $this->config->get('session.store');
+        if (is_string($name) && $state->get('cache') !== $this->config->get('cache.stores.'.$name)) {
+            return [];
+        }
+
+        $handlers = $state->get('handlers') ?? [];
+        if (! is_array($handlers)) {
+            return [];
+        }
+
+        $reusable = [];
+        foreach ($handlers as $key => $handler) {
+            if (! is_string($key) || ! $handler instanceof SessionHandlerInterface) {
+                return [];
+            }
+            $reusable[$key] = $handler;
+        }
+
+        return $reusable;
     }
 
     /** @param array<string, SessionHandlerInterface> $handlers */

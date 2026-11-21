@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Declared the MIT license in package metadata.
 - Detached PHP array references in immutable contexts, durable references, participant declarations and compiled composition so caller mutations cannot change a frozen target or capability graph.
 - Closed phase capabilities before compensation and observations; rejected retained clones and cross-Fiber access.
 - Added regression coverage for phase lifetime, reference aliasing and recursive metadata.

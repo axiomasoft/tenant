@@ -35,14 +35,58 @@ it('preserves explicit TLS requirements when starting the native archive command
     ];
     $store = new PgDumpArchiveStore($directory, 'archive:private', static fn (object $row): array => $route, $executable);
     $exportId = '11111111-1111-4111-8111-111111111111';
+    putenv('TENANT_PARENT_SECRET=parent-secret');
     try {
         $manifest = $store->write($resource, 'operation:archive', $exportId, 'archive:private');
         $environment = json_decode(file_get_contents($directory.'/'.$exportId.'.dump'), true, flags: JSON_THROW_ON_ERROR);
-        expect($store->verify($manifest))->toBeTrue()
+        expect($environment)->toBeArray()
+            ->and($store->verify($manifest))->toBeTrue()
             ->and($environment['PGSSLMODE'] ?? null)->toBe('verify-full')
             ->and($environment['PGSSLCERT'] ?? null)->toBe('/private/client.pem')
             ->and($environment['PGSSLKEY'] ?? null)->toBe('/private/client.key')
-            ->and($environment['PGSSLROOTCERT'] ?? null)->toBe('/private/ca.pem');
+            ->and($environment['PGSSLROOTCERT'] ?? null)->toBe('/private/ca.pem')
+            ->and(array_key_exists('TENANT_PARENT_SECRET', $environment))->toBeFalse()
+            ->and($environment['PGPASSWORD'] ?? null)->toBe('test-password');
+    } finally {
+        putenv('TENANT_PARENT_SECRET');
+        foreach (glob($directory.'/*') ?: [] as $path) {
+            unlink($path);
+        }
+        rmdir($directory);
+    }
+});
+
+it('refuses an unsafe database name and a relative pg_dump path before starting a process', function (): void {
+    $directory = sys_get_temp_dir().'/tenant-archive-'.bin2hex(random_bytes(8));
+    mkdir($directory, 0700);
+    $executable = $directory.'/dump-environment';
+    file_put_contents($executable, "#!/bin/sh\nexit 0\n");
+    chmod($executable, 0700);
+    $route = [
+        'driver' => 'pgsql',
+        'database' => 'archive"test',
+        'host' => 'database.invalid',
+        'port' => 5432,
+        'username' => 'archive_user',
+        'password' => 'test-password',
+    ];
+    $resource = (object) [
+        'database_name' => 'archive"test',
+        'resource_ref' => 'resource:archive',
+        'incarnation' => 'incarnation:1',
+        'route_revision' => 'route:1',
+        'recovery_generation' => 'generation:1',
+    ];
+    $exportId = '22222222-2222-4222-8222-222222222222';
+    $store = new PgDumpArchiveStore($directory, 'archive:private', static fn (object $row): array => $route, $executable);
+    $relative = new PgDumpArchiveStore($directory, 'archive:private', static fn (object $row): array => [...$route, 'database' => 'archive_test'], 'pg_dump');
+    $safeResource = (object) [...(array) $resource, 'database_name' => 'archive_test'];
+    try {
+        expect(fn (): mixed => $store->write($resource, 'operation:archive', $exportId, 'archive:private'))
+            ->toThrow(RuntimeException::class, 'Invalid PostgreSQL identifier.')
+            ->and(fn (): mixed => $relative->write($safeResource, 'operation:archive', $exportId, 'archive:private'))
+            ->toThrow(RuntimeException::class, 'pg_dump must be an absolute path.')
+            ->and(is_file($directory.'/'.$exportId.'.dump'))->toBeFalse();
     } finally {
         foreach (glob($directory.'/*') ?: [] as $path) {
             unlink($path);

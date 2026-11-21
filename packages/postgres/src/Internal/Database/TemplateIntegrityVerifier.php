@@ -135,6 +135,9 @@ final readonly class TemplateIntegrityVerifier implements TemplateIntegrityVerif
 
     private function actualHashForDatabase(string $database): string
     {
+        if (! PostgresIdentifier::isValid($database)) {
+            throw new TemplateIntegrityException('Invalid PostgreSQL identifier.');
+        }
         $central = $this->db();
         $configuration = DbRow::configMap($central);
 

@@ -17,6 +17,12 @@ mkdir -p "$shim"
 ln -sf "$bin" "$shim/php"
 export PATH="$shim:$PATH"
 
+if [[ $# -eq 0 || ( "${1:-}" == -* && "${1:-}" != "--check" ) ]]; then
+    echo "usage: bin/php84 --check | bin/php84 <command> [args...]" >&2
+    echo "bin/php84 runs <command> with PHP 8.4 on PATH. To invoke PHP itself: bin/php84 php -r ..." >&2
+    exit 2
+fi
+
 if [[ "${1:-}" == "--check" ]]; then
     version="$(php -r 'echo PHP_VERSION;')"
     if [[ "$version" != 8.4.* ]]; then

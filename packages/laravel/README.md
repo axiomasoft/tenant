@@ -1,6 +1,6 @@
 # Tenant Laravel (`axiomasoft/tenant-laravel`)
 
-Laravel context, Eloquent integration, guarded cache/session/local storage, HTTP and queue integration for `axiomasoft/tenant`. Database switching is a separate profile.
+Laravel context, Eloquent integration, guarded cache/session/local storage, HTTP and queue integration for `axiomasoft/tenant`. Database switching is a separate profile. Released under the MIT license.
 
 ## Features
 
@@ -16,7 +16,7 @@ Install `axiomasoft/tenant-laravel` and bind `Tenant\Contracts\Context\ContextRe
 Choose the profile before boot:
 
 - **`laravel-scoped`** supplies a context for Eloquent consumers while leaving their connections and data-isolation rules intact. No PostgreSQL owner, physical verifier or connection named `central` is required unless another enabled integration needs one.
-- **`laravel-pg-database`** switches a guarded PostgreSQL connection per resource and additionally requires `Tenant\Contracts\Verification\BindingVerifier`. This remains the default for compatibility. It can use an existing physical owner; `tenant-postgres` is optional.
+- **`laravel-pg-database`** switches a guarded PostgreSQL connection per resource and additionally requires `Tenant\Contracts\Verification\BindingVerifier`. This remains the default for compatibility. It can use an existing physical owner. The facet route must name `host`, `database`, `username`, and `password`. Put a non-default `port` and any TLS settings in the facet route so the verifier and the guarded connection use the same values. Central application settings such as `application_name` provide defaults. The guarded connection selects the `public` schema.
 
 For an application that already owns all its database, cache, session and storage behavior, the minimal context-only `config/tenant.php` is:
 
@@ -40,7 +40,7 @@ return [
 
 These declarations record existing host responsibilities; they do not implement row scoping or authorize sharing across tenants. Consumers still need their own Eloquent scopes, ownership checks or explicit connection/space routing. Missing context is not central access.
 
-To let Tenant manage cache/session/storage in scoped mode, enable the chosen facilities, remove their `shared` declarations and return a trusted `Tenant\Laravel\Data\ScopeDescriptor` in the resolver's `FacetBindings` under `tenant:resource`. It contains a prefix and absolute durable, ephemeral and session roots, with no database route. The database facility stays disabled. Use `ProfileRef('laravel-scoped', 1)` for tenant/central selections, or an explicit `Selection::single(...)` for a host-enforced single installation.
+To let Tenant manage cache/session/storage in scoped mode, enable the chosen facilities, remove their `shared` declarations and return a trusted `Tenant\Laravel\Data\ScopeDescriptor` in the resolver's `FacetBindings` under `tenant:resource`. It contains a prefix and absolute durable, ephemeral and session roots. The host must assign unique, non-overlapping prefixes across resources that share a backend. Use a fixed namespace followed by a delimiter-free resource identifier and a final colon, such as `tenant:a:`. The descriptor requires a nonempty prefix before the final colon and rejects null bytes. Use `ProfileRef('laravel-scoped', 1)` for tenant/central selections, or an explicit `Selection::single(...)` for a host-enforced single installation.
 
 Disabled cache/session facilities are validated as host-owned sharing declarations; their external drivers are not constrained to Tenant's supported isolated drivers. Enabled facilities still enforce those constraints. See the [integration guide](../../docs/integration.md) for composition hooks and ownership rules.
 

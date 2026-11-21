@@ -33,8 +33,8 @@ final readonly class TemplateClonePostgreSQLManager
 
     public function createOrVerify(ResourceSnapshot $snapshot, string $templateDatabase): bool
     {
-        $this->identifier($snapshot->databaseName);
-        $this->identifier($templateDatabase);
+        PostgresIdentifier::assert($snapshot->databaseName);
+        PostgresIdentifier::assert($templateDatabase);
         if ($snapshot->databaseName === $templateDatabase) {
             throw new RuntimeException('Template and target must differ.');
         }
@@ -61,7 +61,7 @@ final readonly class TemplateClonePostgreSQLManager
 
             // No automatic CREATE retry: a lost connection may conceal a committed DDL.
             $this->fence();
-            $this->connection->getPdo()->exec('CREATE DATABASE "'.$snapshot->databaseName.'" TEMPLATE "'.$templateDatabase.'" STRATEGY WAL_LOG');
+            $this->connection->getPdo()->exec('CREATE DATABASE '.PostgresIdentifier::quote($snapshot->databaseName).' TEMPLATE '.PostgresIdentifier::quote($templateDatabase).' STRATEGY WAL_LOG');
             $this->fence();
             ($this->stampNewBinding)($snapshot);
             $this->fence();
@@ -95,12 +95,5 @@ final readonly class TemplateClonePostgreSQLManager
     private function databaseExists(string $name): bool
     {
         return $this->connection->selectOne('SELECT datname FROM pg_database WHERE datname = ?', [$name]) !== null;
-    }
-
-    private function identifier(string $value): void
-    {
-        if (preg_match('/\A[a-zA-Z0-9_]+\z/D', $value) !== 1 || strlen($value) > 63) {
-            throw new RuntimeException('Invalid PostgreSQL identifier.');
-        }
     }
 }

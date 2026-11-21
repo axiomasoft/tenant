@@ -7,8 +7,10 @@ namespace Tenant\Postgres;
 use Closure;
 use Packman\Attributes\Api;
 use RuntimeException;
+use Tenant\Exceptions\ArchiveUnverified;
 use Tenant\Postgres\Contracts\Lifecycle\ArchiveStore;
 use Tenant\Postgres\Internal\Database\DbRow;
+use Tenant\Postgres\Internal\Database\PostgresIdentifier;
 use Tenant\Postgres\Internal\Database\PostgresRoute;
 use Throwable;
 
@@ -34,22 +36,9 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
         if (($route['database'] ?? null) !== $databaseName || ! PostgresRoute::isDirect($route)) {
             throw new RuntimeException('Archive route mismatch.');
         }
-        $host = $route['host'] ?? null;
-        $username = $route['username'] ?? null;
-        $password = $route['password'] ?? null;
-        $port = $route['port'] ?? 5432;
-        if (! is_string($host) || ! is_string($username) || ! is_string($password) || (! is_int($port) && ! is_string($port))) {
-            throw new RuntimeException('Archive route credentials are invalid.');
-        }
-        $environment = ['PGHOST' => $host, 'PGPORT' => (string) $port, 'PGUSER' => $username, 'PGPASSWORD' => $password, 'PGCONNECT_TIMEOUT' => '10'];
-        foreach (['sslmode' => 'PGSSLMODE', 'sslcert' => 'PGSSLCERT', 'sslkey' => 'PGSSLKEY', 'sslrootcert' => 'PGSSLROOTCERT'] as $option => $variable) {
-            if (isset($route[$option])) {
-                if (! is_string($route[$option]) || $route[$option] === '' || str_contains($route[$option], "\0")) {
-                    throw new RuntimeException('Archive TLS configuration is invalid.');
-                }
-                $environment[$variable] = $route[$option];
-            }
-        }
+        PostgresIdentifier::assert($databaseName);
+        $executable = $this->executable();
+        $environment = $this->processEnvironment($route);
         $tmp = $path.'.partial';
         $output = fopen($tmp, 'x');
         if ($output === false) {
@@ -62,7 +51,7 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
             throw new RuntimeException('Archive error stream unavailable.');
         }
         try {
-            $process = proc_open([$this->pgDump, '--format=custom', '--no-owner', '--no-privileges', '--dbname', $databaseName], [0 => ['file', '/dev/null', 'r'], 1 => $output, 2 => $errors], $pipes, env_vars: $environment);
+            $process = proc_open([$executable, '--format=custom', '--no-owner', '--no-privileges', '--dbname', $databaseName], [0 => ['file', '/dev/null', 'r'], 1 => $output, 2 => $errors], $pipes, env_vars: $environment);
             if (! is_resource($process) || proc_close($process) !== 0) {
                 throw new RuntimeException('Native pg_dump failed; archive remains quarantined.');
             }
@@ -95,7 +84,8 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
         $file = fopen($path.'.manifest.partial', 'x');
         if ($file === false) {
             throw new RuntimeException('Archive manifest unavailable.');
-        }chmod($path.'.manifest.partial', 0600);
+        }
+        chmod($path.'.manifest.partial', 0600);
         try {
             $bytes = json_encode(get_object_vars($manifest), JSON_THROW_ON_ERROR);
             if (fwrite($file, $bytes) !== strlen($bytes) || ! fflush($file) || ! fsync($file)) {
@@ -119,7 +109,7 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
             fclose($directory);
         }
         if (! $this->verify($manifest)) {
-            throw new RuntimeException('archive_unverified');
+            throw new ArchiveUnverified('archive_unverified');
         }
 
         return $manifest;
@@ -177,5 +167,43 @@ final readonly class PgDumpArchiveStore implements ArchiveStore
         if (! is_dir($this->root) || is_link($this->root) || (fileperms($this->root) & 0077) !== 0) {
             throw new RuntimeException('Archive requires a private durable directory.');
         }
+    }
+
+    /** @param array<string, mixed> $route
+     * @return array<string, string> */
+    private function processEnvironment(array $route): array
+    {
+        $host = $route['host'] ?? null;
+        $username = $route['username'] ?? null;
+        $password = $route['password'] ?? null;
+        $port = $route['port'] ?? 5432;
+        if (! is_string($host) || ! is_string($username) || ! is_string($password) || (! is_int($port) && ! is_string($port))
+            || str_contains($host, "\0") || str_contains($username, "\0") || str_contains($password, "\0") || str_contains((string) $port, "\0")) {
+            throw new RuntimeException('Archive route credentials are invalid.');
+        }
+        $environment = ['PGHOST' => $host, 'PGPORT' => (string) $port, 'PGUSER' => $username, 'PGPASSWORD' => $password, 'PGCONNECT_TIMEOUT' => '10'];
+        foreach (['sslmode' => 'PGSSLMODE', 'sslcert' => 'PGSSLCERT', 'sslkey' => 'PGSSLKEY', 'sslrootcert' => 'PGSSLROOTCERT'] as $option => $variable) {
+            if (isset($route[$option])) {
+                if (! is_string($route[$option]) || $route[$option] === '' || str_contains($route[$option], "\0")) {
+                    throw new RuntimeException('Archive TLS configuration is invalid.');
+                }
+                $environment[$variable] = $route[$option];
+            }
+        }
+        $path = getenv('PATH');
+        if (is_string($path) && $path !== '' && ! str_contains($path, "\0")) {
+            $environment['PATH'] = $path;
+        }
+
+        return $environment;
+    }
+
+    private function executable(): string
+    {
+        if ($this->pgDump === '' || str_contains($this->pgDump, "\0") || ! str_starts_with($this->pgDump, '/')) {
+            throw new RuntimeException('pg_dump must be an absolute path.');
+        }
+
+        return $this->pgDump;
     }
 }

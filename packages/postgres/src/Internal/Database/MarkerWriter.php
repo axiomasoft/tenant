@@ -21,7 +21,7 @@ final readonly class MarkerWriter
 
     public function stamp(ResourceSnapshot $snapshot): void
     {
-        if (preg_match('/^[A-Za-z0-9_]{1,63}$/D', $snapshot->databaseName) !== 1 || preg_match('/^[A-Za-z0-9_]{1,63}$/D', $this->runtimeRole) !== 1 || $this->generation === '') {
+        if (! PostgresIdentifier::isValid($snapshot->databaseName) || ! PostgresIdentifier::isValid($this->runtimeRole) || $this->generation === '') {
             throw new RuntimeException('Invalid physical binding.');
         }
         ($this->assertFence)();
@@ -32,19 +32,21 @@ final readonly class MarkerWriter
         }
         $connection = $this->factory->make($config, 'tenant-pg-marker-writer');
         try {
+            $connection->statement('SET search_path TO public');
             $connection->transaction(function () use ($connection, $snapshot): void {
                 ($this->assertFence)();
-                $rows = $connection->select('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM tenant_binding FOR UPDATE');
+                $rows = $connection->select('SELECT protocol,owner_id,resource_ref,incarnation,recovery_generation FROM public.tenant_binding FOR UPDATE');
                 if (count($rows) !== 1 || (array) $rows[0] !== $this->expectedTemplateMarker) {
                     throw new RuntimeException('Unexpected template marker.');
                 }
-                $count = $connection->table('tenant_binding')->where('singleton', true)->update(['protocol' => 'tenant.binding/1', 'owner_id' => 'tenant-postgres', 'resource_ref' => $snapshot->resourceRef, 'incarnation' => $snapshot->incarnation, 'recovery_generation' => $this->generation]);
+                $count = $connection->table('public.tenant_binding')->where('singleton', true)->update(['protocol' => 'tenant.binding/1', 'owner_id' => 'tenant-postgres', 'resource_ref' => $snapshot->resourceRef, 'incarnation' => $snapshot->incarnation, 'recovery_generation' => $this->generation]);
                 if ($count !== 1) {
                     throw new RuntimeException('Marker update failed.');
                 }
-                $connection->statement('REVOKE ALL ON tenant_binding FROM PUBLIC');
-                $connection->statement('REVOKE ALL ON tenant_binding FROM "'.$this->runtimeRole.'"');
-                $connection->statement('GRANT SELECT ON tenant_binding TO "'.$this->runtimeRole.'"');
+                $role = PostgresIdentifier::quote($this->runtimeRole);
+                $connection->statement('REVOKE ALL ON public.tenant_binding FROM PUBLIC');
+                $connection->statement('REVOKE ALL ON public.tenant_binding FROM '.$role);
+                $connection->statement('GRANT SELECT ON public.tenant_binding TO '.$role);
                 ($this->assertFence)();
             });
             ($this->assertFence)();

@@ -191,6 +191,8 @@ it('reads binary download content before restoring the tenant context', function
 });
 
 it('stops a process when host selection leaks a foreign frame even if selection throws', function (string $mode): void {
+    $this->kernel->expects($this->never())->method('handle');
+    $this->kernel->expects($this->never())->method('terminate');
     $script = <<<'PHP'
 require $argv[1];
 $rig = new TenantTests\RuntimeRig(ids: []);

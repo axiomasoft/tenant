@@ -30,7 +30,7 @@ Product state that must change during activation belongs in a `product`-stage pa
 
 ## Laravel composition
 
-Bind the host resolver in a service provider's `register()` method, before application boot. Select `runtime_profile: laravel-scoped` for consumer-owned Eloquent data isolation, or bind a physical verifier and retain `laravel-pg-database` for guarded database switching. The core also supports portable `php-scoped` and `single` compositions when the host configures them explicitly. See [Laravel profiles](architecture/laravel-profiles.md) for their precise boundaries.
+Bind the host resolver in a service provider's `register()` method, before application boot. Select `runtime_profile: laravel-scoped` for consumer-owned Eloquent data isolation, or bind a physical verifier and retain `laravel-pg-database` for guarded database switching. Those are the only profiles `TenantOptions` accepts. A portable `php-scoped` composition is available when the host constructs `CompositionBuilder` itself; `tenant.compose` cannot add a profile after that builder freezes. On the Laravel scoped profile, `Selection::single(...)` is an explicit selection, not a `runtime_profile` value. See [Laravel profiles](architecture/laravel-profiles.md) for their precise boundaries.
 
 Use the existing composition hooks only in the host's registration phase:
 

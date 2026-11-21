@@ -9,6 +9,7 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\PostgresConnection;
 use InvalidArgumentException;
 use Packman\Attributes\Internal;
+use PDO;
 use ReflectionMethod;
 use Tenant\Exceptions\TenantFailure;
 use Tenant\Runtime\GenerationGuard;
@@ -55,17 +56,13 @@ final class GuardedConnection extends PostgresConnection
     public function beginTransaction(): void
     {
         $this->guard->check();
-        $release = $this->transactions === 0 ? $this->guard->acquire() : null;
-        if ($release !== null) {
-            $this->transactionRelease = $release;
+        if ($this->transactions === 0 && $this->transactionRelease === null) {
+            $this->transactionRelease = $this->guard->acquire();
         }
         try {
             parent::beginTransaction();
         } catch (Throwable $failure) {
-            $release?->__invoke();
-            if ($release !== null) {
-                $this->transactionRelease = null;
-            }
+            $this->releaseFinishedTransaction();
             throw $failure;
         }
     }
@@ -79,13 +76,7 @@ final class GuardedConnection extends PostgresConnection
             // closes, and the lease must close before user afterCommit callbacks.
             // Laravel executes child records before their parent. Every savepoint
             // needs this first callback, while only the outermost commit releases.
-            $this->transactionsManager->addCallback(function (): void {
-                if ($this->transactions === 0) {
-                    $release = $this->transactionRelease;
-                    $this->transactionRelease = null;
-                    $release?->__invoke();
-                }
-            });
+            $this->transactionsManager->addCallback($this->releaseFinishedTransaction(...));
         }
 
         return parent::fireConnectionEvent($event);
@@ -94,20 +85,20 @@ final class GuardedConnection extends PostgresConnection
     public function commit(): void
     {
         $this->guard->check();
-        parent::commit();
-        if ($this->transactions === 0) {
-            ($this->transactionRelease)?->__invoke();
-            $this->transactionRelease = null;
+        try {
+            parent::commit();
+        } finally {
+            $this->releaseFinishedTransaction();
         }
     }
 
     public function rollBack($toLevel = null): void
     {
         $this->guard->check();
-        parent::rollBack($toLevel);
-        if ($this->transactions === 0) {
-            ($this->transactionRelease)?->__invoke();
-            $this->transactionRelease = null;
+        try {
+            parent::rollBack($toLevel);
+        } finally {
+            $this->releaseFinishedTransaction();
         }
     }
 
@@ -128,11 +119,25 @@ final class GuardedConnection extends PostgresConnection
             return parent::transaction($callback, $attempts);
         } finally {
             // Laravel's transaction helper commits PDO directly rather than calling commit().
-            if ($this->transactions === 0) {
-                ($this->transactionRelease)?->__invoke();
-                $this->transactionRelease = null;
-            }
+            $this->releaseFinishedTransaction();
         }
+    }
+
+    private function releaseFinishedTransaction(): void
+    {
+        if ($this->transactions !== 0 || $this->transactionRelease === null) {
+            return;
+        }
+        $pdo = $this->getRawPdo();
+        if ($pdo instanceof PDO && $pdo->inTransaction()) {
+            // Laravel may lower the level after a commit error even if PDO can still roll back.
+            $this->transactions = 1;
+
+            return;
+        }
+        $release = $this->transactionRelease;
+        $this->transactionRelease = null;
+        $release();
     }
 
     /**
