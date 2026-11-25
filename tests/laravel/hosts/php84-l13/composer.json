@@ -1,0 +1,32 @@
+{
+  "name": "axiomasoft/tenant-lab-php84-l13",
+  "type": "project",
+  "require": {
+    "php": ">=8.4 <8.6",
+    "laravel/framework": "^13.0",
+    "predis/predis": "^3.0",
+    "axiomasoft/tenant-laravel": "1.0.0"
+  },
+  "require-dev": {
+    "pestphp/pest": "^4.0",
+    "phpstan/phpstan": "^2.1"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    },
+    "platform": {
+      "php": "8.4.0"
+    },
+    "sort-packages": true
+  },
+  "autoload": {
+    "psr-4": {}
+  },
+  "repositories": [
+    {
+      "type": "artifact",
+      "url": "/home/vostrikov/projects/packages/tenant/plans/2026.10.24-№1-TENANT/artifacts/P3.2/archive/448985075572194867ac"
+    }
+  ]
+}

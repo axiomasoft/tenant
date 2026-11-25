@@ -1,0 +1,99 @@
+# Dependency advisories are checked with Composer (`composer security:audit`).
+# Dependabot is intentionally not configured.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  COMPOSER_NO_INTERACTION: "1"
+
+jobs:
+  quality:
+    name: Static analysis and gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout Packman v0.1.2
+        run: git clone --depth 1 --branch v0.1.2 https://github.com/axiomasoft/packman.git ../packman
+      - uses: ./.github/actions/setup-php
+      - name: Cache PHPStan results
+        uses: actions/cache@v6
+        with:
+          path: build/phpstan
+          key: phpstan-${{ hashFiles('phpstan.neon', 'composer.lock') }}
+          restore-keys: phpstan-
+      - run: composer lint:check
+      - run: composer analyse
+      - run: composer refactor:check
+      - run: composer gate
+      - run: composer php-api
+      - run: composer error-codes
+      - run: composer config-schema
+      - run: composer boundaries
+      - run: composer security:audit
+
+  tests:
+    name: SQLite tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout Packman v0.1.2
+        run: git clone --depth 1 --branch v0.1.2 https://github.com/axiomasoft/packman.git ../packman
+      - uses: ./.github/actions/setup-php
+      - run: composer test:parallel
+
+  postgresql:
+    name: PostgreSQL tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: skm
+          POSTGRES_PASSWORD: skm_dev
+          POSTGRES_DB: tenant_test
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U skm -d tenant_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Checkout Packman v0.1.2
+        run: git clone --depth 1 --branch v0.1.2 https://github.com/axiomasoft/packman.git ../packman
+      - uses: ./.github/actions/setup-php
+      - run: composer test:pg
+
+  contracts:
+    name: Contract fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install pinned contract tools
+        run: |
+          python3 -I -m venv .venv-contracts
+          .venv-contracts/bin/python -I -m pip install --require-hashes -r tools/contract-requirements.lock
+      - run: .venv-contracts/bin/python -I scripts/check-contract-fixtures.py --all
+      - run: .venv-contracts/bin/python -I -m unittest discover -s tests -p 'test_*.py'

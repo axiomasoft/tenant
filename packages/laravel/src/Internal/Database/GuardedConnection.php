@@ -1,0 +1,163 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tenant\Laravel\Internal\Database;
+
+use Closure;
+use Illuminate\Database\Connection;
+use Illuminate\Database\PostgresConnection;
+use InvalidArgumentException;
+use Packman\Attributes\Internal;
+use PDO;
+use ReflectionMethod;
+use Tenant\Exceptions\TenantFailure;
+use Tenant\Runtime\GenerationGuard;
+use Throwable;
+
+/** @internal Qualified SQL/query-builder operations. Escaped native PDO is outside the contract. */
+#[Internal]
+final class GuardedConnection extends PostgresConnection
+{
+    /** @var (Closure(): void)|null */
+    private ?Closure $transactionRelease = null;
+
+    /** @param array<string, mixed> $config */
+    public function __construct(mixed $pdo, string $database, string $prefix, array $config, private readonly GenerationGuard $guard)
+    {
+        parent::__construct($pdo, $database, $prefix, $config);
+    }
+
+    /**
+     * @param  array<mixed>  $bindings
+     * @param  Closure(string, array<mixed>): mixed  $callback
+     */
+    protected function run($query, $bindings, Closure $callback)
+    {
+        $this->guard->check();
+
+        return parent::run($query, $bindings, $callback);
+    }
+
+    public function getPdo()
+    {
+        $this->guard->check();
+
+        return parent::getPdo();
+    }
+
+    public function getReadPdo()
+    {
+        $this->guard->check();
+
+        return parent::getReadPdo();
+    }
+
+    public function beginTransaction(): void
+    {
+        $this->guard->check();
+        if ($this->transactions === 0 && $this->transactionRelease === null) {
+            $this->transactionRelease = $this->guard->acquire();
+        }
+        try {
+            parent::beginTransaction();
+        } catch (Throwable $failure) {
+            $this->releaseFinishedTransaction();
+            throw $failure;
+        }
+    }
+
+    /** @return array<mixed>|null */
+    protected function fireConnectionEvent($event)
+    {
+        if ($event === 'beganTransaction' && $this->transactionsManager !== null) {
+            // Laravel records the transaction before this event. Register first,
+            // before host listeners: PDO commit must complete before the lease
+            // closes, and the lease must close before user afterCommit callbacks.
+            // Laravel executes child records before their parent. Every savepoint
+            // needs this first callback, while only the outermost commit releases.
+            $this->transactionsManager->addCallback($this->releaseFinishedTransaction(...));
+        }
+
+        return parent::fireConnectionEvent($event);
+    }
+
+    public function commit(): void
+    {
+        $this->guard->check();
+        try {
+            parent::commit();
+        } finally {
+            $this->releaseFinishedTransaction();
+        }
+    }
+
+    public function rollBack($toLevel = null): void
+    {
+        $this->guard->check();
+        try {
+            parent::rollBack($toLevel);
+        } finally {
+            $this->releaseFinishedTransaction();
+        }
+    }
+
+    /**
+     * @template TReturn
+     *
+     * @param  Closure(static): TReturn  $callback
+     * @param  int  $attempts
+     * @return TReturn
+     */
+    public function transaction(Closure $callback, $attempts = 1)
+    {
+        $this->guard->check();
+        if ($attempts < 1) {
+            throw new InvalidArgumentException('Transaction attempts must be at least 1.');
+        }
+        try {
+            return parent::transaction($callback, $attempts);
+        } finally {
+            // Laravel's transaction helper commits PDO directly rather than calling commit().
+            $this->releaseFinishedTransaction();
+        }
+    }
+
+    private function releaseFinishedTransaction(): void
+    {
+        if ($this->transactions !== 0 || $this->transactionRelease === null) {
+            return;
+        }
+        $pdo = $this->getRawPdo();
+        if ($pdo instanceof PDO && $pdo->inTransaction()) {
+            // Laravel may lower the level after a commit error even if PDO can still roll back.
+            $this->transactions = 1;
+
+            return;
+        }
+        $release = $this->transactionRelease;
+        $this->transactionRelease = null;
+        $release();
+    }
+
+    /**
+     * @param  array<mixed>  $bindings
+     * @param  array<mixed>  $fetchUsing
+     */
+    public function cursor($query, $bindings = [], $useReadPdo = true, array $fetchUsing = [])
+    {
+        $this->guard->check();
+        if ($fetchUsing !== [] && count(new ReflectionMethod(Connection::class, 'cursor')->getParameters()) < 4) {
+            throw new TenantFailure('unsupported_capability');
+        }
+        $release = $this->guard->acquire();
+        try {
+            foreach (parent::cursor($query, $bindings, $useReadPdo, ...($fetchUsing === [] ? [] : [$fetchUsing])) as $row) {
+                $this->guard->check();
+                yield $row;
+            }
+        } finally {
+            $release();
+        }
+    }
+}

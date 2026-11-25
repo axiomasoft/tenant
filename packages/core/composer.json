@@ -1,0 +1,39 @@
+{
+    "name": "axiomasoft/tenant",
+    "description": "Portable isolation context and scoped execution contracts.",
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": ">=8.4 <8.6",
+        "ext-intl": "*",
+        "axiomasoft/packman": "^0.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tenant\\": "src/"
+        },
+        "files": [
+            "src/aliases.php"
+        ]
+    },
+    "extra": {
+        "packman": {
+            "schema-version": 1,
+            "package-type": "domain",
+            "stability": "stable",
+            "error-prefix": "tenant",
+            "owns": [
+                "Attributes",
+                "Composition",
+                "Contracts",
+                "Data",
+                "Enums",
+                "Errors",
+                "Exceptions",
+                "Extensions",
+                "Internal",
+                "Runtime"
+            ]
+        }
+    }
+}

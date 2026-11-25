@@ -1,0 +1,943 @@
+{
+  "contract": "tenant.ownership/1",
+  "semanticVersion": "1.0.0",
+  "status": "frozen ownership specification, no schema/DDL executed",
+  "checkpoints": {
+    "P5.1": {
+      "frameOwner": "axiomasoft/tenant",
+      "physicalOwner": "CoreX",
+      "schemaSelection": "existing CoreX technical baseline plus its incarnation/marker additions; product tables remain CoreX",
+      "qualification": "runtime-only; optional PG package not required"
+    },
+    "P5.4": {
+      "frameOwner": "axiomasoft/tenant",
+      "physicalOwner": "axiomasoft/tenant-postgres",
+      "schemaSelection": "fresh resource-only baseline, CoreX physical registrations removed as one cohort",
+      "qualification": "after P4 plus source switch; no dual writer, no legacy migration"
+    }
+  },
+  "identities": [
+    {
+      "id": "tenant.runtime.frame",
+      "kind": "execution",
+      "writerByCheckpoint": {
+        "P5.1": "axiomasoft/tenant",
+        "P5.4": "axiomasoft/tenant"
+      },
+      "contract": "token/stack/journal/generation/poison; process-local only"
+    },
+    {
+      "id": "tenant.composition",
+      "kind": "composition",
+      "writerByCheckpoint": {
+        "P5.1": "host",
+        "P5.4": "host"
+      },
+      "contract": "immutable SPI/profile/binding manifest; constructor composition, no persistence required"
+    },
+    {
+      "id": "tenant.context/1",
+      "kind": "wire",
+      "writerByCheckpoint": {
+        "P5.1": "axiomasoft/tenant",
+        "P5.4": "axiomasoft/tenant"
+      },
+      "contract": "wire schema/codec definitions; wire is data, no authority"
+    },
+    {
+      "id": "tenant.profiles/1",
+      "kind": "profile",
+      "writerByCheckpoint": {
+        "P5.1": "axiomasoft/tenant",
+        "P5.4": "axiomasoft/tenant"
+      },
+      "contract": "protocol and built-in profile declarations; host extension qualification owned by host"
+    },
+    {
+      "id": "tenant.api/1",
+      "kind": "api",
+      "writerByCheckpoint": {
+        "P5.1": "axiomasoft/tenant",
+        "P5.4": "axiomasoft/tenant"
+      },
+      "contract": "public contract definitions; optional/neutral contracts stay with named packages"
+    },
+    {
+      "id": "tenant.errors/1",
+      "kind": "errors",
+      "writerByCheckpoint": {
+        "P5.1": "axiomasoft/tenant",
+        "P5.4": "axiomasoft/tenant"
+      },
+      "contract": "stable reason vocabulary, package-specific exceptions stay with their package"
+    },
+    {
+      "id": "tenant.ownership/1",
+      "kind": "ownership",
+      "writerByCheckpoint": {
+        "P5.1": "host",
+        "P5.4": "host"
+      },
+      "contract": "one composition-selected schema/physical owner per checkpoint"
+    },
+    {
+      "id": "tenant.clusters",
+      "kind": "catalog",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "routing/capacity/maintenance DB reference; credentials only private owner secret provider"
+    },
+    {
+      "id": "tenant.resources",
+      "kind": "catalog",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "resourceRef/cluster/facets/routeRevision/incarnation/availability; excludes product status"
+    },
+    {
+      "id": "tenant.templates",
+      "kind": "catalog",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "template identity/version/hash/signature/snapshot, not live instance marker"
+    },
+    {
+      "id": "tenant.allocations",
+      "kind": "allocation",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "immutable original key/digest/cluster/template/resource binding"
+    },
+    {
+      "id": "tenant.operations",
+      "kind": "operation",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "key+canonical intent digest and original receipt/status/observed effect"
+    },
+    {
+      "id": "tenant.operation_attempts",
+      "kind": "operation",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "attempt generation/session/backend observation/fence; not second operation"
+    },
+    {
+      "id": "tenant.exports",
+      "kind": "archive",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "original export ID, operation ID, frozen destination, archive outcome"
+    },
+    {
+      "id": "tenant.archive_manifests",
+      "kind": "archive",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "verified archive hash/resource/incarnation/retention refs; artifact storage at same owner"
+    },
+    {
+      "id": "tenant.resource_tombstones",
+      "kind": "recovery",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "no key/resource identity reuse; original outcomes and replay horizon"
+    },
+    {
+      "id": "tenant.instance_marker",
+      "kind": "physical-resource",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "owner-only protocol/resourceRef/incarnation/recoveryGeneration stamp; no app writes"
+    },
+    {
+      "id": "tenant.recovery_anchor",
+      "kind": "external-recovery",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "outside restored catalog/archive set; one owner operator/deployment record, no independent authority catalog"
+    },
+    {
+      "id": "tenant.schema_history",
+      "kind": "migration",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "contract": "one catalog schema set/history per selected named connection; shared CoreX runner or standalone runner, never two"
+    },
+    {
+      "id": "host.account_resource_mapping",
+      "kind": "mapping",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "CoreX"
+      },
+      "contract": "account→verified resourceRef/incarnation; reads physical owner public port"
+    },
+    {
+      "id": "host.product_scope",
+      "kind": "product",
+      "writerByCheckpoint": {
+        "P5.1": "product host",
+        "P5.4": "product host"
+      },
+      "contract": "A/W/company/city/relations/selection/revisions and mutation locks; no second frame owner"
+    },
+    {
+      "id": "host.identity_admission",
+      "kind": "authority",
+      "writerByCheckpoint": {
+        "P5.1": "identity/access host",
+        "P5.4": "identity/access host"
+      },
+      "contract": "actor/auth/membership/permission and effect admission; named central auth"
+    },
+    {
+      "id": "host.commercial_intent",
+      "kind": "policy",
+      "writerByCheckpoint": {
+        "P5.1": "commercial host",
+        "P5.4": "commercial host"
+      },
+      "contract": "payer/agreement/entitlement/paid/retention policy intents; money event never DROP"
+    },
+    {
+      "id": "host.queue_transport",
+      "kind": "transport",
+      "writerByCheckpoint": {
+        "P5.1": "transport host",
+        "P5.4": "transport host"
+      },
+      "contract": "named central jobs/failed_jobs/unique locks, not business operation receipt"
+    },
+    {
+      "id": "host.durable_outbox",
+      "kind": "messaging",
+      "writerByCheckpoint": {
+        "P5.1": "owning domain",
+        "P5.4": "owning domain"
+      },
+      "contract": "CoreX/Vaulter/product event store and post-receipt publication; not Tenant volatile observations"
+    },
+    {
+      "id": "vaulter.publication_context",
+      "kind": "neutral-dispatch",
+      "writerByCheckpoint": {
+        "P5.1": "Vaulter",
+        "P5.4": "Vaulter"
+      },
+      "contract": "neutral schema/SPI in Vaulter core; Tenant bridge selected by host, Drive public task factory owned by Drive"
+    },
+    {
+      "id": "vaulter.tenant_scalar",
+      "kind": "projection",
+      "writerByCheckpoint": {
+        "P5.1": "Vaulter host bridge",
+        "P5.4": "Vaulter host bridge"
+      },
+      "contract": "same injective namespace/id encoding and fresh owner mapping, no schema writer added by bridge"
+    }
+  ],
+  "nonTenantOwners": {
+    "CoreX": [
+      "root_identities",
+      "root_identity_accounts",
+      "root_account_products",
+      "root_domains",
+      "root_oauth_clients",
+      "root_idp_sessions",
+      "root_oauth_refresh_tokens",
+      "root_impersonation_grants",
+      "root_feature_flags",
+      "root_usage_snapshots",
+      "root_migration_batches",
+      "root_account_schema_state",
+      "root_account_events",
+      "root_wakeup_hints",
+      "root_wakeup_reconciliation_state",
+      "users",
+      "wsp_workspaces",
+      "wsp_workspace_members",
+      "wsp_invitations",
+      "sessions",
+      "tnt_membership_pairs",
+      "tnt_membership_inbox",
+      "sys_departments relationship FKs"
+    ],
+    "FlexCRM": "workspace/company/city/visibility/employment mutations and owning tables; basic A/W guards mandatory; no tenant_id injected into domain tables",
+    "Vaulter": "core/Drive tables/tenant_id/ACL/scan work/purge/outbox; bridge no DDL; optional bridge artifact in Vaulter family",
+    "commercial": "Billium/Tariffler/Licensing/ProductCoordinator own money/entitlements/occurrence policy, no competing physical FSM"
+  },
+  "sourceSchemaMap": [
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020010_create_root_clusters.php",
+      "sha256": "3412228e706a6e5c09ada0f5b9240cf6bb0f74f0d3abeb77ddc8a0c73775b794",
+      "tables": [
+        "root_clusters"
+      ],
+      "disposition": "split fresh baseline; no whole-table transfer, no deployed data backfill",
+      "fields": {
+        "id": "tenant.clusters",
+        "name": "tenant.clusters",
+        "region": "tenant.clusters",
+        "status": "tenant.clusters",
+        "pg_host_writer": "tenant.clusters",
+        "pg_host_reader": "tenant.clusters",
+        "pg_port": "tenant.clusters",
+        "pgbouncer_host": "tenant.clusters",
+        "pgbouncer_port": "tenant.clusters",
+        "app_db_user": "tenant.clusters",
+        "tei_endpoint": "CoreX/host extension metadata; physical catalog stores only opaque extension refs",
+        "backup_repo": "tenant.clusters",
+        "db_count": "tenant.clusters",
+        "db_soft_limit": "tenant.clusters",
+        "pending_pool_size": "tenant.clusters",
+        "template_version": "tenant.clusters",
+        "meta": "CoreX/host extension metadata; physical catalog stores only opaque extension refs",
+        "created_at": "tenant.clusters",
+        "updated_at": "tenant.clusters"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020020_create_root_templates.php",
+      "sha256": "bf85ad565747ebdd2433a2c4af66f321e1d342de90d4d60c6f6e3a2d6c648486",
+      "tables": [
+        "root_templates"
+      ],
+      "disposition": "split fresh baseline; no whole-table transfer, no deployed data backfill",
+      "fields": {
+        "id": "tenant.templates",
+        "version": "tenant.templates",
+        "db_name": "tenant.templates",
+        "status": "tenant.templates",
+        "embedding_model": "host template artifact extension metadata",
+        "embedding_dim": "host template artifact extension metadata",
+        "git_ref": "tenant.templates",
+        "schema_hash": "tenant.templates",
+        "built_at": "tenant.templates",
+        "created_at": "tenant.templates",
+        "updated_at": "tenant.templates"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020030_create_root_identities.php",
+      "sha256": "6795be64caf73deaba30b27a7e17704730a12314c7cbe23caedff29846a81200",
+      "tables": [
+        "root_identities"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "email": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "phone": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "name": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "password_hash": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "email_verified_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "mfa_totp_secret": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "mfa_enabled_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "locale": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "is_staff": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "last_login_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "deleted_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020040_create_root_accounts.php",
+      "sha256": "73f92e57f97d7d7e6bb00a0a9afb543ad82f3fdcde3be27253bfadf33f68a978",
+      "tables": [
+        "root_accounts"
+      ],
+      "disposition": "split fresh baseline; no whole-table transfer, no deployed data backfill",
+      "fields": {
+        "id": "CoreX account id -> host.account_resource_mapping; generated resourceRef is distinct",
+        "slug": "CoreX account/product schema",
+        "name": "CoreX account/product schema",
+        "cluster_id": "tenant.resources",
+        "db_name": "tenant.resources",
+        "status": "CoreX account business status; separate new tenant.resources.availability, never share this column",
+        "owner_identity_id": "CoreX account/product schema",
+        "vertical_code": "CoreX account/product schema",
+        "template_version": "tenant.resources",
+        "embedding_model": "CoreX template-extension metadata",
+        "embedding_dim": "CoreX template-extension metadata",
+        "locale": "CoreX account/product schema",
+        "trial_ends_at": "CoreX account/product schema",
+        "suspended_at": "CoreX account/product schema",
+        "grace_until": "CoreX account/product schema",
+        "purge_after": "CoreX retention policy deadline -> immutable physical operation schedule ref",
+        "signup_key": "tenant.allocations",
+        "signup_request_digest": "tenant.allocations",
+        "signup_cluster_id": "tenant.allocations",
+        "signup_template_id": "tenant.allocations",
+        "pool_cleanup": "tenant.resources",
+        "created_at": "owning target record has own timestamps; account remains CoreX, physical tombstone at physical owner",
+        "updated_at": "owning target record has own timestamps; account remains CoreX, physical tombstone at physical owner",
+        "deleted_at": "owning target record has own timestamps; account remains CoreX, physical tombstone at physical owner"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020050_create_root_identity_accounts.php",
+      "sha256": "ad12dbbea50dabce02ff4830f4616d574a5df4b673d35d08b69dd79ae39fe26e",
+      "tables": [
+        "root_identity_accounts"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "identity_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "sync_status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "synced_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020060_create_root_account_products.php",
+      "sha256": "d38e65c61978a8134bcc7a82c3602a262772acbff49cff886aa7603f90b7ced0",
+      "tables": [
+        "root_account_products"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "product": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "activated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020070_create_root_domains.php",
+      "sha256": "c0b8498a31096e6b2f1a82824cf6cd9c612e611b351447757c58c3dc2e023c60",
+      "tables": [
+        "root_domains"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "host": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "type": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "is_primary": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "verification_token": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "verified_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "tls_status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "ca_used": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "verification_generation": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "deleted_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020080_create_root_oauth_clients.php",
+      "sha256": "d179a804e8fb23ce483ef3f41b02939a4107e16079c006e34a9b3ae69013cae0",
+      "tables": [
+        "root_oauth_clients"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "client_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "secret_hash": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "name": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "product": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "redirect_patterns": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "is_first_party": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "deleted_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020090_create_root_idp_sessions.php",
+      "sha256": "cc3de4a0eff37eb053a71d3c0b19460a9323e8a7bd491182334c0f6090fda05d",
+      "tables": [
+        "root_idp_sessions"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "identity_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "token_hash": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "ip": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "user_agent": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "expires_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "revoked_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020100_create_root_oauth_refresh_tokens.php",
+      "sha256": "77585d41c5110799517faaa1671aefad8497ec34d4cf46a4e2a4b6a01f759e71",
+      "tables": [
+        "root_oauth_refresh_tokens"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "session_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "client_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "token_hash": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "expires_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "revoked_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020110_create_root_impersonation_grants.php",
+      "sha256": "d6fa0606c652a46ec2c623c43153f95074256a0e701d876b6049db5b5328a528",
+      "tables": [
+        "root_impersonation_grants"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "staff_identity_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "target_user_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "reason": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "approved_by": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "expires_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "used_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "revoked_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020120_create_root_feature_flags.php",
+      "sha256": "c033279127b9f0de79886bce0ca024e046c4ae0002056fa2ef492d38d009e8af",
+      "tables": [
+        "root_feature_flags"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "flag": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "value": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020130_create_root_usage_snapshots.php",
+      "sha256": "1f3cce4a7b426172d217ed632eaac6cf31078ae8c20e19c08bb64c16e8ee02a5",
+      "tables": [
+        "root_usage_snapshots"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "metric": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "period": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "value": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020140_create_root_migration_batches.php",
+      "sha256": "a55d4a49a2bec6566214489bf40e21ef9aba43f076de11d527385c1b6887c617",
+      "tables": [
+        "root_migration_batches"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "from_version": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "to_version": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "wave": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "stats": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "started_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "finished_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020150_create_root_account_schema_state.php",
+      "sha256": "d4df8241136025ca16a54fc26fda04e4d28bdf8756ba29c788eb39027b8a39f2",
+      "tables": [
+        "root_account_schema_state"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "current_version": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "target_version": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "batch_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "last_migrated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "last_error": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020160_create_root_account_events.php",
+      "sha256": "d876d9f4f254b1ad47d478ffd20c36eac149629e7c65777f52ed8a3ccbc4ef6b",
+      "tables": [
+        "root_account_events"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "event": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "actor": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "payload": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020170_create_root_account_exports.php",
+      "sha256": "7912b67e39749accbfa1d89fe63175a13331327d5177998be8b1ef87d8499aeb",
+      "tables": [
+        "root_account_exports"
+      ],
+      "disposition": "split fresh baseline; no whole-table transfer, no deployed data backfill",
+      "fields": {
+        "id": "tenant.exports",
+        "account_id": "CoreX mapping; tenant.exports uses resourceRef/incarnation",
+        "kind": "tenant.exports",
+        "status": "tenant.exports",
+        "formats": "tenant.exports",
+        "storage_path": "tenant.exports",
+        "url_expires_at": "tenant.exports",
+        "size_bytes": "tenant.exports",
+        "purge_after": "host retention policy -> accepted physical schedule",
+        "created_at": "tenant.exports",
+        "updated_at": "tenant.exports"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020180_create_root_wakeup_hints.php",
+      "sha256": "8ab83c5a97a2d27f79d3cce97b68c059c9c3bd5ffbe04a6f09ee3ec896684903",
+      "tables": [
+        "root_wakeup_hints"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "next_fire_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "hint_revision": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "leased_until": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "claim_epoch": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/root/2026_10_01_020190_create_root_wakeup_reconciliation_state.php",
+      "sha256": "3f0ecf872c365ff4c392a9d6c930dd17203fab53599dfa717f3b064702ee845e",
+      "tables": [
+        "root_wakeup_reconciliation_state"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "name": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "cursor_account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "attempts": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "retry_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020200_create_users.php",
+      "sha256": "733e8ac5f6922341b9d17c15e005be8e78c9e877788b87b99b83a940a9f4cb80",
+      "tables": [
+        "users"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "email": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "name": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "phone": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "locale": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "password_hash": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "department_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "is_active": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "settings": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "last_login_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "identity_source_updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "synced_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "deleted_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020210_create_wsp_workspaces.php",
+      "sha256": "c7ed212abca317fc9e1fc48f4ab1bdfc89ff9fdbf139d068aa63d499c40c92ac",
+      "tables": [
+        "wsp_workspaces"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "parent_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "type": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "name": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "slug": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "is_default": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "settings": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "deleted_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020220_create_wsp_workspace_members.php",
+      "sha256": "1789f4fcf4f4704ac69d9c51357674c9e7ce24ad77a2350c6d5944a6dc7d9b4e",
+      "tables": [
+        "wsp_workspace_members"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "workspace_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "user_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "is_default": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "joined_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020230_create_wsp_invitations.php",
+      "sha256": "b6bc04f18feced5c1acdc9373bbee62f786d422852c5fc1f55fdad288bd3266d",
+      "tables": [
+        "wsp_invitations"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "email": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "workspace_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "role_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "invited_by": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "token_hash": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "expires_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "accepted_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "created_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "updated_at": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020240_create_sessions.php",
+      "sha256": "e781e4901be2f7a2b5bffb5d4b449d6ec21e5d226502c970300fa6675c0e5a10",
+      "tables": [
+        "sessions"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "user_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "ip_address": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "user_agent": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "payload": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "last_activity": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020250_create_tnt_membership_pairs.php",
+      "sha256": "3a97feedb6c29eebab053d4cab1abb769b00e8c33e8c28f8aa164ca0079c5662",
+      "tables": [
+        "tnt_membership_pairs"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "account_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "identity_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "revision": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "revoke_generation": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "local_epoch": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "operation_fence": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "application_fence": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "operation_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "applied_operation_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "barrier_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "snapshot_digest": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "denied": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020260_create_tnt_membership_inbox.php",
+      "sha256": "072b407d0a7b379ef3eaa81851d155002942f653924e7a96ed0d5110e8a8c5a8",
+      "tables": [
+        "tnt_membership_inbox"
+      ],
+      "disposition": "keep CoreX-owned schema; source history only, not second active migration set",
+      "fields": {
+        "event_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "logical_digest": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "delivery_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "status": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "attempts": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "owner_id": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant",
+        "lease_until": "CoreX identity/account/workspace/product/schema-orchestration/messaging owner; not generic Tenant"
+      }
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020270_add_sys_departments_membership_fks.php",
+      "sha256": "502213968ceecf7ec3a823bc82ea8a6f92e4b35cd057dd7621b22a45dd5e4faa",
+      "tables": [],
+      "disposition": "keep CoreX relation FK/schema change; no Tenant table allocation",
+      "fields": {}
+    },
+    {
+      "source": "packages/tenancy/database/migrations/tenant/2026_10_01_020280_add_sys_department_user_membership_fks.php",
+      "sha256": "9e2df412d0878cfde515c6fa08309ed2e46842a552eb09e8bd702b831cfb50da",
+      "tables": [],
+      "disposition": "keep CoreX relation FK/schema change; no Tenant table allocation",
+      "fields": {}
+    }
+  ],
+  "reuse": {
+    "policy": "reuse qualified CoreX frame/journal/facility/queue/session/storage/template/claim algorithms/tests; typed API change is not engine rewrite permission",
+    "corexSource": "176382cdc1a0784079700f572408c87ae175bc3d",
+    "keep": "account/identity/product/schema orchestration/messaging remain CoreX; PG migration history does not become two active sets",
+    "adapt": [
+      "same-ID no-op -> fresh resolution/admission",
+      "singleton original snapshots -> frame-local states",
+      "throwing enter events -> isolated observations",
+      "old generation handle revival -> permanent stale refusal",
+      "database name/connectionIdentity -> actual marker+catalog verification"
+    ],
+    "newGaps": [
+      "marker/incarnation/recovery anchor",
+      "original operation identity and query/reconcile",
+      "same-session DDL fence/quarantine",
+      "tracked escaped stream lifetime",
+      "Vaulter deferred producer original target capture"
+    ],
+    "checkpointSwitch": "P5.4 reuses existing P4/P5.1 algorithm/helper/corpus, moves persistence/wiring once; no second verifier protocol; minimal path independent of P4",
+    "evidence": "P1.1 artifacts/reuse/P1.1.json records read source/test hashes; owning runtime items must provide source→target→fixture→observed evidence separately"
+  },
+  "authority": {
+    "currentItem": "P1.1 contract freeze only; implementation gate reused, no physical/source consumer changes here",
+    "boundary": "do not accept/apply CD on owner behalf; P2.1 coordinator verifies accepted applied boundary before source extraction",
+    "publication": "no push/tag/release/publication; E09 licence/support/security OPEN blocks release/maturity, not contract freeze",
+    "pendingProductInputs": "company/employment/city/commercial/retention choices remain conditional host profiles; no unqualified technical defaults or claimed business policy"
+  },
+  "physicalOperations": [
+    {
+      "operation": "template verification/clone",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "claim/provision",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "catalog allocation/capacity",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "instance stamp/incarnation",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "binding verification/ref emission",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "export/archive verification",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "delete/tombstone",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "original operation query/reconcile/cancel",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "restore/clone anchor reconciliation",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    },
+    {
+      "operation": "catalog schema migrations",
+      "writerByCheckpoint": {
+        "P5.1": "CoreX",
+        "P5.4": "axiomasoft/tenant-postgres"
+      },
+      "rule": "one writer; host invokes public owner port, never compensation SQL; technical full scope requires owning runtime evidence"
+    }
+  ],
+  "generatedIdentifiers": "New physical resource identities use UUIDv7, distinct from CoreX account IDs; generated incarnation IDs also UUIDv7 and never reused. External host opaque identity remains host-normalized string, not forced into account UUID shape."
+}

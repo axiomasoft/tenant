@@ -1,0 +1,17 @@
+/vendor/
+/build/
+/.phpunit.cache/
+/.claude/
+/.codex/
+/.gemini/
+/AGENTS.md
+/review/
+.phpunit.result.cache
+/packages/*/vendor/
+/packages/*/.phpunit.cache/
+.DS_Store
+*.sqlite
+*.sqlite-journal
+*.log
+__pycache__/
+/.venv-contracts/

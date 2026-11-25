@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Runs a command with PHP 8.4 as `php` on PATH, so Composer scripts and
+# `#!/usr/bin/env php` binaries use 8.4 even when the host default is older.
+# Usage: bin/php84 --check | bin/php84 <command> [args...]
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+bin="${PHP84_BIN:-$(command -v php8.4 || true)}"
+
+if [[ -z "$bin" || ! -x "$bin" ]]; then
+    echo "php84: php8.4 binary not found (set PHP84_BIN)" >&2
+    exit 1
+fi
+
+shim="$root/build/php84/bin"
+mkdir -p "$shim"
+ln -sf "$bin" "$shim/php"
+export PATH="$shim:$PATH"
+
+if [[ $# -eq 0 || ( "${1:-}" == -* && "${1:-}" != "--check" ) ]]; then
+    echo "usage: bin/php84 --check | bin/php84 <command> [args...]" >&2
+    echo "bin/php84 runs <command> with PHP 8.4 on PATH. To invoke PHP itself: bin/php84 php -r ..." >&2
+    exit 2
+fi
+
+if [[ "${1:-}" == "--check" ]]; then
+    version="$(php -r 'echo PHP_VERSION;')"
+    if [[ "$version" != 8.4.* ]]; then
+        echo "php84: expected PHP 8.4.x, got $version" >&2
+        exit 1
+    fi
+    required=(ctype curl dom fileinfo intl json mbstring openssl pcntl pdo_pgsql pdo_sqlite posix sodium sqlite3 tokenizer xml zip)
+    missing=()
+    for ext in "${required[@]}"; do
+        php -r "exit(extension_loaded('$ext') ? 0 : 1);" || missing+=("$ext")
+    done
+    if (( ${#missing[@]} )); then
+        echo "php84: MISSING: ${missing[*]}" >&2
+        exit 1
+    fi
+    echo "php84 OK: $version, extensions complete"
+    exit 0
+fi
+
+exec "$@"

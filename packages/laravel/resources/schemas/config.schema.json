@@ -1,0 +1,60 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "axiomasoft/tenant-laravel configuration",
+    "type": "object",
+    "properties": {
+        "tenant": {
+            "type": "object",
+            "properties": {
+                "cache_stores": {
+                    "type": "array"
+                },
+                "central_cache_stores": {
+                    "type": "array"
+                },
+                "central_connection": {
+                    "type": "string",
+                    "default": "central"
+                },
+                "facilities": {
+                    "type": "object",
+                    "properties": {
+                        "cache": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "database": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "session": {
+                            "type": "boolean",
+                            "default": true
+                        },
+                        "storage": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "runtime_profile": {
+                    "type": "string",
+                    "default": "laravel-pg-database"
+                },
+                "shared": {
+                    "type": [
+                        "array",
+                        "object"
+                    ]
+                },
+                "storage_driver": {
+                    "type": "string",
+                    "default": "local"
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

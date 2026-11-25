@@ -1,0 +1,5 @@
+providers: []
+
+dont-discover:
+  - axiomasoft/tenant-laravel
+  - axiomasoft/tenant-postgres

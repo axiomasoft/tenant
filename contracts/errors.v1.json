@@ -1,0 +1,368 @@
+{
+  "contract": "tenant.errors/1",
+  "semanticVersion": "1.0.0",
+  "namespace": "Tenant\\Exceptions\\",
+  "base": "TenantFailure",
+  "status": "frozen reason/type semantics; no runtime implementation",
+  "rules": [
+    "Stable machine reason independent of message/localization; credentials/DSN/raw SQL/exception text excluded from public diagnostics.",
+    "Original callback/activation cause plus every cleanup failure retained; observation uses sanitized reason only.",
+    "A refusal before mutation leaves previous frame valid; restore or verification failure after mutation poisons and prevents success.",
+    "No retry flag grants business permission; transport retry policy separate from original operation receipt."
+  ],
+  "errors": [
+    {
+      "reason": "missing",
+      "type": "ScopeRequired",
+      "package": "axiomasoft/tenant",
+      "phase": "resolve/capture",
+      "stateEffect": "preserve",
+      "meaning": "No explicit active isolation; Missing never central/wildcard."
+    },
+    {
+      "reason": "denied",
+      "type": "ContextDenied",
+      "package": "axiomasoft/tenant",
+      "phase": "resolve/admission/effect",
+      "stateEffect": "preserve",
+      "meaning": "Fresh host admission or explicit Central default tenant IO refused."
+    },
+    {
+      "reason": "unavailable",
+      "type": "ContextUnavailable",
+      "package": "axiomasoft/tenant",
+      "phase": "lookup/verify",
+      "stateEffect": "preserve",
+      "meaning": "Unavailable resource; previous-frame lookup failure is wrapped restore_failed and poisons."
+    },
+    {
+      "reason": "stale_incarnation",
+      "type": "StaleIncarnation",
+      "package": "axiomasoft/tenant",
+      "phase": "verify/consume",
+      "stateEffect": "preserve",
+      "meaning": "Expected identity does not match fresh catalog/actual marker incarnation; no retarget."
+    },
+    {
+      "reason": "stale_route",
+      "type": "StaleRoute",
+      "package": "axiomasoft/tenant",
+      "phase": "verify/consume",
+      "stateEffect": "preserve",
+      "meaning": "Durable route revision differs from trusted current routing."
+    },
+    {
+      "reason": "binding_mismatch",
+      "type": "BindingMismatch",
+      "package": "axiomasoft/tenant",
+      "phase": "verify",
+      "stateEffect": "preserve",
+      "meaning": "Actual marker/owner/resource/anchor mismatch; no name-only proof."
+    },
+    {
+      "reason": "unsupported_profile",
+      "type": "UnsupportedProfile",
+      "package": "axiomasoft/tenant",
+      "phase": "compile/resolve",
+      "stateEffect": "preserve",
+      "meaning": "Profile ID/version/mode not qualified or does not match policy."
+    },
+    {
+      "reason": "unsupported_version",
+      "type": "UnsupportedVersion",
+      "package": "axiomasoft/tenant",
+      "phase": "decode",
+      "stateEffect": "preserve",
+      "meaning": "Wire/semantic version unsupported; no old decoder fallback."
+    },
+    {
+      "reason": "unsupported_extension",
+      "type": "UnsupportedExtension",
+      "package": "axiomasoft/tenant",
+      "phase": "decode/compile",
+      "stateEffect": "preserve",
+      "meaning": "Unknown required extension type/version/handler; optional unknown ignored only after bounds check."
+    },
+    {
+      "reason": "invalid_reference",
+      "type": "InvalidReference",
+      "package": "axiomasoft/tenant",
+      "phase": "decode",
+      "stateEffect": "preserve",
+      "meaning": "Strict shape, duplicate keys/type, scalar, NFC/byte/depth/size bound violation or duplicate extension type."
+    },
+    {
+      "reason": "untrusted_producer",
+      "type": "UntrustedProducer",
+      "package": "axiomasoft/tenant",
+      "phase": "consume",
+      "stateEffect": "preserve",
+      "meaning": "Producer/origin/purpose not host-trusted, irrespective of valid DTO."
+    },
+    {
+      "reason": "selection_lost",
+      "type": "SelectionLost",
+      "package": "axiomasoft/tenant",
+      "phase": "product",
+      "stateEffect": "rollback",
+      "meaning": "Addressed product ref removed/revoked; no default reselection or account-wide fallback."
+    },
+    {
+      "reason": "switch_failed",
+      "type": "ContextSwitchFailed",
+      "package": "axiomasoft/tenant",
+      "phase": "prepare/activate",
+      "stateEffect": "rollback",
+      "meaning": "Required participant failed; restore every started, including partially failed participant."
+    },
+    {
+      "reason": "restore_failed",
+      "type": "ContextRestoreFailed",
+      "package": "axiomasoft/tenant",
+      "phase": "restore/verify",
+      "stateEffect": "poison",
+      "meaning": "Retain original cause and all cleanup errors; no callback result issued as success."
+    },
+    {
+      "reason": "runtime_poisoned",
+      "type": "RuntimePoisoned",
+      "package": "axiomasoft/tenant",
+      "phase": "any tenant API/IO",
+      "stateEffect": "poison",
+      "meaning": "Further tenant work refused even inside callback catching earlier failure; boundary stops process."
+    },
+    {
+      "reason": "transition_in_progress",
+      "type": "ContextTransitionInProgress",
+      "package": "axiomasoft/tenant",
+      "phase": "prepare/activate/restore/observe reentry",
+      "stateEffect": "preserve",
+      "meaning": "Current or recursive enter/restore unavailable during transition/observation; no fourth public ContextState."
+    },
+    {
+      "reason": "invalid_frame_token",
+      "type": "InvalidFrameToken",
+      "package": "axiomasoft/tenant",
+      "phase": "restore preflight",
+      "stateEffect": "preserve",
+      "meaning": "Foreign runtime/lane, consumed or out-of-order token; do not pop actual top."
+    },
+    {
+      "reason": "concurrent_entry",
+      "type": "ConcurrentEntry",
+      "package": "axiomasoft/tenant",
+      "phase": "enter preflight",
+      "stateEffect": "preserve",
+      "meaning": "Interleaved/concurrent execution lane refused."
+    },
+    {
+      "reason": "stale_handle",
+      "type": "StaleHandle",
+      "package": "axiomasoft/tenant",
+      "phase": "guarded IO",
+      "stateEffect": "preserve",
+      "meaning": "Service/handle generation differs; A-B-A never revalidates old handle."
+    },
+    {
+      "reason": "open_resource",
+      "type": "OpenResource",
+      "package": "axiomasoft/tenant",
+      "phase": "enter/restore preflight",
+      "stateEffect": "preserve",
+      "meaning": "Open tracked stream/cursor/transaction on affected binding blocks transition before mutation; close and retry explicitly."
+    },
+    {
+      "reason": "frame_leak",
+      "type": "FrameLeak",
+      "package": "axiomasoft/tenant",
+      "phase": "run/boundary",
+      "stateEffect": "poison",
+      "meaning": "Outstanding token/stream at callback/boundary completion is fatal; callback result suppressed, worker does not run sentinel."
+    },
+    {
+      "reason": "unsupported_capability",
+      "type": "UnsupportedCapability",
+      "package": "axiomasoft/tenant",
+      "phase": "compile/IO",
+      "stateEffect": "preserve",
+      "meaning": "Required facility or guarded raw path/unsupported driver unavailable."
+    },
+    {
+      "reason": "facility_configuration",
+      "type": "FacilityConfigurationError",
+      "package": "axiomasoft/tenant-laravel",
+      "phase": "boot",
+      "stateEffect": "preserve",
+      "meaning": "Framework store enabled but missing facility or explicit shared owner+purpose; unsafe driver/session profile."
+    },
+    {
+      "reason": "duplicate_implementation",
+      "type": "DuplicateImplementation",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Implementation ID appears twice."
+    },
+    {
+      "reason": "exclusive_slot_conflict",
+      "type": "ExclusiveSlotConflict",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Two mutation owners occupy one slot without explicit compatible replacement."
+    },
+    {
+      "reason": "replacement_target_missing",
+      "type": "ReplacementTargetMissing",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Named original implementation does not exist."
+    },
+    {
+      "reason": "replacement_incompatible",
+      "type": "ReplacementIncompatible",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Replacement SPI/stage/slots/provided capabilities incompatible."
+    },
+    {
+      "reason": "replacement_conflict",
+      "type": "ReplacementConflict",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Multiple replacers or replacement chain ambiguous; no last-wins."
+    },
+    {
+      "reason": "missing_dependency",
+      "type": "MissingDependency",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Required implementation/order endpoint missing."
+    },
+    {
+      "reason": "ambiguous_capability",
+      "type": "AmbiguousCapability",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Several capability providers need explicit host selection."
+    },
+    {
+      "reason": "dependency_cycle",
+      "type": "DependencyCycle",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "No valid topological ordering."
+    },
+    {
+      "reason": "incompatible_spi",
+      "type": "IncompatibleSpi",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "SPI version mismatch across host declaration/binding/adapter."
+    },
+    {
+      "reason": "composition_frozen",
+      "type": "CompositionFrozen",
+      "package": "axiomasoft/tenant",
+      "phase": "register/rebind/compile",
+      "stateEffect": "preserve",
+      "meaning": "Composition mutation or second compile after freeze; no implicit rebuild/hot reload."
+    },
+    {
+      "reason": "invalid_stage_order",
+      "type": "InvalidStageOrder",
+      "package": "axiomasoft/tenant",
+      "phase": "compile",
+      "stateEffect": "preserve",
+      "meaning": "Dependency attempts product activation before required resource activation."
+    },
+    {
+      "reason": "observer_failed",
+      "type": "ObserverFailed",
+      "package": "axiomasoft/tenant",
+      "phase": "observation",
+      "stateEffect": "observe-only",
+      "meaning": "Catch each listener Throwable, report sanitized diagnostic, continue every other observer and cleanup."
+    },
+    {
+      "reason": "diagnostic_failed",
+      "type": "DiagnosticFailed",
+      "package": "axiomasoft/tenant",
+      "phase": "diagnostics",
+      "stateEffect": "observe-only",
+      "meaning": "Suppress diagnostic sink Throwable; no recursive reporting/masking or changed runtime outcome."
+    },
+    {
+      "reason": "identity_encoding_unsupported",
+      "type": "IdentityEncodingUnsupported",
+      "package": "axiomasoft/tenant",
+      "phase": "Vaulter projection/capture",
+      "stateEffect": "preserve",
+      "meaning": "Identity outside explicit Vaulter scalar byte profile; no trim/hash/coercion/fallback."
+    },
+    {
+      "reason": "idempotency_conflict",
+      "type": "IdempotencyConflict",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional owner claim",
+      "stateEffect": "preserve",
+      "meaning": "Same operation key with different canonical semantic digest; no second effect."
+    },
+    {
+      "reason": "operation_unknown",
+      "type": "OperationUnknown",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional owner lookup/reconcile",
+      "stateEffect": "quarantine",
+      "meaning": "Submitted effect outcome unproven; query/reconcile original operation; no blind repeat."
+    },
+    {
+      "reason": "recovery_unsupported",
+      "type": "RecoveryUnsupported",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional recovery admission",
+      "stateEffect": "preserve",
+      "meaning": "No qualified external anchor/proof/runbook; restore/replay unavailable, not automatic reopen."
+    },
+    {
+      "reason": "resource_quarantined",
+      "type": "ResourceQuarantined",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional owner/admission",
+      "stateEffect": "quarantine",
+      "meaning": "Cannot exclude old in-flight DDL or marker mismatch; workers/admission closed until reconciliation."
+    },
+    {
+      "reason": "archive_unverified",
+      "type": "ArchiveUnverified",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional export/delete",
+      "stateEffect": "preserve",
+      "meaning": "Missing writer/hash/manifest/retention proof blocks destructive effect."
+    },
+    {
+      "reason": "retention_history_missing",
+      "type": "RetentionHistoryMissing",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional operation/replay",
+      "stateEffect": "preserve",
+      "meaning": "Insufficient retained original key/receipt/tombstone horizon denies replay."
+    },
+    {
+      "reason": "original_operation_missing",
+      "type": "OriginalOperationMissing",
+      "package": "axiomasoft/tenant-postgres",
+      "phase": "optional query/replay",
+      "stateEffect": "preserve",
+      "meaning": "Original receipt cannot be located; never substitute newer export/resource operation."
+    }
+  ],
+  "callbackFailure": "Application Throwable propagates unchanged after successful cleanup. If cleanup also fails, ContextRestoreFailed.causes includes original application Throwable first and all cleanup causes; no synthetic callback success or receipt."
+}

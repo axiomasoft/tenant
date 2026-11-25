@@ -1,0 +1,24 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "declare_strict_types": true,
+        "final_class": false,
+        "ordered_imports": {
+            "sort_algorithm": "alpha",
+            "imports_order": ["class", "function", "const"]
+        }
+    },
+    "exclude": [
+        "build",
+        "vendor",
+        "tests/consumers",
+        "tests/laravel",
+        "tests/postgres",
+        "packages/laravel/tests/Boundary",
+        "packages/laravel/tests/Codec",
+        "packages/laravel/tests/Compatibility",
+        "packages/laravel/tests/Facilities",
+        "packages/laravel/tests/Http",
+        "packages/laravel/tests/Queue"
+    ]
+}
